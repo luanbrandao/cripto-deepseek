@@ -39,4 +39,11 @@ export class BinancePublicClient {
     const response = await axios.get(`${this.baseUrl}/exchangeInfo`);
     return response.data;
   }
+
+  async getCandlesHistory(symbol: string) {
+    const response = await axios.get(`${this.baseUrl}/klines`, {
+      params: { symbol, interval: '1h', limit: 24 }
+    });
+    return response.data;
+  }
 }
