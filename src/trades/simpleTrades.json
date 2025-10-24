@@ -1,0 +1,16 @@
+[
+  {
+    "timestamp": "2025-10-24T22:36:26.331Z",
+    "symbol": "BTCUSDT",
+    "action": "BUY",
+    "price": 111076.31,
+    "entryPrice": 111076.31,
+    "targetPrice": 116630.12550000001,
+    "stopPrice": 107744.0207,
+    "amount": 300,
+    "balance": 700,
+    "crypto": 0.0027008459319543474,
+    "reason": "Tendência de alta confirmada",
+    "confidence": 75
+  }
+]
