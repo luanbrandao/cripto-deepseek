@@ -1,6 +1,5 @@
-import SimpleAnalyzer from '../analyzers/simpleAnalyzer';
 import { BinancePublicClient } from '../clients/binance-public-client';
-import * as fs from 'fs';
+import { TradeStorage, Trade } from '../storage/trade-storage';
 import * as path from 'path';
 
 interface Portfolio {
@@ -10,29 +9,16 @@ interface Portfolio {
   winTrades: number;
 }
 
-interface Trade {
-  timestamp: string;
-  symbol: string;
-  action: string;
-  price: number;
-  entryPrice: number;
-  targetPrice: number;
-  stopPrice: number;
-  amount: number;
-  balance: number;
-  crypto: number;
-  reason: string;
-  confidence: number;
-}
-
 export class TradeSimulator {
   private portfolio: Portfolio;
   private binance: BinancePublicClient;
   private symbol: string;
   private trades: Trade[] = [];
-  private tradesFile = path.join(__dirname, '../trades/simpleTrades.json');
+  private tradesFile: string;
+  private analyzer: any;
 
-  constructor(initialBalance: number = 1000, symbol: string = 'BTCUSDT') {
+  constructor(analyzer: any, initialBalance: number = 1000, symbol: string = 'BTCUSDT', tradesFile?: string) {
+    this.analyzer = analyzer;
     this.portfolio = {
       balance: initialBalance,
       crypto: 0,
@@ -41,6 +27,7 @@ export class TradeSimulator {
     };
     this.binance = new BinancePublicClient();
     this.symbol = symbol;
+    this.tradesFile = tradesFile || path.join(__dirname, `../trades/${analyzer.name.toLowerCase()}Trades.json`);
   }
 
   async simulate() {
@@ -54,7 +41,7 @@ export class TradeSimulator {
       const currentPrice = prices[prices.length - 1];
 
       // Analisar mercado
-      const analysis = SimpleAnalyzer.analyze({
+      const analysis = this.analyzer.analyze({
         price24h: prices,
         currentPrice
       });
@@ -119,7 +106,7 @@ export class TradeSimulator {
     };
 
     this.trades.push(trade);
-    this.saveTradesHistory();
+    TradeStorage.saveTrades(this.trades, this.tradesFile);
   }
 
   private showResults(currentPrice: number) {
@@ -131,25 +118,9 @@ export class TradeSimulator {
     console.log(`💵 Saldo: $${this.portfolio.balance.toFixed(2)}`);
     console.log(`🪙 Crypto: ${this.portfolio.crypto.toFixed(6)} ($${cryptoValue.toFixed(2)})`);
     console.log(`💎 Valor Total: $${totalValue.toFixed(2)}`);
-    console.log(`${profit >= 0 ? '📈' : '📉'} P&L: $${profit.toFixed(2)} (${((profit/1000)*100).toFixed(2)}%)`);
+    console.log(`${profit >= 0 ? '📈' : '📉'} P&L: $${profit.toFixed(2)} (${((profit / 1000) * 100).toFixed(2)}%)`);
     console.log(`🔄 Trades: ${this.portfolio.totalTrades}`);
   }
 
-  private saveTradesHistory() {
-    try {
-      let existingTrades: Trade[] = [];
-      if (fs.existsSync(this.tradesFile)) {
-        const data = fs.readFileSync(this.tradesFile, 'utf8').trim();
-        if (data && data !== '') {
-          existingTrades = JSON.parse(data);
-        }
-      }
-      
-      const allTrades = [...existingTrades, ...this.trades];
-      fs.writeFileSync(this.tradesFile, JSON.stringify(allTrades, null, 2));
-      console.log(`💾 Histórico salvo: ${this.trades.length} trades`);
-    } catch (error) {
-      console.error('❌ Erro ao salvar histórico:', error);
-    }
-  }
+
 }
