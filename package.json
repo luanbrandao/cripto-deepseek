@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts"
+    "binance-public": "ts-node src/test-binance-public.ts",
+    "dev": "ts-node src/index.ts",
+    "test": "ts-node test.ts"
   },
   "dependencies": {
     "axios": "^1.6.0",

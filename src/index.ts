@@ -1,14 +1,15 @@
-import { BinanceService } from './clients/binance-client';
+import { BinancePublicClient } from './clients/binance-public-client';
 import { DeepSeekService } from './clients/deepseek-client';
+import { biancenPublicApi } from './examples/binance-public-api';
 
 async function main() {
-  const binance = new BinanceService();
+  const binancePublic = new BinancePublicClient();
   const deepseek = new DeepSeekService();
 
   try {
-    // Obter dados do Bitcoin
-    const btcPrice = await binance.getPrice('BTCUSDT');
-    const btcStats = await binance.get24hrStats('BTCUSDT');
+    // Usar cliente público da Binance
+    const btcPrice = await binancePublic.getPrice('BTCUSDT');
+    const btcStats = await binancePublic.get24hrStats('BTCUSDT');
 
     console.log('BTC Price:', btcPrice);
     console.log('BTC 24h Stats:', btcStats);
@@ -20,6 +21,10 @@ async function main() {
     );
 
     console.log('DeepSeek Analysis:', analysis);
+
+    // Executar exemplo público
+    console.log('\n--- Public Client Example ---');
+    await biancenPublicApi();
   } catch (error) {
     console.error('Error:', error);
   }
