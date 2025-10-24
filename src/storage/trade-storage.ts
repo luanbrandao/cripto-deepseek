@@ -14,6 +14,12 @@ export interface Trade {
   crypto: number;
   reason: string;
   confidence: number;
+  status: 'pending' | 'completed';
+  riskReturn: {
+    potentialGain: number;
+    potentialLoss: number;
+    riskRewardRatio: number;
+  };
 }
 
 export class TradeStorage {

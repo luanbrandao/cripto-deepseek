@@ -89,6 +89,11 @@ export class TradeSimulator {
     const targetPrice = analysis.action === 'BUY' ? currentPrice * 1.05 : currentPrice * 0.95;
     const stopPrice = analysis.action === 'BUY' ? currentPrice * 0.97 : currentPrice * 1.03;
 
+    // Calcular risco e retorno
+    const potentialGain = Math.abs(targetPrice - currentPrice);
+    const potentialLoss = Math.abs(stopPrice - currentPrice);
+    const riskRewardRatio = potentialGain / potentialLoss;
+
     // Salvar trade no histórico
     const trade: Trade = {
       timestamp: new Date().toISOString(),
@@ -102,7 +107,13 @@ export class TradeSimulator {
       balance: this.portfolio.balance,
       crypto: this.portfolio.crypto,
       reason: analysis.reason,
-      confidence: analysis.confidence
+      confidence: analysis.confidence,
+      status: 'pending',
+      riskReturn: {
+        potentialGain,
+        potentialLoss,
+        riskRewardRatio
+      }
     };
 
     this.trades.push(trade);
