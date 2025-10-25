@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Analyzer - Documentação</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .chart-container { width: 100%; height: 400px; margin: 20px 0; }
+        .logic-box { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .buy { color: #28a745; font-weight: bold; }
+        .sell { color: #dc3545; font-weight: bold; }
+        .hold { color: #6c757d; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 Simple Analyzer</h1>
+        <p>Analisador técnico baseado em médias móveis e variação de preços</p>
+    </div>
+
+    <div class="section">
+        <h2>📊 Como Funciona</h2>
+        <p>O Simple Analyzer utiliza indicadores técnicos simples para tomar decisões de trading:</p>
+        <ul>
+            <li><strong>SMA 5:</strong> Média móvel simples dos últimos 5 períodos</li>
+            <li><strong>SMA 10:</strong> Média móvel simples dos últimos 10 períodos</li>
+            <li><strong>Variação %:</strong> Mudança percentual do preço atual vs primeiro preço</li>
+        </ul>
+        
+        <h3>⏰ Período de Análise</h3>
+        <div class="logic-box">
+            <p><strong>Timeframe:</strong> 1 hora (1h)</p>
+            <p><strong>Histórico:</strong> 50 candles (últimas 50 horas)</p>
+            <p><strong>Dados utilizados:</strong> Preços de fechamento (close prices)</p>
+            <p><strong>Fonte:</strong> API Binance - endpoint /api/v3/klines</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🎯 Lógica de Decisão</h2>
+        
+        <div class="logic-box">
+            <h3 class="buy">🟢 COMPRA (Confiança: 75%)</h3>
+            <p><strong>Condição:</strong> Preço > SMA5 AND SMA5 > SMA10 AND Variação > 2%</p>
+            <p><strong>Razão:</strong> "Tendência de alta confirmada"</p>
+        </div>
+
+        <div class="logic-box">
+            <h3 class="sell">🔴 VENDA (Confiança: 70%)</h3>
+            <p><strong>Condição:</strong> Preço < SMA5 AND SMA5 < SMA10 AND Variação < -2%</p>
+            <p><strong>Razão:</strong> "Tendência de baixa confirmada"</p>
+        </div>
+
+        <div class="logic-box">
+            <h3 class="sell">🔴 VENDA (Confiança: 80%)</h3>
+            <p><strong>Condição:</strong> Variação > 5%</p>
+            <p><strong>Razão:</strong> "Possível correção após alta"</p>
+        </div>
+
+        <div class="logic-box">
+            <h3 class="buy">🟢 COMPRA (Confiança: 75%)</h3>
+            <p><strong>Condição:</strong> Variação < -5%</p>
+            <p><strong>Razão:</strong> "Possível recuperação após queda"</p>
+        </div>
+
+        <div class="logic-box">
+            <h3 class="hold">⏸️ HOLD (Confiança: 50%)</h3>
+            <p><strong>Condição:</strong> Nenhuma das condições acima</p>
+            <p><strong>Razão:</strong> "Mercado estável"</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📈 Exemplo Visual</h2>
+        <div class="chart-container">
+            <canvas id="priceChart"></canvas>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>⚙️ Parâmetros de Saída</h2>
+        <ul>
+            <li><strong>action:</strong> "BUY", "SELL" ou "HOLD"</li>
+            <li><strong>confidence:</strong> Nível de confiança (50-80%)</li>
+            <li><strong>reason:</strong> Explicação da decisão</li>
+            <li><strong>suggested_amount:</strong> 3 unidades se confiança > 70%, senão 1</li>
+        </ul>
+    </div>
+
+    <script>
+        // Dados de exemplo
+        const prices = [100, 102, 101, 103, 105, 107, 106, 108, 110, 109, 111, 113, 115, 112, 114];
+        const labels = prices.map((_, i) => `T${i+1}`);
+        
+        // Calcular SMAs
+        const sma5 = [];
+        const sma10 = [];
+        
+        for (let i = 0; i < prices.length; i++) {
+            if (i >= 4) {
+                sma5.push(prices.slice(i-4, i+1).reduce((a, b) => a + b) / 5);
+            } else {
+                sma5.push(null);
+            }
+            
+            if (i >= 9) {
+                sma10.push(prices.slice(i-9, i+1).reduce((a, b) => a + b) / 10);
+            } else {
+                sma10.push(null);
+            }
+        }
+
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Preço',
+                    data: prices,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    tension: 0.1
+                }, {
+                    label: 'SMA 5',
+                    data: sma5,
+                    borderColor: '#28a745',
+                    backgroundColor: 'transparent',
+                    borderDash: [5, 5]
+                }, {
+                    label: 'SMA 10',
+                    data: sma10,
+                    borderColor: '#dc3545',
+                    backgroundColor: 'transparent',
+                    borderDash: [10, 5]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: 'Preço ($)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Tempo'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Exemplo: Preço vs Médias Móveis'
+                    },
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
