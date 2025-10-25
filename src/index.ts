@@ -1,63 +1,73 @@
 import { BinancePublicClient } from './clients/binance-public-client';
 import { DeepSeekService } from './clients/deepseek-client';
-import { biancenPublicApi } from './examples/binance-public-api';
 import { TradeStorage, Trade } from './storage/trade-storage';
+import { AnalysisParser } from './bots/services/analysis-parser';
+import { RiskManager } from './bots/services/risk-manager';
 import * as path from 'path';
 
 async function main() {
   const binancePublic = new BinancePublicClient();
   const deepseek = new DeepSeekService();
 
+  console.log('🚀 ANÁLISE DE MERCADO COM DEEPSEEK AI SEM EXECURTAR TRADE REAL');
+
   try {
-    // Usar cliente público da Binance
-    const btcPrice = await binancePublic.getPrice('SOLUSDT');
-    const btcStats = await binancePublic.get24hrStats('SOLUSDT');
+    const symbol = 'SOLUSDT';
+    const price = await binancePublic.getPrice(symbol);
+    const stats = await binancePublic.get24hrStats(symbol);
+    const klines = await binancePublic.getKlines(symbol, '1h', 24);
 
-    console.log('BTC Price:', btcPrice);
-    console.log('BTC 24h Stats:', btcStats);
+    console.log(`💰 ${symbol}: $${parseFloat(price.price).toLocaleString()}`);
+    console.log(`📈 Variação 24h: ${parseFloat(stats.priceChangePercent).toFixed(2)}%`);
+    console.log(`📊 Volume 24h: ${parseFloat(stats.volume).toLocaleString()} ${symbol}`);
 
-    // Analisar com DeepSeek
+    console.log('\n🧠 Analisando mercado com DeepSeek AI...');
     const analysis = await deepseek.analyzeMarket(
-      { price: btcPrice, stats: btcStats },
-      'Analyze this Bitcoin market data and provide trading insights.'
+      { price, stats, klines },
+      `Analyze ${symbol} market data including 24h klines. Provide a CLEAR trading recommendation: BUY, SELL, or HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators.`
     );
 
-    console.log('DeepSeek Analysis:', analysis);
+    console.log('\n📋 Análise DeepSeek (primeiros 500 chars):');
+    console.log(analysis.substring(0, 500) + '...');
 
-    // Salvar trade no histórico
+    const decision = await AnalysisParser.parseDeepSeekAnalysis(analysis, symbol, parseFloat(price.price));
+    const { riskPercent, rewardPercent } = RiskManager.calculateDynamicRiskReward(decision.price, decision.confidence);
+
+    console.log(`\n🤖 Decisão AI: ${decision.action} ${decision.symbol}`);
+    console.log(`📊 Confiança: ${decision.confidence}%`);
+    console.log(`💭 Razão: ${decision.reason}`);
+    console.log(`📊 Risk/Reward: ${(rewardPercent * 100).toFixed(1)}%/${(riskPercent * 100).toFixed(1)}% (${(rewardPercent / riskPercent).toFixed(1)}:1)`);
+
     const trade: Trade = {
       timestamp: new Date().toISOString(),
-      symbol: 'SOLUSDT',
-      action: 'ANALYSIS',
-      price: parseFloat(btcPrice.price),
-      entryPrice: parseFloat(btcPrice.price),
-      targetPrice: parseFloat(btcPrice.price) * 1.02,
-      stopPrice: parseFloat(btcPrice.price) * 0.98,
+      symbol: decision.symbol,
+      action: decision.action,
+      price: decision.price,
+      entryPrice: decision.price,
+      targetPrice: decision.action === 'BUY' ? decision.price * (1 + rewardPercent) : decision.price * (1 - rewardPercent),
+      stopPrice: decision.action === 'BUY' ? decision.price * (1 - riskPercent) : decision.price * (1 + riskPercent),
       amount: 0,
       balance: 0,
       crypto: 0,
-      reason: 'DeepSeek AI Analysis',
-      confidence: 75,
+      reason: decision.reason,
+      confidence: decision.confidence,
       status: 'completed',
       riskReturn: {
-        potentialGain: parseFloat(btcPrice.price) * 0.02,
-        potentialLoss: parseFloat(btcPrice.price) * 0.02,
-        riskRewardRatio: 1.0
+        potentialGain: decision.price * rewardPercent,
+        potentialLoss: decision.price * riskPercent,
+        riskRewardRatio: rewardPercent / riskPercent
       },
-      result: 'win',
-      exitPrice: parseFloat(btcPrice.price),
+      result: undefined,
+      exitPrice: decision.price,
       actualReturn: 0
     };
 
-    const tradesFile = path.join(__dirname, 'trades/deepseekTrades.json');
+    const tradesFile = path.join(__dirname, 'trades/deepseekAnalysis.json');
     TradeStorage.saveTrades([trade], tradesFile);
-    console.log('💾 Trade salvo no histórico');
+    console.log('\n💾 Análise salva no histórico: deepseekAnalysis.json');
 
-    // Executar exemplo público
-    console.log('\n--- Public Client Example ---');
-    await biancenPublicApi();
   } catch (error) {
-    console.error('Error:', error);
+    console.error('❌ Erro na análise:', error);
   }
 }
 
