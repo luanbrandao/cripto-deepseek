@@ -11,6 +11,7 @@
     "test": "ts-node test.ts",
     "simulate": "ts-node src/simulate.ts",
     "simulate-123": "ts-node src/simulate-123.ts",
+    "simulate-ema": "ts-node src/simulate-ema.ts",
     "check-trades": "ts-node src/check-trades.ts"
   },
   "dependencies": {

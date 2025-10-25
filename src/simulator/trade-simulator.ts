@@ -27,7 +27,8 @@ export class TradeSimulator {
     };
     this.binance = new BinancePublicClient();
     this.symbol = symbol;
-    this.tradesFile = tradesFile || path.join(__dirname, `../trades/${analyzer.name.toLowerCase()}Trades.json`);
+    const analyzerName = analyzer.name || analyzer.constructor.name;
+    this.tradesFile = tradesFile || path.join(__dirname, `../trades/${analyzerName.toLowerCase()}Trades.json`);
   }
 
   async simulate() {
@@ -42,7 +43,9 @@ export class TradeSimulator {
 
       // Preparar dados baseado no tipo de analisador
       let marketData: any;
-      if (this.analyzer.name === 'Analyzer123') {
+      const analyzerName = this.analyzer.name || this.analyzer.constructor.name;
+      
+      if (analyzerName === 'Analyzer123') {
         // Dados para 123Analyzer (candles OHLC)
         const candles = klines.map((k: any) => ({
           open: parseFloat(k[1]),
@@ -52,12 +55,12 @@ export class TradeSimulator {
         }));
         marketData = { candles, currentPrice };
       } else {
-        // Dados para SimpleAnalyzer (apenas preços)
+        // Dados para SimpleAnalyzer e EmaAnalyzer (apenas preços)
         marketData = { price24h: prices, currentPrice };
       }
 
       // Analisar mercado
-      const analysis = this.analyzer.analyze(marketData);
+      const analysis = this.analyzer.analyze ? this.analyzer.analyze(marketData) : this.analyzer.analyze(marketData);
 
       console.log(`📊 Análise: ${analysis.action} (${analysis.confidence}%)`);
       console.log(`📝 Razão: ${analysis.reason}`);
