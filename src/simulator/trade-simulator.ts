@@ -1,5 +1,6 @@
 import { BinancePublicClient } from '../clients/binance-public-client';
 import { TradeStorage, Trade } from '../storage/trade-storage';
+import { checkActiveSimulationTradesLimit } from '../bots/utils/simulation-limit-checker';
 import * as path from 'path';
 
 interface Portfolio {
@@ -34,6 +35,10 @@ export class TradeSimulator {
   async simulate() {
     console.log(`🎯 Iniciando simulação para ${this.symbol}`);
     console.log(`💰 Saldo inicial: $${this.portfolio.balance}\n`);
+
+    if (!checkActiveSimulationTradesLimit(this.tradesFile)) {
+      return;
+    }
 
     try {
       // Obter dados históricos

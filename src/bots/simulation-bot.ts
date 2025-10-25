@@ -2,6 +2,7 @@ import { BinancePublicClient } from '../clients/binance-public-client';
 import { BinancePrivateClient } from '../clients/binance-private-client';
 import { DeepSeekService } from '../clients/deepseek-client';
 import { TradeStorage, Trade } from '../storage/trade-storage';
+import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -90,6 +91,11 @@ async function executeTradeDecision(decision: TradeDecision, binancePrivate: Bin
 async function main() {
   console.log('🚀 ANÁLISE DE MERCADO COM DEEPSEEK AI e API privada da Binance');
   console.log('🚀 NÃO EXECUTA TRADE REAIS');
+
+  const tradesFile = path.join(__dirname, 'trades/aiTradingBot.json');
+  if (!checkActiveSimulationTradesLimit(tradesFile)) {
+    return;
+  }
 
   const apiKey = process.env.BINANCE_API_KEY;
   const apiSecret = process.env.BINANCE_API_SECRET;

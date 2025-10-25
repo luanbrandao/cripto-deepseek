@@ -5,6 +5,7 @@ import { AnalysisParser } from './services/analysis-parser';
 import { RiskManager } from './services/risk-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
+import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -125,6 +126,11 @@ class SmartTradingBotSimulator {
 
   async simulateTrade(symbol: string = 'BTCUSDT') {
     this.logBotInfo();
+
+    const tradesFile = path.join(__dirname, 'trades/smartTradingBotSimulator.json');
+    if (!checkActiveSimulationTradesLimit(tradesFile)) {
+      return null;
+    }
 
     try {
       // 1. Verificar tendência com EMA
