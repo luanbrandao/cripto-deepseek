@@ -17,6 +17,10 @@ interface TradeDecision {
 
 const TRADE_AMOUNT_USD = 20;
 const MIN_CONFIDENCE = 70;
+const TRADE_COOLDOWN_MINUTES = 5; // Cooldown entre trades
+
+let lastTradeTime = 0;
+let isTrading = false;
 
 async function parseDeepSeekAnalysis(analysis: string, symbol: string, price: number): Promise<TradeDecision> {
   const analysisLower = analysis.toLowerCase();
@@ -45,10 +49,28 @@ async function executeRealTrade(decision: TradeDecision, binancePrivate: Binance
   console.log(`📊 Confiança: ${decision.confidence}%`);
   console.log(`💭 Razão: ${decision.reason}`);
 
+  // Verificar se já está executando um trade
+  if (isTrading) {
+    console.log('⏸️ Trade já em execução - aguarde...');
+    return null;
+  }
+
+  // Verificar cooldown entre trades
+  const now = Date.now();
+  const timeSinceLastTrade = (now - lastTradeTime) / (1000 * 60); // em minutos
+  
+  if (timeSinceLastTrade < TRADE_COOLDOWN_MINUTES && lastTradeTime > 0) {
+    console.log(`⏸️ Cooldown ativo - aguarde ${(TRADE_COOLDOWN_MINUTES - timeSinceLastTrade).toFixed(1)} minutos`);
+    return null;
+  }
+
   if (decision.action === 'HOLD' || decision.confidence < MIN_CONFIDENCE) {
     console.log(`⏸️ Trade não executado - Confiança ${decision.confidence}% < ${MIN_CONFIDENCE}% mínimo`);
     return null;
   }
+
+  // Marcar como executando
+  isTrading = true;
 
   try {
     const accountInfo = await binancePrivate.getAccountInfo();
@@ -96,56 +118,72 @@ async function executeRealTrade(decision: TradeDecision, binancePrivate: Binance
 
     try {
       if (decision.action === 'BUY') {
-        // Take Profit (venda com limite acima do preço atual)
-        const takeProfitPrice = (avgPrice * 1.02).toFixed(2);
-        const tpOrder = await binancePrivate.createLimitOrder(
+        // Para compras: vender com TP acima e SL abaixo
+        const takeProfitPrice = parseFloat((avgPrice * 1.02).toFixed(2));
+        const stopLossPrice = parseFloat((avgPrice * 0.98).toFixed(2));
+        const stopLimitPrice = parseFloat((avgPrice * 0.975).toFixed(2));
+        
+        const ocoOrder = await binancePrivate.createOCOOrder(
           decision.symbol,
           'SELL',
           executedQty,
-          parseFloat(takeProfitPrice)
+          takeProfitPrice,
+          stopLossPrice,
+          stopLimitPrice
         );
-        console.log(`🎯 Take Profit criado: ${tpOrder.orderId} @ $${takeProfitPrice}`);
-
-        // Stop Loss automático
-        const stopLossPrice = (avgPrice * 0.98).toFixed(2);
-        const slOrder = await binancePrivate.createStopLossOrder(
-          decision.symbol,
-          'SELL',
-          executedQty,
-          parseFloat(stopLossPrice)
-        );
-        console.log(`🛑 Stop Loss criado: ${slOrder.orderId} @ $${stopLossPrice}`);
-
+        
+        console.log(`🎯 Ordem OCO criada: ${ocoOrder.orderListId}`);
+        console.log(`📈 Take Profit: $${takeProfitPrice.toFixed(2)}`);
+        console.log(`🛑 Stop Loss: $${stopLossPrice.toFixed(2)}`);
+        
       } else if (decision.action === 'SELL') {
-        // Para vendas, criar ordens inversas
-        const takeProfitPrice = (avgPrice * 0.98).toFixed(2);
-        const tpOrder = await binancePrivate.createLimitOrder(
+        // Para vendas: comprar com TP abaixo e SL acima
+        const takeProfitPrice = parseFloat((avgPrice * 0.98).toFixed(2));
+        const stopLossPrice = parseFloat((avgPrice * 1.02).toFixed(2));
+        const stopLimitPrice = parseFloat((avgPrice * 1.025).toFixed(2));
+        
+        const ocoOrder = await binancePrivate.createOCOOrder(
           decision.symbol,
           'BUY',
           executedQty,
-          parseFloat(takeProfitPrice)
+          takeProfitPrice,
+          stopLossPrice,
+          stopLimitPrice
         );
-        console.log(`🎯 Take Profit criado: ${tpOrder.orderId} @ $${takeProfitPrice}`);
-
-        const stopLossPrice = (avgPrice * 1.02).toFixed(2);
-        const slOrder = await binancePrivate.createStopLossOrder(
-          decision.symbol,
-          'BUY',
-          executedQty,
-          parseFloat(stopLossPrice)
-        );
-        console.log(`🛑 Stop Loss criado: ${slOrder.orderId} @ $${stopLossPrice}`);
+        
+        console.log(`🎯 Ordem OCO criada: ${ocoOrder.orderListId}`);
+        console.log(`📈 Take Profit: $${takeProfitPrice.toFixed(2)}`);
+        console.log(`🛑 Stop Loss: $${stopLossPrice.toFixed(2)}`);
       }
-    } catch (tpError: any) {
-      console.log('⚠️ Erro ao criar Take Profit automático:', tpError.response?.data?.msg || tpError.message);
-      console.log('📱 Configure stop loss e take profit manualmente');
+    } catch (ocoError: any) {
+      console.log('⚠️ Erro ao criar ordem OCO:', ocoError.response?.data?.msg || ocoError.message);
+      console.log('📱 Tentando criar ordens separadas...');
+      
+      // Fallback: criar ordens separadas
+      try {
+        if (decision.action === 'BUY') {
+          const takeProfitPrice = (avgPrice * 1.02).toFixed(2);
+          const tpOrder = await binancePrivate.createLimitOrder(
+            decision.symbol, 'SELL', executedQty, parseFloat(takeProfitPrice)
+          );
+          console.log(`🎯 Take Profit: ${tpOrder.orderId} @ $${takeProfitPrice}`);
+        }
+      } catch (fallbackError: any) {
+        console.log('⚠️ Configure stop loss e take profit manualmente');
+      }
     }
 
+    // Atualizar timestamp do último trade
+    lastTradeTime = Date.now();
+    
     return orderResult;
 
   } catch (error: any) {
     console.error('❌ Erro ao executar ordem real:', error.response?.data || error.message);
     return null;
+  } finally {
+    // Sempre liberar o lock
+    isTrading = false;
   }
 }
 

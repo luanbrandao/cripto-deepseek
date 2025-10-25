@@ -1,0 +1,42 @@
+[
+  {
+    "timestamp": "2025-10-25T04:12:43.682Z",
+    "symbol": "BTCUSDT",
+    "action": "BUY",
+    "price": 111142.63,
+    "entryPrice": 111142.63,
+    "targetPrice": 113365.4826,
+    "stopPrice": 108919.7774,
+    "amount": 20,
+    "balance": 0,
+    "crypto": 0,
+    "reason": "DeepSeek AI: Sinal forte de compra",
+    "confidence": 85,
+    "status": "pending",
+    "riskReturn": {
+      "potentialGain": 2222.8526,
+      "potentialLoss": 2222.8526,
+      "riskRewardRatio": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-25T04:14:29.576Z",
+    "symbol": "BTCUSDT",
+    "action": "BUY",
+    "price": 111139.04,
+    "entryPrice": 111139.04,
+    "targetPrice": 113361.8208,
+    "stopPrice": 108916.25919999999,
+    "amount": 20,
+    "balance": 0,
+    "crypto": 0,
+    "reason": "DeepSeek AI: Sinal forte de compra",
+    "confidence": 85,
+    "status": "pending",
+    "riskReturn": {
+      "potentialGain": 2222.7808,
+      "potentialLoss": 2222.7808,
+      "riskRewardRatio": 1
+    }
+  }
+]

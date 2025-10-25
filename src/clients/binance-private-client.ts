@@ -104,4 +104,26 @@ export class BinancePrivateClient {
     });
     return response.data;
   }
+
+  async createOCOOrder(symbol: string, side: 'BUY' | 'SELL', quantity: number, price: number, stopPrice: number, stopLimitPrice: number) {
+    const timestamp = this.getTimestamp();
+    const queryString = `symbol=${symbol}&side=${side}&quantity=${quantity}&price=${price}&stopPrice=${stopPrice}&stopLimitPrice=${stopLimitPrice}&stopLimitTimeInForce=GTC&timestamp=${timestamp}`;
+    const signature = this.createSignature(queryString);
+
+    const response = await axios.post(`${this.baseUrl}/order/oco`, null, {
+      params: {
+        symbol,
+        side,
+        quantity,
+        price,
+        stopPrice,
+        stopLimitPrice,
+        stopLimitTimeInForce: 'GTC',
+        timestamp,
+        signature
+      },
+      headers: { 'X-MBX-APIKEY': this.apiKey }
+    });
+    return response.data;
+  }
 }

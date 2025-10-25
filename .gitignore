@@ -4,3 +4,4 @@ dist/
 .env
 .env.local
 src/trades
+bots/trades
