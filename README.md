@@ -150,6 +150,59 @@ src/
 - Sistema completo de proteção
 - Monitoramento em tempo real
 
+### **3. Simulações de Estratégias**
+
+#### **Simulação 123 (simulate-123.ts)**
+- **Estratégia**: Padrão 123 de reversão
+- **Lógica**: Identifica pontos de reversão usando 3 candles consecutivos
+- **Setup de Compra**: Candle 2 com mínima mais baixa + rompimento da máxima do candle 3
+- **Setup de Venda**: Candle 2 com máxima mais alta + rompimento da mínima do candle 3
+- **Confiança**: 65-80% baseada na tendência
+- **Stop Loss**: Automático na mínima/máxima do candle 2
+
+#### **Simulação EMA (simulate-ema.ts)**
+- **Estratégia**: Cruzamento de Médias Móveis Exponenciais
+- **Configuração**: EMA 12/26 (personalizável)
+- **Sinal de Compra**: Preço > EMA rápida > EMA lenta + variação > 2%
+- **Sinal de Venda**: Preço < EMA rápida < EMA lenta + variação < -2%
+- **Proteção**: Reversão automática em movimentos extremos (±5%)
+- **Confiança**: 70-80% baseada na força da tendência
+
+```bash
+# Executar simulações
+npm run simulate-123    # Padrão 123
+npm run simulate-ema    # EMA 12/26
+```
+
+### **4. Monitor de Trades (trade-monitor.ts)**
+- **Função**: Verifica e atualiza o status dos trades de teste
+- **Monitoramento**: Compara preço atual com targets e stops
+- **Atualização automática**: Marca trades como 'win' ou 'loss'
+- **Resultado real**: Calcula retorno efetivo dos trades
+- **Status**: Converte trades 'pending' para 'completed'
+
+#### **Lógica de Avaliação**
+```typescript
+// Para trades BUY
+if (preçoAtual >= targetPrice) → WIN
+if (preçoAtual <= stopPrice) → LOSS
+
+// Para trades SELL  
+if (preçoAtual <= targetPrice) → WIN
+if (preçoAtual >= stopPrice) → LOSS
+```
+
+#### **Dados Atualizados**
+- `status`: 'pending' →  'completed'
+- `result`: 'win' | 'loss'
+- `exitPrice`: Preço de saída real
+- `actualReturn`: Retorno efetivo calculado
+
+```bash
+# Monitorar trades
+npm run monitor-trades
+```
+
 ## 📈 Métricas e Logging
 
 ### **Logs de Decisão**
@@ -208,6 +261,13 @@ npm start
 
 # Modo trading real
 npm run trading-bot
+
+# Simulações
+npm run simulate-123    # Estratégia padrão 123
+npm run simulate-ema    # Estratégia EMA crossover
+
+# Monitoramento
+npm run monitor-trades  # Verifica status dos trades
 ```
 
 ## ⚠️ Avisos Importantes
