@@ -14,7 +14,9 @@
     "check-trades": "ts-node src/check-trades.ts",
     "test-deepseek": "ts-node src/test-deepseek.ts",
     "test-binance-public": "ts-node src/test-binance-public.ts",
-    "test-binance-private": "ts-node src/test-binance-private.ts"
+    "test-binance-private": "ts-node src/test-binance-private.ts",
+    "ai-trading-bot": "ts-node src/index-private.ts",
+    "real-trading-bot": "ts-node src/real-trading-bot.ts"
   },
   "dependencies": {
     "axios": "^1.6.0",

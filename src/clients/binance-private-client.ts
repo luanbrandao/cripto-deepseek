@@ -58,4 +58,50 @@ export class BinancePrivateClient {
     });
     return response.data;
   }
+
+  async createMarketOrder(symbol: string, side: 'BUY' | 'SELL', quoteOrderQty: number) {
+    const timestamp = this.getTimestamp();
+    const queryString = `symbol=${symbol}&side=${side}&type=MARKET&quoteOrderQty=${quoteOrderQty}&timestamp=${timestamp}`;
+    const signature = this.createSignature(queryString);
+
+    const response = await axios.post(`${this.baseUrl}/order`, null, {
+      params: { symbol, side, type: 'MARKET', quoteOrderQty, timestamp, signature },
+      headers: { 'X-MBX-APIKEY': this.apiKey }
+    });
+    return response.data;
+  }
+
+  async createLimitOrder(symbol: string, side: 'BUY' | 'SELL', quantity: number, price: number) {
+    const timestamp = this.getTimestamp();
+    const queryString = `symbol=${symbol}&side=${side}&type=LIMIT&timeInForce=GTC&quantity=${quantity}&price=${price}&timestamp=${timestamp}`;
+    const signature = this.createSignature(queryString);
+
+    const response = await axios.post(`${this.baseUrl}/order`, null, {
+      params: { symbol, side, type: 'LIMIT', timeInForce: 'GTC', quantity, price, timestamp, signature },
+      headers: { 'X-MBX-APIKEY': this.apiKey }
+    });
+    return response.data;
+  }
+
+  async createStopLossOrder(symbol: string, side: 'BUY' | 'SELL', quantity: number, stopPrice: number) {
+    const timestamp = this.getTimestamp();
+    const queryString = `symbol=${symbol}&side=${side}&type=STOP_LOSS_LIMIT&timeInForce=GTC&quantity=${quantity}&price=${stopPrice}&stopPrice=${stopPrice}&timestamp=${timestamp}`;
+    const signature = this.createSignature(queryString);
+
+    const response = await axios.post(`${this.baseUrl}/order`, null, {
+      params: { 
+        symbol, 
+        side, 
+        type: 'STOP_LOSS_LIMIT', 
+        timeInForce: 'GTC', 
+        quantity, 
+        price: stopPrice, 
+        stopPrice, 
+        timestamp, 
+        signature 
+      },
+      headers: { 'X-MBX-APIKEY': this.apiKey }
+    });
+    return response.data;
+  }
 }
