@@ -6,7 +6,7 @@ import { AnalysisParser } from './services/analysis-parser';
 import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
 import { checkActiveTradesLimit } from './utils/trade-limit-checker';
-import { logMarketInfo } from './utils/market-data-logger';
+import { getMarketData } from './utils/market-data-fetcher';
 import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
 import { validateBinanceKeys } from './utils/env-validator';
 
@@ -34,11 +34,7 @@ async function main() {
     }
 
     const symbol = 'BNBUSDT';
-    const price = await binancePublic.getPrice(symbol);
-    const stats = await binancePublic.get24hrStats(symbol);
-    const klines = await binancePublic.getKlines(symbol, '1h', 24);
-
-    logMarketInfo(symbol, price, stats);
+    const { price, stats, klines } = await getMarketData(binancePublic, symbol);
 
     console.log('\n🧠 Analisando mercado com DeepSeek AI...');
     const analysis = await deepseek.analyzeMarket(

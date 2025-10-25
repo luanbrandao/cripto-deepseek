@@ -4,7 +4,7 @@ import { AnalysisParser } from './services/analysis-parser';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
-import { logMarketInfo } from './utils/market-data-logger';
+import { getMarketData } from './utils/market-data-fetcher';
 import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
 import * as path from 'path';
 
@@ -26,15 +26,7 @@ class SmartTradingBotSimulator {
     console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%\n`);
   }
 
-  private async getMarketData(symbol: string) {
-    const price = await this.binancePublic.getPrice(symbol);
-    const stats = await this.binancePublic.get24hrStats(symbol);
-    const klines = await this.binancePublic.getKlines(symbol, '1h', 24);
 
-    logMarketInfo(symbol, price, stats);
-    
-    return { price, stats, klines };
-  }
 
 
 
@@ -133,7 +125,7 @@ class SmartTradingBotSimulator {
       }
 
       // 2. Obter dados de mercado e analisar com DeepSeek
-      const marketData = await this.getMarketData(symbol);
+      const marketData = await getMarketData(this.binancePublic, symbol);
       const decision = await this.analyzeWithDeepSeek(symbol, marketData);
 
       // 3. Validar decisão do DeepSeek

@@ -3,7 +3,7 @@ import { BinancePrivateClient } from '../clients/binance-private-client';
 import { DeepSeekService } from '../clients/deepseek-client';
 import { TradeStorage, Trade } from '../storage/trade-storage';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
-import { logMarketInfo } from './utils/market-data-logger';
+import { getMarketData } from './utils/market-data-fetcher';
 import { validateBinanceKeys } from './utils/env-validator';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -113,10 +113,7 @@ async function main() {
   try {
     // Obter dados de mercado
     const symbol = 'BTCUSDT';
-    const price = await binancePublic.getPrice(symbol);
-    const stats = await binancePublic.get24hrStats(symbol);
-
-    logMarketInfo(symbol, price, stats);
+    const { price, stats } = await getMarketData(binancePublic, symbol);
 
     // Analisar com DeepSeek
     console.log('\n🧠 Analisando mercado com DeepSeek AI...');
