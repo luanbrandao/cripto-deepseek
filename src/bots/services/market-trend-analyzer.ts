@@ -25,7 +25,7 @@ export class MarketTrendAnalyzer {
     console.log('📊 Verificando tendência do mercado com EMA...');
 
     const klines = await this.binancePublic.getKlines(symbol, '1h', 26);
-    const prices = klines.map(k => parseFloat(k[4])); // Close prices
+    const prices = klines.map((k: any) => parseFloat(k[4])); // Close prices
     const currentPrice = prices[prices.length - 1];
 
     const marketData: MarketData = {

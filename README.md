@@ -157,7 +157,14 @@ src/
 - **Boost de confiança**: +10% quando ambos confirmam
 - **Foco em compras**: Otimizado para tendências de alta
 
-### **4. Simulações de Estratégias**
+### **4. Smart Trading Bot Simulator (smart-trading-bot-simulator.ts)**
+- **Simulação completa**: Toda lógica do Smart Bot sem trades reais
+- **Análise dupla**: EMA + DeepSeek AI (igual ao bot real)
+- **Segurança total**: Nenhuma ordem é executada na exchange
+- **Teste de estratégia**: Ideal para validar decisões antes do real
+- **Histórico completo**: Salva simulações para análise
+
+### **5. Simulações de Estratégias**
 
 #### **Simulação 123 (simulate-123.ts)**
 - **Estratégia**: Padrão 123 de reversão
@@ -181,7 +188,7 @@ npm run simulate-123    # Padrão 123
 npm run simulate-ema    # EMA 12/26
 ```
 
-### **5. Monitor de Trades (trade-monitor.ts)**
+### **6. Monitor de Trades (trade-monitor.ts)**
 - **Função**: Verifica e atualiza o status dos trades de teste
 - **Monitoramento**: Compara preço atual com targets e stops
 - **Atualização automática**: Marca trades como 'win' ou 'loss'
@@ -271,6 +278,9 @@ npm run trading-bot
 
 # Smart trading bot (EMA + DeepSeek AI)
 npm run smart-trading-bot
+
+# Smart trading bot simulator (sem trades reais)
+npm run smart-trading-bot-simulator
 
 # Simulações
 npm run simulate-123    # Estratégia padrão 123
