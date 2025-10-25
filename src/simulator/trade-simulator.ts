@@ -40,11 +40,24 @@ export class TradeSimulator {
       const prices = klines.map((k: any) => parseFloat(k[4])); // Close prices
       const currentPrice = prices[prices.length - 1];
 
+      // Preparar dados baseado no tipo de analisador
+      let marketData: any;
+      if (this.analyzer.name === 'Analyzer123') {
+        // Dados para 123Analyzer (candles OHLC)
+        const candles = klines.map((k: any) => ({
+          open: parseFloat(k[1]),
+          high: parseFloat(k[2]),
+          low: parseFloat(k[3]),
+          close: parseFloat(k[4])
+        }));
+        marketData = { candles, currentPrice };
+      } else {
+        // Dados para SimpleAnalyzer (apenas preços)
+        marketData = { price24h: prices, currentPrice };
+      }
+
       // Analisar mercado
-      const analysis = this.analyzer.analyze({
-        price24h: prices,
-        currentPrice
-      });
+      const analysis = this.analyzer.analyze(marketData);
 
       console.log(`📊 Análise: ${analysis.action} (${analysis.confidence}%)`);
       console.log(`📝 Razão: ${analysis.reason}`);
@@ -116,8 +129,11 @@ export class TradeSimulator {
       }
     };
 
-    this.trades.push(trade);
-    TradeStorage.saveTrades(this.trades, this.tradesFile);
+    // Só salvar se não for HOLD (padrão encontrado)
+    if (analysis.action !== 'HOLD') {
+      this.trades.push(trade);
+      TradeStorage.saveTrades(this.trades, this.tradesFile);
+    }
   }
 
   private showResults(currentPrice: number) {
