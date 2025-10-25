@@ -6,6 +6,8 @@ import { TRADING_CONFIG } from './config/trading-config';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
 import { getMarketData } from './utils/market-data-fetcher';
 import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
+import { analyzeWithDeepSeek } from './utils/deepseek-analyzer';
+import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
 import * as path from 'path';
 
 class SmartTradingBotSimulator {
@@ -30,49 +32,7 @@ class SmartTradingBotSimulator {
 
 
 
-  private async analyzeWithDeepSeek(symbol: string, marketData: any) {
-    console.log('\n🧠 Analisando mercado com DeepSeek AI...');
-    
-    const analysis = await this.deepseek.analyzeMarket(
-      marketData,
-      `Analyze ${symbol} market data including 24h klines. Focus on BULLISH signals only. Provide a CLEAR BUY recommendation if conditions are favorable, otherwise HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators for upward momentum.`
-    );
 
-    console.log('\n📋 Análise DeepSeek (primeiros 500 chars):');
-    console.log(analysis.substring(0, 500) + '...');
-
-    return await AnalysisParser.parseDeepSeekAnalysis(analysis, symbol, parseFloat(marketData.price.price));
-  }
-
-  private validateTrendAnalysis(trendAnalysis: any): boolean {
-    if (!trendAnalysis.isUptrend) {
-      console.log('❌ MERCADO NÃO ESTÁ EM TENDÊNCIA DE ALTA');
-      console.log('⏸️ Simulação cancelada - aguardando condições favoráveis');
-      console.log(`💭 Razão: ${trendAnalysis.reason}\n`);
-      return false;
-    }
-
-    console.log('✅ TENDÊNCIA DE ALTA CONFIRMADA PELO EMA');
-    console.log('🎯 Prosseguindo com análise DeepSeek AI...\n');
-    return true;
-  }
-
-  private validateDeepSeekDecision(decision: any): boolean {
-    if (decision.action !== 'BUY') {
-      console.log('⏸️ DeepSeek não recomenda compra - aguardando');
-      return false;
-    }
-    return true;
-  }
-
-  private boostConfidence(decision: any) {
-    const boostedConfidence = Math.min(95, decision.confidence + 10);
-    decision.confidence = boostedConfidence;
-    decision.reason = `${decision.reason} + Tendência de alta confirmada pelo EMA`;
-    
-    console.log('🎯 DUPLA CONFIRMAÇÃO: EMA + DEEPSEEK AI APROVAM COMPRA!');
-    return decision;
-  }
 
   private simulateTradeExecution(decision: any) {
     console.log('\n🚨 SIMULANDO EXECUÇÃO DE ORDEM');
@@ -120,21 +80,21 @@ class SmartTradingBotSimulator {
     try {
       // 1. Verificar tendência com EMA
       const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-      if (!this.validateTrendAnalysis(trendAnalysis)) {
+      if (!validateTrendAnalysis(trendAnalysis, true)) {
         return null;
       }
 
       // 2. Obter dados de mercado e analisar com DeepSeek
       const marketData = await getMarketData(this.binancePublic, symbol);
-      const decision = await this.analyzeWithDeepSeek(symbol, marketData);
+      const decision = await analyzeWithDeepSeek(this.deepseek, symbol, marketData);
 
       // 3. Validar decisão do DeepSeek
-      if (!this.validateDeepSeekDecision(decision)) {
+      if (!validateDeepSeekDecision(decision)) {
         return null;
       }
 
       // 4. Boost de confiança e simular trade
-      const boostedDecision = this.boostConfidence(decision);
+      const boostedDecision = boostConfidence(decision);
       return await this.simulateAndSave(boostedDecision);
 
     } catch (error) {
