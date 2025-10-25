@@ -1,7 +1,7 @@
-import { BinancePublicClient } from './clients/binance-public-client';
-import { BinancePrivateClient } from './clients/binance-private-client';
-import { DeepSeekService } from './clients/deepseek-client';
-import { TradeStorage, Trade } from './storage/trade-storage';
+import { BinancePublicClient } from '../clients/binance-public-client';
+import { BinancePrivateClient } from '../clients/binance-private-client';
+import { DeepSeekService } from '../clients/deepseek-client';
+import { TradeStorage, Trade } from '../storage/trade-storage';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 

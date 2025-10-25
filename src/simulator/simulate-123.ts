@@ -1,5 +1,5 @@
-import { TradeSimulator } from './simulator/trade-simulator';
-import Analyzer123 from './analyzers/123Analyzer';
+import { TradeSimulator } from '../simulator/trade-simulator';
+import Analyzer123 from '../analyzers/123Analyzer';
 
 async function runSimulation123() {
   const tradesFile = `./src/trades/123analyzerTrades.json`;

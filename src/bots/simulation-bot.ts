@@ -1,7 +1,7 @@
-import { BinancePublicClient } from './clients/binance-public-client';
-import { BinancePrivateClient } from './clients/binance-private-client';
-import { DeepSeekService } from './clients/deepseek-client';
-import { TradeStorage, Trade } from './storage/trade-storage';
+import { BinancePublicClient } from '../clients/binance-public-client';
+import { BinancePrivateClient } from '../clients/binance-private-client';
+import { DeepSeekService } from '../clients/deepseek-client';
+import { TradeStorage, Trade } from '../storage/trade-storage';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -17,10 +17,10 @@ interface TradeDecision {
 
 async function parseDeepSeekAnalysis(analysis: string, symbol: string, price: number): Promise<TradeDecision> {
   const analysisLower = analysis.toLowerCase();
-  
+
   // Detectar sinais de compra
-  if (analysisLower.includes('buy') || analysisLower.includes('bullish') || 
-      analysisLower.includes('uptrend') || analysisLower.includes('breakout above')) {
+  if (analysisLower.includes('buy') || analysisLower.includes('bullish') ||
+    analysisLower.includes('uptrend') || analysisLower.includes('breakout above')) {
     return {
       action: 'BUY',
       confidence: 75,
@@ -29,10 +29,10 @@ async function parseDeepSeekAnalysis(analysis: string, symbol: string, price: nu
       price
     };
   }
-  
+
   // Detectar sinais de venda
-  if (analysisLower.includes('sell') || analysisLower.includes('bearish') || 
-      analysisLower.includes('downtrend') || analysisLower.includes('break below')) {
+  if (analysisLower.includes('sell') || analysisLower.includes('bearish') ||
+    analysisLower.includes('downtrend') || analysisLower.includes('break below')) {
     return {
       action: 'SELL',
       confidence: 70,
@@ -41,7 +41,7 @@ async function parseDeepSeekAnalysis(analysis: string, symbol: string, price: nu
       price
     };
   }
-  
+
   // Padrão: HOLD
   return {
     action: 'HOLD',
@@ -56,21 +56,21 @@ async function executeTradeDecision(decision: TradeDecision, binancePrivate: Bin
   console.log(`\n🤖 Decisão AI: ${decision.action} ${decision.symbol}`);
   console.log(`📊 Confiança: ${decision.confidence}%`);
   console.log(`💭 Razão: ${decision.reason}`);
-  
+
   if (decision.action === 'HOLD') {
     console.log('⏸️ Nenhuma ação executada - aguardando melhor oportunidade');
     return null;
   }
-  
+
   try {
     // Verificar saldo da conta
     const accountInfo = await binancePrivate.getAccountInfo();
     console.log('✅ Conta verificada - executando trade simulado');
-    
+
     // SIMULAÇÃO - não executa ordem real
     console.log('🚨 MODO SIMULAÇÃO - Ordem não executada na exchange');
     console.log(`📝 Ordem simulada: ${decision.action} ${decision.symbol} @ $${decision.price}`);
-    
+
     return {
       orderId: 'SIMULATED_' + Date.now(),
       symbol: decision.symbol,
@@ -78,7 +78,7 @@ async function executeTradeDecision(decision: TradeDecision, binancePrivate: Bin
       price: decision.price,
       status: 'SIMULATED'
     };
-    
+
   } catch (error) {
     console.error('❌ Erro ao executar trade:', error);
     return null;
@@ -88,43 +88,43 @@ async function executeTradeDecision(decision: TradeDecision, binancePrivate: Bin
 async function main() {
   const apiKey = process.env.BINANCE_API_KEY;
   const apiSecret = process.env.BINANCE_API_SECRET;
-  
+
   if (!apiKey || !apiSecret) {
     console.error('❌ Chaves da Binance não encontradas no .env');
     return;
   }
-  
+
   const binancePublic = new BinancePublicClient();
   const binancePrivate = new BinancePrivateClient(apiKey, apiSecret);
   const deepseek = new DeepSeekService();
-  
+
   console.log('🚀 Iniciando Trading Bot com DeepSeek AI');
-  
+
   try {
     // Obter dados de mercado
     const symbol = 'BTCUSDT';
     const price = await binancePublic.getPrice(symbol);
     const stats = await binancePublic.get24hrStats(symbol);
-    
+
     console.log(`💰 ${symbol}: $${parseFloat(price.price).toLocaleString()}`);
     console.log(`📈 Variação 24h: ${parseFloat(stats.priceChangePercent).toFixed(2)}%`);
-    
+
     // Analisar com DeepSeek
     console.log('\n🧠 Analisando mercado com DeepSeek AI...');
     const analysis = await deepseek.analyzeMarket(
       { price, stats },
       `Analyze ${symbol} market data and provide a clear BUY, SELL, or HOLD recommendation with reasoning.`
     );
-    
+
     console.log('\n📋 Análise DeepSeek:');
     console.log(analysis.substring(0, 300) + '...');
-    
+
     // Interpretar análise e tomar decisão
     const decision = await parseDeepSeekAnalysis(analysis, symbol, parseFloat(price.price));
-    
+
     // Executar trade (simulado)
     const orderResult = await executeTradeDecision(decision, binancePrivate);
-    
+
     // Salvar no histórico
     const trade: Trade = {
       timestamp: new Date().toISOString(),
@@ -146,19 +146,19 @@ async function main() {
         riskRewardRatio: 1.5
       }
     };
-    
+
     if (orderResult) {
       trade.result = 'win'; // Simulado
       trade.exitPrice = decision.price;
       trade.actualReturn = 0;
     }
-    
+
     const tradesFile = path.join(__dirname, 'trades/aiTradingBot.json');
     TradeStorage.saveTrades([trade], tradesFile);
     console.log('\n💾 Trade salvo no histórico: aiTradingBot.json');
-    
+
     console.log('\n✅ Execução completa do Trading Bot');
-    
+
   } catch (error) {
     console.error('❌ Erro no Trading Bot:', error);
   }

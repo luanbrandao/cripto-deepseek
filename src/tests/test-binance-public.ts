@@ -1,4 +1,4 @@
-import { BinancePublicClient } from './clients/binance-public-client';
+import { BinancePublicClient } from '../clients/binance-public-client';
 
 async function testBinancePublic() {
   const client = new BinancePublicClient();

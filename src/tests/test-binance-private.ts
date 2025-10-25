@@ -1,4 +1,4 @@
-import { BinancePrivateClient } from './clients/binance-private-client';
+import { BinancePrivateClient } from '../clients/binance-private-client';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -25,11 +25,11 @@ async function testBinancePrivateConnection() {
     console.log(`📊 Tipo de conta: ${accountInfo.accountType}`);
     console.log(`⚖️ Pode negociar: ${accountInfo.canTrade}`);
     console.log(`💰 Saldos com valor > 0:`);
-    
-    const balancesWithValue = accountInfo.balances.filter((balance: any) => 
+
+    const balancesWithValue = accountInfo.balances.filter((balance: any) =>
       parseFloat(balance.free) > 0 || parseFloat(balance.locked) > 0
     );
-    
+
     balancesWithValue.slice(0, 5).forEach((balance: any) => {
       const free = parseFloat(balance.free);
       const locked = parseFloat(balance.locked);
@@ -46,7 +46,7 @@ async function testBinancePrivateConnection() {
     console.log('\n📋 Teste 2: Ordens Abertas');
     const openOrders = await client.getOpenOrders();
     console.log(`✅ Ordens abertas: ${openOrders.length}`);
-    
+
     if (openOrders.length > 0) {
       console.log('📝 Primeiras ordens abertas:');
       openOrders.slice(0, 3).forEach((order: any) => {
@@ -61,7 +61,7 @@ async function testBinancePrivateConnection() {
     try {
       const orderHistory = await client.getOrderHistory('BTCUSDT', 5);
       console.log(`✅ Histórico obtido: ${orderHistory.length} ordens`);
-      
+
       if (orderHistory.length > 0) {
         console.log('📊 Últimas ordens:');
         orderHistory.slice(0, 3).forEach((order: any) => {
@@ -83,7 +83,7 @@ async function testBinancePrivateConnection() {
     if (error.response) {
       console.error('Status:', error.response.status);
       console.error('Erro:', error.response.data);
-      
+
       if (error.response.status === 401) {
         console.error('🔑 Possível problema com as chaves API - verifique se estão corretas');
       }

@@ -1,5 +1,5 @@
-import { TradeSimulator } from './simulator/trade-simulator';
-import EmaAnalyzer from './analyzers/emaAnalyzer';
+import { TradeSimulator } from '../simulator/trade-simulator';
+import EmaAnalyzer from '../analyzers/emaAnalyzer';
 
 async function runEmaSimulation() {
   // Configurar EMA com períodos personalizados
