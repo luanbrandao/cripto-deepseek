@@ -1,15 +1,15 @@
 import { BinancePublicClient } from '../clients/binance-public-client';
 import { BinancePrivateClient } from '../clients/binance-private-client';
 import { DeepSeekService } from '../clients/deepseek-client';
-import { TradeStorage, Trade } from '../storage/trade-storage';
 import { TradeExecutor } from './services/trade-executor';
 import { AnalysisParser } from './services/analysis-parser';
-import { RiskManager } from './services/risk-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { checkActiveTradesLimit } from './utils/trade-limit-checker';
+import { logMarketInfo } from './utils/market-data-logger';
+import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
+import { validateBinanceKeys } from './utils/env-validator';
 import * as dotenv from 'dotenv';
-import * as path from 'path';
 
 dotenv.config();
 
@@ -39,16 +39,12 @@ class SmartTradingBot {
     const stats = await this.binancePublic.get24hrStats(symbol);
     const klines = await this.binancePublic.getKlines(symbol, '1h', 24);
 
-    this.logMarketInfo(symbol, price, stats);
+    logMarketInfo(symbol, price, stats);
     
     return { price, stats, klines };
   }
 
-  private logMarketInfo(symbol: string, price: any, stats: any) {
-    console.log(`💰 ${symbol}: $${parseFloat(price.price).toLocaleString()}`);
-    console.log(`📈 Variação 24h: ${parseFloat(stats.priceChangePercent).toFixed(2)}%`);
-    console.log(`📊 Volume 24h: ${parseFloat(stats.volume).toLocaleString()} ${symbol}`);
-  }
+
 
   private async analyzeWithDeepSeek(symbol: string, marketData: any) {
     console.log('\n🧠 Analisando mercado com DeepSeek AI...');
@@ -142,49 +138,16 @@ class SmartTradingBot {
   }
 
   private async saveTradeHistory(decision: any, orderResult: any) {
-    const { riskPercent, rewardPercent } = RiskManager.calculateDynamicRiskReward(decision.price, decision.confidence);
-
-    const trade: Trade = {
-      timestamp: new Date().toISOString(),
-      symbol: decision.symbol,
-      action: decision.action,
-      price: decision.price,
-      entryPrice: decision.price,
-      targetPrice: decision.price * (1 + rewardPercent),
-      stopPrice: decision.price * (1 - riskPercent),
-      amount: orderResult ? TRADING_CONFIG.TRADE_AMOUNT_USD : 0,
-      balance: 0,
-      crypto: 0,
-      reason: decision.reason,
-      confidence: decision.confidence,
-      status: orderResult ? 'pending' : 'completed',
-      riskReturn: {
-        potentialGain: decision.price * rewardPercent,
-        potentialLoss: decision.price * riskPercent,
-        riskRewardRatio: rewardPercent / riskPercent
-      }
-    };
-
-    if (orderResult) {
-      trade.result = undefined;
-      trade.exitPrice = undefined;
-      trade.actualReturn = undefined;
-    }
-
-    const tradesFile = path.join(__dirname, 'trades/smartTradingBot.json');
-    TradeStorage.saveTrades([trade], tradesFile);
-    console.log('\n💾 Trade salvo no histórico: smartTradingBot.json');
+    const trade = createTradeRecord(decision, orderResult, 'smartTradingBot.json');
+    saveTradeHistory(trade, 'smartTradingBot.json');
   }
 }
 
 async function main() {
-  const apiKey = process.env.BINANCE_API_KEY;
-  const apiSecret = process.env.BINANCE_API_SECRET;
+  const keys = validateBinanceKeys();
+  if (!keys) return;
 
-  if (!apiKey || !apiSecret) {
-    console.error('❌ Chaves da Binance não encontradas no .env');
-    return;
-  }
+  const { apiKey, apiSecret } = keys;
 
   const smartBot = new SmartTradingBot(apiKey, apiSecret);
   await smartBot.executeTrade('BTCUSDT');

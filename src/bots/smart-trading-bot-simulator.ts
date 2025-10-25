@@ -1,15 +1,12 @@
 import { BinancePublicClient } from '../clients/binance-public-client';
 import { DeepSeekService } from '../clients/deepseek-client';
-import { TradeStorage, Trade } from '../storage/trade-storage';
 import { AnalysisParser } from './services/analysis-parser';
-import { RiskManager } from './services/risk-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
-import * as dotenv from 'dotenv';
+import { logMarketInfo } from './utils/market-data-logger';
+import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
 import * as path from 'path';
-
-dotenv.config();
 
 class SmartTradingBotSimulator {
   private binancePublic: BinancePublicClient;
@@ -34,16 +31,12 @@ class SmartTradingBotSimulator {
     const stats = await this.binancePublic.get24hrStats(symbol);
     const klines = await this.binancePublic.getKlines(symbol, '1h', 24);
 
-    this.logMarketInfo(symbol, price, stats);
+    logMarketInfo(symbol, price, stats);
     
     return { price, stats, klines };
   }
 
-  private logMarketInfo(symbol: string, price: any, stats: any) {
-    console.log(`💰 ${symbol}: $${parseFloat(price.price).toLocaleString()}`);
-    console.log(`📈 Variação 24h: ${parseFloat(stats.priceChangePercent).toFixed(2)}%`);
-    console.log(`📊 Volume 24h: ${parseFloat(stats.volume).toLocaleString()} ${symbol}`);
-  }
+
 
   private async analyzeWithDeepSeek(symbol: string, marketData: any) {
     console.log('\n🧠 Analisando mercado com DeepSeek AI...');
@@ -159,32 +152,8 @@ class SmartTradingBotSimulator {
   }
 
   private async saveTradeHistory(decision: any, simulatedOrder: any) {
-    const { riskPercent, rewardPercent } = RiskManager.calculateDynamicRiskReward(decision.price, decision.confidence);
-
-    const trade: Trade = {
-      timestamp: new Date().toISOString(),
-      symbol: decision.symbol,
-      action: decision.action,
-      price: decision.price,
-      entryPrice: decision.price,
-      targetPrice: decision.price * (1 + rewardPercent),
-      stopPrice: decision.price * (1 - riskPercent),
-      amount: TRADING_CONFIG.TRADE_AMOUNT_USD,
-      balance: 0,
-      crypto: 0,
-      reason: decision.reason,
-      confidence: decision.confidence,
-      status: 'pending',
-      riskReturn: {
-        potentialGain: decision.price * rewardPercent,
-        potentialLoss: decision.price * riskPercent,
-        riskRewardRatio: rewardPercent / riskPercent
-      }
-    };
-
-    const tradesFile = path.join(__dirname, 'trades/smartTradingBotSimulator.json');
-    TradeStorage.saveTrades([trade], tradesFile);
-    console.log('\n💾 Simulação salva no histórico: smartTradingBotSimulator.json');
+    const trade = createTradeRecord(decision, simulatedOrder, 'smartTradingBotSimulator.json');
+    saveTradeHistory(trade, 'smartTradingBotSimulator.json');
   }
 }
 

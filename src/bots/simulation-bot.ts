@@ -3,6 +3,8 @@ import { BinancePrivateClient } from '../clients/binance-private-client';
 import { DeepSeekService } from '../clients/deepseek-client';
 import { TradeStorage, Trade } from '../storage/trade-storage';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
+import { logMarketInfo } from './utils/market-data-logger';
+import { validateBinanceKeys } from './utils/env-validator';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -97,13 +99,10 @@ async function main() {
     return;
   }
 
-  const apiKey = process.env.BINANCE_API_KEY;
-  const apiSecret = process.env.BINANCE_API_SECRET;
+  const keys = validateBinanceKeys();
+  if (!keys) return;
 
-  if (!apiKey || !apiSecret) {
-    console.error('❌ Chaves da Binance não encontradas no .env');
-    return;
-  }
+  const { apiKey, apiSecret } = keys;
 
   const binancePublic = new BinancePublicClient();
   const binancePrivate = new BinancePrivateClient(apiKey, apiSecret);
@@ -117,8 +116,7 @@ async function main() {
     const price = await binancePublic.getPrice(symbol);
     const stats = await binancePublic.get24hrStats(symbol);
 
-    console.log(`💰 ${symbol}: $${parseFloat(price.price).toLocaleString()}`);
-    console.log(`📈 Variação 24h: ${parseFloat(stats.priceChangePercent).toFixed(2)}%`);
+    logMarketInfo(symbol, price, stats);
 
     // Analisar com DeepSeek
     console.log('\n🧠 Analisando mercado com DeepSeek AI...');
