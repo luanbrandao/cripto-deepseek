@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>123 Analyzer - Documentação</title>
+
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .chart-container {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .candles-chart {
+            display: flex;
+            align-items: end;
+            height: 400px;
+            gap: 3px;
+            padding: 20px;
+            border-bottom: 2px solid #666;
+            border-left: 2px solid #666;
+            position: relative;
+        }
+        
+        .candle {
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
+            align-items: center;
+            width: 12px;
+            height: 100%;
+            position: relative;
+        }
+        
+        .wick {
+            width: 2px;
+            background: #999;
+            position: absolute;
+        }
+        
+        .body {
+            width: 12px;
+            min-height: 3px;
+            border-radius: 1px;
+            position: absolute;
+        }
+        
+        .bullish {
+            background: #00ff88;
+        }
+        
+        .bearish {
+            background: #ff4444;
+        }
+        
+        .pattern-123-buy {
+            background: #ffaa00;
+            border: 2px solid #ff6600;
+        }
+        
+        .pattern-123-sell {
+            background: #aa00ff;
+            border: 2px solid #6600ff;
+        }
+        
+        .price-label {
+            font-size: 8px;
+            color: #ccc;
+            position: absolute;
+            bottom: -15px;
+            white-space: nowrap;
+        }
+        .pattern-box { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .buy { color: #28a745; font-weight: bold; }
+        .sell { color: #dc3545; font-weight: bold; }
+        .hold { color: #6c757d; font-weight: bold; }
+        .candle-diagram { display: flex; justify-content: center; align-items: end; margin: 20px 0; }
+        .candle { width: 40px; height: 80px; margin: 5px; position: relative; }
+        .candle1 { background: linear-gradient(to top, #ff6b6b 0%, #ff6b6b 60%, #333 60%, #333 100%); }
+        .candle2 { background: linear-gradient(to top, #4ecdc4 0%, #4ecdc4 40%, #333 40%, #333 100%); }
+        .candle3 { background: linear-gradient(to top, #45b7d1 0%, #45b7d1 70%, #333 70%, #333 100%); }
+        .candle-label { position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 123 Analyzer</h1>
+        <p>Analisador baseado no padrão técnico Setup 123 com rompimentos</p>
+    </div>
+
+    <div class="section">
+        <h2>🎯 O que é o Setup 123</h2>
+        <p>O Setup 123 é um padrão de análise técnica que identifica pontos de entrada baseados em:</p>
+        <ul>
+            <li><strong>3 Candles consecutivos</strong> com estrutura específica</li>
+            <li><strong>Rompimento</strong> da máxima/mínima do terceiro candle</li>
+            <li><strong>Contexto de tendência</strong> para maior precisão</li>
+        </ul>
+        
+        <h3>⏰ Período de Análise</h3>
+        <div class="pattern-box">
+            <p><strong>Timeframe:</strong> 1 hora (1h)</p>
+            <p><strong>Histórico:</strong> 50 candles OHLC (Open, High, Low, Close)</p>
+            <p><strong>Análise de tendência:</strong> 7 candles anteriores ao padrão</p>
+            <p><strong>Fonte:</strong> API Binance - endpoint /api/v3/klines</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🟢 Setup 123 de Compra</h2>
+        
+        <div class="pattern-box">
+            <h3>Estrutura do Padrão:</h3>
+            <div class="candle-diagram">
+                <div class="candle candle1">
+                    <div class="candle-label">Candle 1<br>Topo</div>
+                </div>
+                <div class="candle candle2">
+                    <div class="candle-label">Candle 2<br>Fundo</div>
+                </div>
+                <div class="candle candle3">
+                    <div class="candle-label">Candle 3<br>Alta</div>
+                </div>
+            </div>
+            
+            <h4>Condições para Compra:</h4>
+            <ul>
+                <li>✅ <strong>Candle 2:</strong> Mínima mais baixa dos 3 candles</li>
+                <li>✅ <strong>Candle 3:</strong> Candle de alta (close > open)</li>
+                <li>✅ <strong>Candle 3:</strong> Mínima ≥ mínima do candle 2</li>
+                <li>✅ <strong>Rompimento:</strong> Preço atual > máxima do candle 3</li>
+            </ul>
+            
+            <p><strong class="buy">🎯 Sinal de Entrada:</strong> Compra no rompimento da máxima do candle 3</p>
+            <p><strong>🛑 Stop Loss:</strong> Abaixo da mínima do candle 2</p>
+            <p><strong>📈 Confiança:</strong> 65% (padrão) | 80% (com tendência de alta)</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔴 Setup 123 de Venda</h2>
+        
+        <div class="pattern-box">
+            <h4>Condições para Venda:</h4>
+            <ul>
+                <li>✅ <strong>Candle 2:</strong> Máxima mais alta dos 3 candles</li>
+                <li>✅ <strong>Candle 3:</strong> Candle de baixa (close < open)</li>
+                <li>✅ <strong>Candle 3:</strong> Máxima ≤ máxima do candle 2</li>
+                <li>✅ <strong>Rompimento:</strong> Preço atual < mínima do candle 3</li>
+            </ul>
+            
+            <p><strong class="sell">🎯 Sinal de Entrada:</strong> Venda no rompimento da mínima do candle 3</p>
+            <p><strong>🛑 Stop Loss:</strong> Acima da máxima do candle 2</p>
+            <p><strong>📉 Confiança:</strong> 65% (padrão) | 80% (com tendência de baixa)</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📈 Análise de Tendência</h2>
+        <div class="pattern-box">
+            <h4>Identificação de Tendência:</h4>
+            <p><strong>Tendência de Alta:</strong></p>
+            <ul>
+                <li>Último preço > média dos 7 candles anteriores</li>
+                <li>Primeiro preço < último preço do período</li>
+            </ul>
+            
+            <p><strong>Tendência de Baixa:</strong></p>
+            <ul>
+                <li>Último preço < média dos 7 candles anteriores</li>
+                <li>Primeiro preço > último preço do período</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📊 Exemplo Visual</h2>
+        <div class="chart-container">
+            <h3>Gráfico de Candles</h3>
+            <div class="candles-chart" id="candlesChart">
+                <!-- Candles serão inseridos aqui via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>⚙️ Parâmetros de Saída</h2>
+        <ul>
+            <li><strong>action:</strong> "BUY", "SELL" ou "HOLD"</li>
+            <li><strong>confidence:</strong> 65% (padrão) ou 80% (com tendência)</li>
+            <li><strong>reason:</strong> Explicação detalhada do setup identificado</li>
+            <li><strong>suggested_amount:</strong> 2-3 unidades baseado na confiança</li>
+            <li><strong>stopLoss:</strong> Nível de stop loss calculado automaticamente</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🚫 Quando NÃO Opera</h2>
+        <div class="pattern-box">
+            <ul>
+                <li>❌ Dados insuficientes (< 10 candles)</li>
+                <li>❌ Estrutura do padrão 123 não identificada</li>
+                <li>❌ Sem rompimento da máxima/mínima do candle 3</li>
+                <li>❌ Candle 3 não atende aos critérios de direção</li>
+            </ul>
+            <p><strong class="hold">Resultado:</strong> HOLD - "Padrão 123 não identificado"</p>
+        </div>
+    </div>
+
+    <script>
+        // Dados reais de candles do data-candles.ts
+        const candleData = [
+            [1761181200000, '181.02000000', '182.05000000', '180.58000000', '181.78000000', '105749.16200000'],
+            [1761184800000, '181.79000000', '182.47000000', '181.41000000', '182.27000000', '52073.07000000'],
+            [1761188400000, '182.27000000', '183.40000000', '182.14000000', '182.86000000', '86139.62300000'],
+            [1761192000000, '182.87000000', '184.28000000', '182.70000000', '184.02000000', '72710.47300000'],
+            [1761195600000, '184.02000000', '184.84000000', '183.79000000', '184.84000000', '78646.25500000'],
+            [1761199200000, '184.83000000', '187.60000000', '184.54000000', '187.43000000', '211961.84700000'],
+            [1761202800000, '187.44000000', '188.00000000', '186.17000000', '187.48000000', '146827.63400000'],
+            [1761206400000, '187.48000000', '188.71000000', '187.48000000', '187.97000000', '159517.02900000'],
+            [1761210000000, '187.97000000', '188.88000000', '187.48000000', '188.39000000', '133318.49300000'],
+            [1761213600000, '188.39000000', '189.34000000', '188.22000000', '188.25000000', '124755.02600000'],
+            [1761217200000, '188.25000000', '189.49000000', '187.51000000', '187.98000000', '172699.21700000'],
+            [1761220800000, '187.98000000', '189.39000000', '186.60000000', '189.32000000', '191031.40900000'],
+            [1761224400000, '189.32000000', '192.62000000', '188.40000000', '190.37000000', '400212.87600000'],
+            [1761228000000, '190.37000000', '191.29000000', '188.13000000', '189.77000000', '231092.39400000'],
+            [1761231600000, '189.78000000', '191.87000000', '189.43000000', '191.04000000', '262182.11000000'],
+            [1761235200000, '191.04000000', '192.43000000', '190.42000000', '191.95000000', '145498.70900000'],
+            [1761238800000, '191.95000000', '193.45000000', '190.10000000', '192.50000000', '232036.47200000'],
+            [1761242400000, '192.49000000', '192.87000000', '190.84000000', '191.53000000', '106132.19500000'],
+            [1761246000000, '191.52000000', '191.87000000', '190.55000000', '191.15000000', '82540.21000000'],
+            [1761249600000, '191.14000000', '191.29000000', '188.31000000', '188.80000000', '186406.16900000'],
+            [1761253200000, '188.80000000', '189.46000000', '188.51000000', '188.80000000', '87481.95400000'],
+            [1761256800000, '188.79000000', '190.58000000', '188.65000000', '190.43000000', '79837.54300000'],
+            [1761260400000, '190.42000000', '191.51000000', '190.41000000', '191.35000000', '63849.37400000'],
+            [1761264000000, '191.36000000', '193.85000000', '190.95000000', '193.10000000', '156454.78100000']
+        ];
+
+        function detectPattern123(data, endIndex) {
+            if (endIndex < 2) return null;
+            
+            const candle1 = data[endIndex - 2];
+            const candle2 = data[endIndex - 1];
+            const candle3 = data[endIndex];
+            
+            const open1 = parseFloat(candle1[1]), high1 = parseFloat(candle1[2]), low1 = parseFloat(candle1[3]), close1 = parseFloat(candle1[4]);
+            const open2 = parseFloat(candle2[1]), high2 = parseFloat(candle2[2]), low2 = parseFloat(candle2[3]), close2 = parseFloat(candle2[4]);
+            const open3 = parseFloat(candle3[1]), high3 = parseFloat(candle3[2]), low3 = parseFloat(candle3[3]), close3 = parseFloat(candle3[4]);
+            
+            // Padrão 123 de compra
+            if (low2 < low1 && low2 < low3 && close3 > open3 && low3 >= low2) {
+                return { type: 'buy', candles: [endIndex - 2, endIndex - 1, endIndex] };
+            }
+            
+            // Padrão 123 de venda
+            if (high2 > high1 && high2 > high3 && close3 < open3 && high3 <= high2) {
+                return { type: 'sell', candles: [endIndex - 2, endIndex - 1, endIndex] };
+            }
+            
+            return null;
+        }
+
+        function createCandleChart() {
+            const chartContainer = document.getElementById('candlesChart');
+            
+            // Detectar padrões 123 em todos os candles
+            const patterns123 = [];
+            for (let i = 2; i < candleData.length; i++) {
+                const pattern = detectPattern123(candleData, i);
+                if (pattern) {
+                    patterns123.push(pattern);
+                }
+            }
+
+            // Encontrar min e max para escala
+            let minPrice = Infinity;
+            let maxPrice = -Infinity;
+
+            candleData.forEach(candle => {
+                const high = parseFloat(candle[2]);
+                const low = parseFloat(candle[3]);
+                minPrice = Math.min(minPrice, low);
+                maxPrice = Math.max(maxPrice, high);
+            });
+
+            const priceRange = maxPrice - minPrice;
+            const chartHeight = 350;
+
+            candleData.forEach((candle, index) => {
+                const open = parseFloat(candle[1]);
+                const high = parseFloat(candle[2]);
+                const low = parseFloat(candle[3]);
+                const close = parseFloat(candle[4]);
+
+                const isBullish = close > open;
+                
+                // Verificar se este candle faz parte de um padrão 123
+                let isPattern123 = false;
+                let patternType = null;
+                patterns123.forEach(pattern => {
+                    if (pattern.candles.includes(index)) {
+                        isPattern123 = true;
+                        patternType = pattern.type;
+                    }
+                });
+
+                // Calcular altura do candle
+                const candleHeight = ((high - low) / priceRange) * 300;
+                const bodyHeight = Math.max(Math.abs(close - open) / priceRange * 300, 3);
+                const bottomPos = ((maxPrice - low) / priceRange) * 300;
+
+                // Criar elemento do candle
+                const candleElement = document.createElement('div');
+                candleElement.className = 'candle';
+                candleElement.style.marginBottom = bottomPos + 'px';
+
+                // Definir classe do corpo do candle
+                let bodyClass = isBullish ? 'bullish' : 'bearish';
+                if (isPattern123) {
+                    bodyClass = patternType === 'buy' ? 'pattern-123-buy' : 'pattern-123-sell';
+                }
+
+                candleElement.innerHTML = `
+                    <div class="wick" style="height: ${candleHeight}px; bottom: 0;"></div>
+                    <div class="body ${bodyClass}" 
+                         style="height: ${bodyHeight}px; bottom: ${((Math.min(open, close) - low) / priceRange) * 300}px;"></div>
+                    <div class="price-label">${close.toFixed(1)}</div>
+                `;
+
+                chartContainer.appendChild(candleElement);
+            });
+        }
+
+        // Criar o gráfico quando a página carregar
+        document.addEventListener('DOMContentLoaded', createCandleChart);
+    </script>
+</body>
+</html>
