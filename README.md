@@ -150,7 +150,14 @@ src/
 - Sistema completo de proteção
 - Monitoramento em tempo real
 
-### **3. Simulações de Estratégias**
+### **3. Smart Trading Bot (smart-trading-bot.ts)**
+- **Análise dupla**: EMA + DeepSeek AI
+- **Filtro de tendência**: Só executa em mercado de alta
+- **Segurança extra**: Validação dupla antes de executar
+- **Boost de confiança**: +10% quando ambos confirmam
+- **Foco em compras**: Otimizado para tendências de alta
+
+### **4. Simulações de Estratégias**
 
 #### **Simulação 123 (simulate-123.ts)**
 - **Estratégia**: Padrão 123 de reversão
@@ -174,7 +181,7 @@ npm run simulate-123    # Padrão 123
 npm run simulate-ema    # EMA 12/26
 ```
 
-### **4. Monitor de Trades (trade-monitor.ts)**
+### **5. Monitor de Trades (trade-monitor.ts)**
 - **Função**: Verifica e atualiza o status dos trades de teste
 - **Monitoramento**: Compara preço atual com targets e stops
 - **Atualização automática**: Marca trades como 'win' ou 'loss'
@@ -261,6 +268,9 @@ npm start
 
 # Modo trading real
 npm run trading-bot
+
+# Smart trading bot (EMA + DeepSeek AI)
+npm run smart-trading-bot
 
 # Simulações
 npm run simulate-123    # Estratégia padrão 123
