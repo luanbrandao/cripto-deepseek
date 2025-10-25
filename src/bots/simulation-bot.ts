@@ -15,6 +15,8 @@ interface TradeDecision {
   price: number;
 }
 
+// Simulação completa de trading (inclui verificação de conta da Binance e DeepSeek, NÃO FAZ TRADE REAL)
+// apenas testa se está tudo funcionando antes de executar o real-trading-bot
 async function parseDeepSeekAnalysis(analysis: string, symbol: string, price: number): Promise<TradeDecision> {
   const analysisLower = analysis.toLowerCase();
 
@@ -86,6 +88,9 @@ async function executeTradeDecision(decision: TradeDecision, binancePrivate: Bin
 }
 
 async function main() {
+  console.log('🚀 ANÁLISE DE MERCADO COM DEEPSEEK AI e API privada da Binance');
+  console.log('🚀 NÃO EXECUTA TRADE REAIS');
+
   const apiKey = process.env.BINANCE_API_KEY;
   const apiSecret = process.env.BINANCE_API_SECRET;
 

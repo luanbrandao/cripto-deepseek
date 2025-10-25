@@ -9,7 +9,7 @@ async function main() {
   const binancePublic = new BinancePublicClient();
   const deepseek = new DeepSeekService();
 
-  console.log('🚀 ANÁLISE DE MERCADO COM DEEPSEEK AI SEM EXECURTAR TRADE REAL');
+  console.log('🚀 ANÁLISE DE MERCADO COM DEEPSEEK AI e API public da Binance');
 
   try {
     const symbol = 'SOLUSDT';
