@@ -5,6 +5,7 @@ import { TradeExecutor } from './services/trade-executor';
 import { RiskManager } from './services/risk-manager';
 import { TRADING_CONFIG } from './config/trading-config';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
+import { checkActiveTradesLimit } from './utils/trade-limit-checker';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -108,18 +109,23 @@ class EmaTradingBot {
     this.logBotInfo();
 
     try {
-      // 1. Obter dados de mercado
+      // 1. Verificar trades ativos
+      if (!await checkActiveTradesLimit(this.binancePrivate)) {
+        return null;
+      }
+
+      // 2. Obter dados de mercado
       const marketData = await this.getMarketData(symbol);
 
-      // 2. Analisar com EMA
+      // 3. Analisar com EMA
       const decision = this.analyzeWithEma(symbol, marketData);
 
-      // 3. Validar decisão
+      // 4. Validar decisão
       if (!this.validateDecision(decision)) {
         return null;
       }
 
-      // 4. Executar trade
+      // 5. Executar trade
       return await this.executeAndSave(decision);
 
     } catch (error) {

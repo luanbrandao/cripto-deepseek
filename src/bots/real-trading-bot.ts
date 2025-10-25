@@ -8,6 +8,7 @@ import { RiskManager } from './services/risk-manager';
 import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { checkActiveTradesLimit } from './utils/trade-limit-checker';
 
 dotenv.config();
 
@@ -31,6 +32,10 @@ async function main() {
   console.log(`🎯 Risk/Reward: Dinâmico (mínimo ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 para executar)\n`);
 
   try {
+    if (!await checkActiveTradesLimit(binancePrivate)) {
+      return;
+    }
+
     const symbol = 'BNBUSDT';
     const price = await binancePublic.getPrice(symbol);
     const stats = await binancePublic.get24hrStats(symbol);

@@ -7,6 +7,7 @@ import { AnalysisParser } from './services/analysis-parser';
 import { RiskManager } from './services/risk-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
+import { checkActiveTradesLimit } from './utils/trade-limit-checker';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -110,22 +111,27 @@ class SmartTradingBot {
     this.logBotInfo();
 
     try {
-      // 1. Verificar tendência com EMA
+      // 1. Verificar trades ativos
+      if (!await checkActiveTradesLimit(this.binancePrivate)) {
+        return null;
+      }
+
+      // 2. Verificar tendência com EMA
       const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
       if (!this.validateTrendAnalysis(trendAnalysis)) {
         return null;
       }
 
-      // 2. Obter dados de mercado e analisar com DeepSeek
+      // 3. Obter dados de mercado e analisar com DeepSeek
       const marketData = await this.getMarketData(symbol);
       const decision = await this.analyzeWithDeepSeek(symbol, marketData);
 
-      // 3. Validar decisão do DeepSeek
+      // 4. Validar decisão do DeepSeek
       if (!this.validateDeepSeekDecision(decision)) {
         return null;
       }
 
-      // 4. Boost de confiança e executar trade
+      // 5. Boost de confiança e executar trade
       const boostedDecision = this.boostConfidence(decision);
       return await this.executeAndSave(boostedDecision);
 

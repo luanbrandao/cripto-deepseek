@@ -126,4 +126,9 @@ export class BinancePrivateClient {
     });
     return response.data;
   }
+
+  async getActiveTradesCount(): Promise<number> {
+    const openOrders = await this.getOpenOrders();
+    return openOrders.length;
+  }
 }
