@@ -1,0 +1,579 @@
+BTC Price: { symbol: 'BTCUSDT', price: '111013.75000000' }
+BTC 24h Stats: {
+  symbol: 'BTCUSDT',
+  priceChange: '447.54000000',
+  priceChangePercent: '0.405',
+  weightedAvgPrice: '110844.63926661',
+  prevClosePrice: '110566.21000000',
+  lastPrice: '111013.75000000',
+  lastQty: '0.00013000',
+  bidPrice: '111013.74000000',
+  bidQty: '1.00059000',
+  askPrice: '111013.75000000',
+  askQty: '7.90290000',
+  openPrice: '110566.21000000',
+  highPrice: '112104.98000000',
+  lowPrice: '109700.01000000',
+  volume: '14566.06980000',
+  quoteVolume: '1614570752.51332710',
+  openTime: 1761270643999,
+  closeTime: 1761357043999,
+  firstId: 5384933874,
+  lastId: 5388036870,
+  weightedAvgPrice: '110844.63926661',
+  prevClosePrice: '110566.21000000',
+  lastPrice: '111013.75000000',
+  lastQty: '0.00013000',
+  bidPrice: '111013.74000000',
+  bidQty: '1.00059000',
+  askPrice: '111013.75000000',
+  askQty: '7.90290000',
+  openPrice: '110566.21000000',
+  highPrice: '112104.98000000',
+  lowPrice: '109700.01000000',
+  weightedAvgPrice: '110844.63926661',
+  prevClosePrice: '110566.21000000',
+  lastPrice: '111013.75000000',
+  lastQty: '0.00013000',
+  bidPrice: '111013.74000000',
+  weightedAvgPrice: '110844.63926661',
+  prevClosePrice: '110566.21000000',
+  weightedAvgPrice: '110844.63926661',
+  prevClosePrice: '110566.21000000',
+  lastPrice: '111013.75000000',
+  lastQty: '0.00013000',
+  bidPrice: '111013.74000000',
+  bidQty: '1.00059000',
+  askPrice: '111013.75000000',
+  askQty: '7.90290000',
+  openPrice: '110566.21000000',
+  highPrice: '112104.98000000',
+  lowPrice: '109700.01000000',
+  weightedAvgPrice: '110844.63926661',
+  prevClosePrice: '110566.21000000',
+  lastPrice: '111013.75000000',
+  lastQty: '0.00013000',
+  bidPrice: '111013.74000000',
+  bidQty: '1.00059000',
+  askPrice: '111013.75000000',
+  askQty: '7.90290000',
+  openPrice: '110566.21000000',
+  weightedAvgPrice: '110844.63926661',
+  prevClosePrice: '110566.21000000',
+  lastPrice: '111013.75000000',
+  lastQty: '0.00013000',
+  bidPrice: '111013.74000000',
+  weightedAvgPrice: '110844.63926661',
+  prevClosePrice: '110566.21000000',
+  weightedAvgPrice: '110844.63926661',
+  prevClosePrice: '110566.21000000',
+  lastPrice: '111013.75000000',
+  lastQty: '0.00013000',
+  bidPrice: '111013.74000000',
+  bidQty: '1.00059000',
+  askPrice: '111013.75000000',
+  askQty: '7.90290000',
+  openPrice: '110566.21000000',
+  highPrice: '112104.98000000',
+  lowPrice: '109700.01000000',
+  volume: '14566.06980000',
+  quoteVolume: '1614570752.51332710',
+  openTime: 1761270643999,
+  closeTime: 1761357043999,
+  firstId: 5384933874,
+  lastId: 5388036870,
+  count: 3102997
+}
+
+DeepSeek Analysis: Of course. Here is a detailed analysis of the provided Bitcoin market data and the resulting trading insights.
+
+### Executive Summary
+
+The data paints a picture of a **bullish but consolidating** Bitcoin market. The price is up from the previous period and is trading near the top of its recent range, showing buyer dominance. However, the relatively small price change and high volume suggest a battle between bulls and bears, with the bulls currently holding a slight edge.
+
+---
+
+### Detailed Data Analysis
+
+Let's break down the key metrics to understand the market structure:
+
+1.  **Price Action & Momentum:**
+    *   **Current Price:** $111,013.75
+    *   **24h Change:** +$447.54 (**+0.405%**). This indicates a positive, albeit modest, upward momentum. It's not a massive pump, suggesting a controlled move rather than a speculative frenzy.
+    *   **Range:** The 24-hour high was **$112,104.98** and the low was **$109,700.01**. The current price is very close to the high of the range, which is a sign of strength. The key resistance level to watch is **$112,105**.
+
+2.  **Market Depth & Liquidity:**
+    *   **Bid/Ask Spread:** The bid price is $111,013.74 and the ask is $111,013.75. This is an incredibly tight spread (0.000009%), indicating a highly liquid market with low transaction costs. This is typical for a major pair like BTCUSDT.
+    *   **Order Book Imbalance:** The bid side has only **~1 BTC** of liquidity at the top, while the ask side has **~7.9 BTC**. This suggests there is slightly more immediate selling pressure (supply) than buying pressure (demand) at the current price, which could act as a minor short-term resistance.
+
+3.  **Volume Analysis (Crucial Indicator):**
+    *   **Volume:** 14,566 BTC
+    *   **Quote Volume:** $1.61 Billion
+    *   This is a significant amount of volume for a 0.4% price move. **High volume on a price increase is a bullish confirmation.** It shows that the move is backed by substantial capital and conviction, making it more likely to be sustainable.
+
+4.  **Contextual Price Levels:**
+    *   **Weighted Average Price:** $110,844.64. The current price is trading **above** this average, which is a positive sign, indicating that the majority of trading activity in the period occurred at a lower price.
+    *   **Previous Close:** $110,566.21. The market has clearly built on the previous period's gains.
+    *   **Key Support:** The previous session's low of **$109,700** now becomes a critical support level. A break below this could signal a shift in momentum.
+
+---
+
+### Trading Insights & Scenarios
+
+#### **For Bulls (Looking to Buy or Hold):**
+
+*   **Thesis:** The market is in a controlled uptrend. The high volume on a green day and the price holding near the top of its range suggest underlying strength.
+*   **Entry/Confirmation:** A confident buy signal would be a decisive break and close above the **$112,105 resistance** on significant volume. This would indicate that the bulls have absorbed all the selling pressure at that level and are ready to push higher.
+*   **Invalidation:** The bullish thesis is invalidated if the price drops and sustains below the **$109,700 support** level. This would indicate a failure to hold gains and a potential reversal.
+
+#### **For Bears (Looking to Sell or Short):**
+
+*   **Thesis:** The market is struggling to break above $112,105, as evidenced by the larger ask size. The modest 0.4% gain could be a sign of exhaustion.
+*   **Entry/Confirmation:** A short opportunity presents itself if the price is rejected from the **$112,105** level with a bearish candlestick pattern (e.g., a long wick or bearish engulfing). Another signal would be a break below the **$110,844** (Weighted Avg Price) level, suggesting a loss of the bullish bias.
+*   **Invalidation:** The bearish thesis is invalidated if the price breaks and holds above **$112,105**, as this would trigger a new wave of buying.
+
+#### **For Cautious Traders (Neutral/Range-bound):**
+
+*   The market is currently in a range between **~$109,700 (support)** and **~$112,105 (resistance)**.
+*   A prudent strategy is to wait for a clear breakout in either direction with accompanying volume before committing significant capital. You could "buy the dip" near support or "sell the rip" near resistance, but these are riskier, shorter-term plays.
+
+### Key Levels to Watch
+
+*   **Major Resistance:** **$112,105** (Today's High)
+*   **Minor Resistance/Current Level:** **$111,014**
+*   **Minor Support:** **$110,844** (Weighted Avg Price) / **$110,566** (Prev. Close)
+*   **Major Support:** **$109,700** (Today's Low)
+
+**Disclaimer:** This analysis is based on a single snapshot of data. Always conduct your own research, consider higher timeframes, and use proper risk management strategies before executing any trades. The cryptocurrency market is highly volatile.
+💾 Histórico salvo: 1 trades
+💾 Trade salvo no histórico
+
+--- Public Client Example ---
+BTC Price: { symbol: 'BTCUSDT', price: '111013.75000000' }
+BTC 24h Stats: {
+  symbol: 'BTCUSDT',
+  priceChange: '443.98000000',
+  priceChangePercent: '0.402',
+  weightedAvgPrice: '110844.70911827',
+  prevClosePrice: '110569.76000000',
+  lastPrice: '111013.75000000',
+  lastQty: '0.00143000',
+  bidPrice: '111013.74000000',
+  bidQty: '4.16887000',
+  askPrice: '111013.75000000',
+  askQty: '1.17293000',
+  openPrice: '110569.77000000',
+  highPrice: '112104.98000000',
+  lowPrice: '109700.01000000',
+  volume: '14562.70872000',
+  quoteVolume: '1614199212.04242490',
+  openTime: 1761270690010,
+  closeTime: 1761357090010,
+  firstId: 5384935416,
+  lastId: 5388036944,
+  count: 3101529
+}
+Order Book (top 10): {
+  lastUpdateId: 79016629980,
+  bids: [
+    [ '111013.74000000', '4.16878000' ],
+    [ '111013.67000000', '0.00010000' ],
+    [ '111013.11000000', '0.30421000' ],
+    [ '111013.10000000', '0.03365000' ],
+    [ '111012.63000000', '0.00109000' ],
+    [ '111012.40000000', '0.00005000' ],
+    [ '111012.12000000', '0.00010000' ],
+    [ '111012.11000000', '0.02718000' ],
+    [ '111012.00000000', '0.00005000' ],
+    [ '111011.42000000', '0.00010000' ]
+  ],
+  asks: [
+    [ '111013.75000000', '1.17238000' ],
+    [ '111013.76000000', '0.01354000' ],
+    [ '111013.83000000', '0.00010000' ],
+    [ '111014.86000000', '0.00109000' ],
+    [ '111015.72000000', '0.00005000' ],
+    [ '111016.52000000', '0.00203000' ],
+    [ '111016.83000000', '0.00005000' ],
+    [ '111017.57000000', '0.00010000' ],
+    [ '111017.58000000', '0.04020000' ],
+    [ '111018.19000000', '0.00360000' ]
+  ]
+}
+24h Klines: [
+  [
+    1761271200000,
+    '110585.09000000',
+    '110829.67000000',
+    '110358.34000000',
+    '110570.12000000',
+    '303.69215000',
+    1761274799999,
+    '33570292.40527140',
+    90066,
+    '157.77978000',
+    '17442879.71135170',
+    '0'
+  ],
+  [
+    1761274800000,
+    '110570.13000000',
+    '110630.81000000',
+    '110274.85000000',
+    '110441.46000000',
+    '332.11629000',
+    1761278399999,
+    '36676450.17510990',
+    73346,
+    '116.92247000',
+    '12912335.47492190',
+    '0'
+  ],
+  [
+    1761278400000,
+    '110441.46000000',
+    '111470.32000000',
+    '110332.00000000',
+    '111178.55000000',
+    '958.63918000',
+    1761281999999,
+    '106486043.60936010',
+    175810,
+    '484.45231000',
+    '53803034.98877570',
+    '0'
+  ],
+  [
+    1761282000000,
+    '111178.54000000',
+    '111310.31000000',
+    '110941.02000000',
+    '111261.36000000',
+    '515.30958000',
+    1761285599999,
+    '57275241.19587140',
+    116812,
+    '252.99958000',
+    '28120035.85168830',
+    '0'
+  ],
+  [
+    1761285600000,
+    '111261.37000000',
+    '111488.00000000',
+    '111120.71000000',
+    '111464.36000000',
+    '480.69090000',
+    1761289199999,
+    '53511338.10498830',
+    92347,
+    '233.42827000',
+    '25986302.16201530',
+    '0'
+  ],
+  [
+    1761289200000,
+    '111464.36000000',
+    '111522.30000000',
+    '110768.23000000',
+    '111054.61000000',
+    '750.55477000',
+    1761292799999,
+    '83416967.05832470',
+    124275,
+    '308.66669000',
+    '34306695.53969770',
+    '0'
+  ],
+  [
+    1761292800000,
+    '111054.61000000',
+    '111226.02000000',
+    '110680.01000000',
+    '111097.80000000',
+    '627.57826000',
+    1761296399999,
+    '69653098.86756040',
+    148487,
+    '256.27578000',
+    '28445471.93640700',
+    '0'
+  ],
+  [
+    1761296400000,
+    '111097.79000000',
+    '111482.99000000',
+    '111000.00000000',
+    '111324.51000000',
+    '446.13074000',
+    1761299999999,
+    '49657728.80940340',
+    124340,
+    '240.89352000',
+    '26813063.25780360',
+    '0'
+  ],
+  [
+    1761300000000,
+    '111324.51000000',
+    '111325.42000000',
+    '111069.46000000',
+    '111114.03000000',
+    '346.40996000',
+    1761303599999,
+    '38514445.43961660',
+    89725,
+    '166.97808000',
+    '18563545.50623460',
+    '0'
+  ],
+  [
+    1761303600000,
+    '111114.03000000',
+    '111267.99000000',
+    '110600.00000000',
+    '111066.29000000',
+    '561.52762000',
+    1761307199999,
+    '62315839.06979760',
+    108794,
+    '259.21088000',
+    '28768341.35417550',
+    '0'
+  ],
+  [
+    1761307200000,
+    '111066.29000000',
+    '112104.98000000',
+    '110867.15000000',
+    '111297.01000000',
+    '1692.92113000',
+    1761310799999,
+    '188816502.60668480',
+    281177,
+    '936.40577000',
+    '104448645.66000110',
+    '0'
+  ],
+  [
+    1761310800000,
+    '111297.02000000',
+    '111451.47000000',
+    '110379.51000000',
+    '110937.94000000',
+    '1200.08389000',
+    1761314399999,
+    '133165313.34389490',
+    276571,
+    '572.45010000',
+    '63535290.00357380',
+    '0'
+  ],
+  [
+    1761314400000,
+    '110937.94000000',
+    '110937.95000000',
+    '109700.01000000',
+    '110219.17000000',
+    '1902.54077000',
+    1761317999999,
+    '209484551.49700720',
+    368501,
+    '985.30994000',
+    '108483410.42579200',
+    '0'
+  ],
+  [
+    1761318000000,
+    '110219.17000000',
+    '110620.00000000',
+    '109896.51000000',
+    '110046.91000000',
+    '737.57678000',
+    1761321599999,
+    '81337452.23980640',
+    203525,
+    '383.93543000',
+    '42348364.78174800',
+    '0'
+  ],
+  [
+    1761321600000,
+    '110046.92000000',
+    '110387.79000000',
+    '109797.13000000',
+    '110261.81000000',
+    '441.40283000',
+    1761325199999,
+    '48586346.44603540',
+    127721,
+    '227.43516000',
+    '25036322.65404350',
+    '0'
+  ],
+  [
+    1761325200000,
+    '110261.81000000',
+    '110571.18000000',
+    '110180.74000000',
+    '110235.22000000',
+    '368.64619000',
+    1761328799999,
+    '40685338.55784660',
+    110196,
+    '159.45489000',
+    '17597345.29922840',
+    '0'
+  ],
+  [
+    1761328800000,
+    '110235.22000000',
+    '110639.04000000',
+    '110166.00000000',
+    '110619.39000000',
+    '336.10914000',
+    1761332399999,
+    '37131976.34374610',
+    109597,
+    '167.78267000',
+    '18532662.17659100',
+    '0'
+  ],
+  [
+    1761332400000,
+    '110619.39000000',
+    '110945.39000000',
+    '110525.06000000',
+    '110615.07000000',
+    '323.90966000',
+    1761335999999,
+    '35871793.47296140',
+    101887,
+    '169.84311000',
+    '18811343.77294270',
+    '0'
+  ],
+  [
+    1761336000000,
+    '110615.07000000',
+    '111025.95000000',
+    '110478.00000000',
+    '110893.70000000',
+    '514.06470000',
+    1761339599999,
+    '56957297.78106810',
+    76839,
+    '271.25284000',
+    '30055396.67783050',
+    '0'
+  ],
+  [
+    1761339600000,
+    '110893.69000000',
+    '111100.00000000',
+    '110646.64000000',
+    '111085.57000000',
+    '915.59401000',
+    1761343199999,
+    '101529366.99112960',
+    104633,
+    '497.29509000',
+    '55144765.19073830',
+    '0'
+  ],
+  [
+    1761343200000,
+    '111085.57000000',
+    '111138.62000000',
+    '110927.23000000',
+    '111023.01000000',
+    '203.92240000',
+    1761346799999,
+    '22642342.87131390',
+    43646,
+    '106.81425000',
+    '11860387.66908790',
+    '0'
+  ],
+  [
+    1761346800000,
+    '111023.01000000',
+    '111123.87000000',
+    '110882.05000000',
+    '111004.89000000',
+    '142.67216000',
+    1761350399999,
+    '15835965.53587370',
+    29652,
+    '60.68079000',
+    '6735104.28322200',
+    '0'
+  ],
+  [
+    1761350400000,
+    '111004.90000000',
+    '111044.86000000',
+    '110672.86000000',
+    '110766.60000000',
+    '210.65830000',
+    1761353999999,
+    '23349827.63453350',
+    58448,
+    '79.73331000',
+    '8836937.69255470',
+    '0'
+  ],
+  [
+    1761354000000,
+    '110766.61000000',
+    '111226.67000000',
+    '110750.00000000',
+    '110766.60000000',
+    '210.65830000',
+    1761353999999,
+    '23349827.63453350',
+    58448,
+    '79.73331000',
+    '8836937.69255470',
+    '0'
+  ],
+  [
+    1761354000000,
+    '110766.60000000',
+    '210.65830000',
+    1761353999999,
+    '23349827.63453350',
+    58448,
+    '79.73331000',
+    '8836937.69255470',
+    '0'
+    '110766.60000000',
+    '210.65830000',
+    1761353999999,
+    '110766.60000000',
+    '210.65830000',
+    '110766.60000000',
+    '110766.60000000',
+    '210.65830000',
+    1761353999999,
+    '23349827.63453350',
+    58448,
+    '79.73331000',
+    '8836937.69255470',
+    '0'
+  ],
+  [
+    1761354000000,
+    '110766.61000000',
+    '111226.67000000',
+    '110750.00000000',
+    '111013.75000000',
+    '211.26836000',
+    1761357599999,
+    '23449744.21369950',
+    54112,
+    '100.53276000',
+    '11159364.77001320',
+    '0'
+  ]
+]
