@@ -16,7 +16,8 @@
     "simulation-bot": "ts-node src/bots/simulation-bot.ts",
     "real-trading-bot": "ts-node src/bots/real-trading-bot.ts",
     "smart-trading-bot": "ts-node src/bots/smart-trading-bot.ts",
-    "smart-trading-bot-simulator": "ts-node src/bots/smart-trading-bot-simulator.ts"
+    "smart-trading-bot-simulator": "ts-node src/bots/smart-trading-bot-simulator.ts",
+    "ema-trading-bot": "ts-node src/bots/ema-trading-bot.ts"
   },
   "dependencies": {
     "axios": "^1.6.0",
