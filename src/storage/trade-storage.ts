@@ -20,6 +20,9 @@ export interface Trade {
     potentialLoss: number;
     riskRewardRatio: number;
   };
+  result?: 'win' | 'loss';
+  exitPrice?: number;
+  actualReturn?: number;
 }
 
 export class TradeStorage {
