@@ -36,12 +36,6 @@ class SmartTradingBot {
     console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%\n`);
   }
 
-
-
-
-
-
-
   private async executeAndSave(decision: any) {
     const orderResult = await TradeExecutor.executeRealTrade(decision, this.binancePrivate);
     await this.saveTradeHistory(decision, orderResult);

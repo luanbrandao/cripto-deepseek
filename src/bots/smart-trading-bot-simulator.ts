@@ -1,6 +1,5 @@
 import { BinancePublicClient } from '../clients/binance-public-client';
 import { DeepSeekService } from '../clients/deepseek-client';
-import { AnalysisParser } from './services/analysis-parser';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
@@ -27,11 +26,6 @@ class SmartTradingBotSimulator {
     console.log(`💵 Valor simulado por trade: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
     console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%\n`);
   }
-
-
-
-
-
 
 
   private simulateTradeExecution(decision: any) {
