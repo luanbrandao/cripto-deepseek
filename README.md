@@ -56,6 +56,18 @@ TRADE_AMOUNT_USD: 15           // Valor por trade
 MIN_CONFIDENCE: 70             // Confiança mínima (%)
 MIN_RISK_REWARD_RATIO: 2.0     // R/R OBRIGATÓRIO 2:1
 TRADE_COOLDOWN_MINUTES: 5      // Tempo entre trades
+
+// CONFIGURAÇÕES DE GRÁFICO
+CHART: {
+  TIMEFRAME: '1h',             // Timeframe dos candlesticks
+  PERIODS: 50                  // Analisa 50 velas = 50 horas de histórico
+}
+
+// Exemplos de configuração:
+// Day Trading:    TIMEFRAME: '15m', PERIODS: 100 (25h histórico)
+// Swing Trading:  TIMEFRAME: '1h',  PERIODS: 50  (50h histórico) 
+// Long Term:      TIMEFRAME: '4h',  PERIODS: 24  (4d histórico)
+
 EMA: { FAST_PERIOD: 12, SLOW_PERIOD: 26 }  // Configurações EMA
 ```
 
@@ -91,10 +103,25 @@ Moeda selecionada → Market Order → OCO (TP + SL) → Log detalhado → Hist�
 - Logs detalhados do processo de decisão
 
 ### **Análise Técnica Avançada**
-- Candlesticks de 1 hora (50 períodos) por moeda
-- Volume e variação de preço 24h comparativo
-- Padrões identificados pela IA para cada ativo
-- EMA crossover + validação de tendência
+- **Candlesticks configuráveis**: Timeframe e períodos ajustáveis
+- **Padrão atual**: 1h x 50 períodos = 50 horas de histórico
+- **Flexibilidade**: 15m/1h/4h com períodos personalizados
+- **Volume e variação**: Dados 24h comparativos por moeda
+- **Padrões IA**: Identificação automática para cada ativo
+- **EMA crossover**: Validação de tendência configurável
+
+### **Configuração de Períodos (PERIODS)**
+```typescript
+// O que são PERIODS?
+// Quantidade de candlesticks analisados para decisão
+
+TIMEFRAME: '1h' + PERIODS: 50 = Analisa 50 velas de 1h (50h histórico)
+TIMEFRAME: '15m' + PERIODS: 100 = Analisa 100 velas de 15m (25h histórico)
+TIMEFRAME: '4h' + PERIODS: 24 = Analisa 24 velas de 4h (4d histórico)
+
+// Mais períodos = Mais contexto, análise conservadora
+// Menos períodos = Análise ágil, reações rápidas
+```
 
 ### **Análise de Risco Garantida**
 - Risk/Reward SEMPRE 2:1 (impossível burlar)
@@ -402,13 +429,36 @@ BINANCE_API_KEY=your_binance_key
 BINANCE_API_SECRET=your_binance_secret
 ```
 
-### **2. Instalação**
+### **2. Configuração de Timeframes (Opcional)**
+```typescript
+// Em src/bots/config/trading-config.ts
+
+// Para day trading (análise rápida)
+CHART: {
+  TIMEFRAME: '15m',   // Velas de 15 minutos
+  PERIODS: 100        // 100 velas = 25 horas de histórico
+}
+
+// Para swing trading (padrão atual)
+CHART: {
+  TIMEFRAME: '1h',    // Velas de 1 hora
+  PERIODS: 50         // 50 velas = 50 horas de histórico
+}
+
+// Para long-term trading
+CHART: {
+  TIMEFRAME: '4h',    // Velas de 4 horas
+  PERIODS: 24         // 24 velas = 4 dias de histórico
+}
+```
+
+### **3. Instalação**
 ```bash
 npm install
 npm run build
 ```
 
-### **3. Execução**
+### **4. Execução**
 ```bash
 # Modo análise
 npm start
@@ -482,6 +532,13 @@ npm run test-risk-reward # Testar validação 2:1
 - Validação obrigatória em múltiplas camadas
 - Impossível executar trades com ratio < 2:1
 - Rejeição automática de trades inadequados
+
+### **✅ Configuração de Gráficos Centralizadas**
+- **TIMEFRAME e PERIODS** configuráveis em `trading-config.ts`
+- **Flexibilidade total**: 15m, 1h, 4h com períodos personalizados
+- **Exemplos práticos**: Day trading (15m/100), Swing (1h/50), Long-term (4h/24)
+- **Documentação clara**: Explicação detalhada do que são períodos
+- **Padronização**: Todos os bots usam configuração centralizada
 
 ### **✅ Arquitetura Refatorada**
 - Utils centralizadas para eliminar código duplicado

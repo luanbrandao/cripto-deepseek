@@ -37,7 +37,7 @@ class EmaTradingBot {
   }
 
   private async getMarketData(symbol: string): Promise<MarketData> {
-    const klines = await this.binancePublic.getKlines(symbol, '1h', 26);
+    const klines = await this.binancePublic.getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
     const prices = klines.map((k: any) => parseFloat(k[4])); // Close prices
     const currentPrice = prices[prices.length - 1];
 

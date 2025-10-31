@@ -59,7 +59,7 @@ export class TradeSimulator {
       this.symbol = bestAnalysis.symbol;
       
       // Executar trade da melhor oportunidade
-      const klines = await this.binance.getKlines(this.symbol, '1h', 50);
+      const klines = await this.binance.getKlines(this.symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
       const currentPrice = parseFloat(klines[klines.length - 1][4]);
       
       this.executeTrade(bestAnalysis.analysis, currentPrice);
@@ -78,7 +78,7 @@ export class TradeSimulator {
         console.log(`\n📊 Analisando ${symbol}...`);
         
         // Obter dados históricos
-        const klines = await this.binance.getKlines(symbol, '1h', 50);
+        const klines = await this.binance.getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
         const prices = klines.map((k: any) => parseFloat(k[4]));
         const currentPrice = prices[prices.length - 1];
 
@@ -157,7 +157,7 @@ export class TradeSimulator {
 
     try {
       // Obter dados históricos
-      const klines = await this.binance.getKlines(this.symbol, '1h', 50);
+      const klines = await this.binance.getKlines(this.symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4])); // Close prices
       const currentPrice = prices[prices.length - 1];
 

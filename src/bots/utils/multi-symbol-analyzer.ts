@@ -21,11 +21,11 @@ export async function analyzeMultipleSymbols(
   for (const symbol of symbols) {
     try {
       console.log(`\n📊 Analisando ${symbol}...`);
-      const { price, stats } = await getMarketData(binancePublic, symbol);
+      const { price, stats, klines } = await getMarketData(binancePublic, symbol);
       
       const analysis = await deepseek.analyzeMarket(
-        { price, stats },
-        `Analyze ${symbol} market data and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning.`
+        { price, stats, klines },
+        `Analyze ${symbol} market data (${TRADING_CONFIG.CHART.TIMEFRAME} timeframe, ${TRADING_CONFIG.CHART.PERIODS} periods) and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning.`
       );
       
       const decision = await parseAnalysisFunction(analysis, symbol, parseFloat(price.price));

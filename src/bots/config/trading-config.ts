@@ -19,6 +19,23 @@ export const TRADING_CONFIG = {
   },
 
   // CONFIGURAÇÕES DE ANÁLISE
+  CHART: {
+    TIMEFRAME: '1h',                // Tempo gráfico para análise
+    PERIODS: 50                     // Analisa 50 velas = 50 horas de histórico
+  },
+
+  // // Para análise mais rápida (day trading)
+  // CHART: {
+  //   TIMEFRAME: '15m',   // Cada vela = 15 minutos  
+  //   PERIODS: 100        // Analisa 100 velas = 25 horas de histórico
+  // }
+
+  // // Para análise de longo prazo
+  // CHART: {
+  //   TIMEFRAME: '4h',    // Cada vela = 4 horas
+  //   PERIODS: 24         // Analisa 24 velas = 4 dias de histórico
+  // }
+
   EMA: {
     FAST_PERIOD: 12,                // EMA rápida
     SLOW_PERIOD: 26                 // EMA lenta
