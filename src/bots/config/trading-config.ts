@@ -1,6 +1,6 @@
 export const TRADING_CONFIG = {
   // CONFIGURAÇÕES DE MOEDA E TRADING
-  SYMBOLS: ['BTCUSDT'], // Array de moedas para análise
+  SYMBOLS: ['BTCUSDT', 'BNBUSDT', 'ETHUSDT', 'ADAUSDT'], // Array de moedas para análise
   SYMBOLS_EXAMPLE: ['BTCUSDT', 'BNBUSDT', 'ETHUSDT', 'ADAUSDT'], // Array de moedas para análise
   DEFAULT_SYMBOL: 'BTCUSDT',        // Moeda padrão para bots single-symbol
   TRADE_AMOUNT_USD: 15,             // Valor por trade

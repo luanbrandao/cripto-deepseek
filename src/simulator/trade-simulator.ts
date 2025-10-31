@@ -1,7 +1,14 @@
 import { BinancePublicClient } from '../clients/binance-public-client';
 import { TradeStorage, Trade } from '../storage/trade-storage';
 import { checkActiveSimulationTradesLimit } from '../bots/utils/simulation-limit-checker';
+import { TRADING_CONFIG } from '../bots/config/trading-config';
 import * as path from 'path';
+
+interface SymbolAnalysis {
+  symbol: string;
+  analysis: any;
+  score: number;
+}
 
 interface Portfolio {
   balance: number;
@@ -18,7 +25,7 @@ export class TradeSimulator {
   private tradesFile: string;
   private analyzer: any;
 
-  constructor(analyzer: any, initialBalance: number = 1000, symbol: string = 'BTCUSDT', tradesFile?: string) {
+  constructor(analyzer: any, initialBalance: number = 1000, symbols?: string[], tradesFile?: string) {
     this.analyzer = analyzer;
     this.portfolio = {
       balance: initialBalance,
@@ -27,12 +34,120 @@ export class TradeSimulator {
       winTrades: 0
     };
     this.binance = new BinancePublicClient();
-    this.symbol = symbol;
+    this.symbol = symbols ? symbols[0] : TRADING_CONFIG.DEFAULT_SYMBOL;
     const analyzerName = analyzer.name || analyzer.constructor.name;
     this.tradesFile = tradesFile || path.join(__dirname, `../trades/${analyzerName.toLowerCase()}Trades.json`);
   }
 
-  async simulate() {
+  async simulate(symbols: string[] = TRADING_CONFIG.SYMBOLS) {
+    console.log(`🎯 Iniciando simulação multi-moeda`);
+    console.log(`💰 Saldo inicial: $${this.portfolio.balance}`);
+    console.log(`🔍 Analisando ${symbols.length} moedas...\n`);
+
+    if (!checkActiveSimulationTradesLimit(this.tradesFile)) {
+      return;
+    }
+
+    try {
+      const bestAnalysis = await this.analyzeMultipleSymbols(symbols);
+      
+      if (!bestAnalysis) {
+        console.log('\n⏸️ Nenhuma oportunidade encontrada - todas as moedas em HOLD');
+        return;
+      }
+      
+      this.symbol = bestAnalysis.symbol;
+      
+      // Executar trade da melhor oportunidade
+      const klines = await this.binance.getKlines(this.symbol, '1h', 50);
+      const currentPrice = parseFloat(klines[klines.length - 1][4]);
+      
+      this.executeTrade(bestAnalysis.analysis, currentPrice);
+      this.showResults(currentPrice);
+
+    } catch (error) {
+      console.error('❌ Erro na simulação:', error);
+    }
+  }
+
+  private async analyzeMultipleSymbols(symbols: string[]): Promise<SymbolAnalysis | null> {
+    const analyses: SymbolAnalysis[] = [];
+    
+    for (const symbol of symbols) {
+      try {
+        console.log(`\n📊 Analisando ${symbol}...`);
+        
+        // Obter dados históricos
+        const klines = await this.binance.getKlines(symbol, '1h', 50);
+        const prices = klines.map((k: any) => parseFloat(k[4]));
+        const currentPrice = prices[prices.length - 1];
+
+        // Preparar dados baseado no tipo de analisador
+        let marketData: any;
+        const analyzerName = this.analyzer.name || this.analyzer.constructor.name;
+        
+        if (analyzerName === 'Analyzer123') {
+          const candles = klines.map((k: any) => ({
+            open: parseFloat(k[1]),
+            high: parseFloat(k[2]),
+            low: parseFloat(k[3]),
+            close: parseFloat(k[4])
+          }));
+          marketData = { candles, currentPrice };
+        } else {
+          marketData = { price24h: prices, currentPrice };
+        }
+
+        // Analisar mercado
+        const analysis = this.analyzer.analyze(marketData);
+        
+        // Calcular score
+        let score = 0;
+        if (analysis.action === 'BUY' || analysis.action === 'SELL') {
+          score = analysis.confidence;
+        }
+        
+        analyses.push({ symbol, analysis, score });
+        console.log(`   ${symbol}: ${analysis.action} (${analysis.confidence}% confiança, score: ${score})`);
+        
+      } catch (error) {
+        console.log(`   ❌ Erro ao analisar ${symbol}:`, error);
+      }
+    }
+    
+    // Log resumo
+    console.log('\n📋 RESUMO DAS ANÁLISES:');
+    console.log('═'.repeat(60));
+    analyses.forEach(analysis => {
+      const emoji = analysis.analysis.action === 'BUY' ? '🟢' : analysis.analysis.action === 'SELL' ? '🔴' : '⚪';
+      console.log(`${emoji} ${analysis.symbol.padEnd(10)} | ${analysis.analysis.action.padEnd(4)} | ${analysis.analysis.confidence}% | ${analysis.analysis.reason}`);
+    });
+    console.log('═'.repeat(60));
+    
+    // Encontrar melhor oportunidade
+    const validAnalyses = analyses.filter(a => a.analysis.action !== 'HOLD');
+    const bestAnalysis = validAnalyses.sort((a, b) => b.score - a.score)[0];
+    
+    if (bestAnalysis) {
+      console.log('\n🏆 DECISÃO FINAL:');
+      console.log(`🎯 VENCEDORA: ${bestAnalysis.symbol} (${bestAnalysis.analysis.action})`);
+      console.log(`📊 Confiança: ${bestAnalysis.score}%`);
+      console.log(`💡 Motivo da escolha: Maior confiança entre ${validAnalyses.length} oportunidades válidas`);
+      
+      if (validAnalyses.length > 1) {
+        const secondBest = validAnalyses[1];
+        console.log(`📈 Segunda opção: ${secondBest.symbol} (${secondBest.score}% confiança)`);
+        console.log(`⚡ Vantagem: +${(bestAnalysis.score - secondBest.score).toFixed(1)}% de confiança`);
+      }
+      
+      return bestAnalysis;
+    }
+    
+    return null;
+  }
+
+  // Método legado para compatibilidade
+  async simulateSingle() {
     console.log(`🎯 Iniciando simulação para ${this.symbol}`);
     console.log(`💰 Saldo inicial: $${this.portfolio.balance}\n`);
 
