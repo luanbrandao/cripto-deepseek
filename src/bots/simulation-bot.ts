@@ -92,7 +92,7 @@ async function main() {
   logBotHeader('SIMULATION BOT', 'DeepSeek AI + API Binance - SIMULAÇÃO COMPLETA');
   console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
 
-  const tradesFile = path.join(__dirname, 'trades/aiTradingBot.json');
+  const tradesFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.SIMULATION}`);
   if (!checkActiveSimulationTradesLimit(tradesFile)) {
     return;
   }
@@ -106,7 +106,7 @@ async function main() {
 
   try {
     // Obter dados de mercado
-    const symbol = 'BNBUSDT';
+    const symbol = TRADING_CONFIG.DEFAULT_SYMBOL;
     const { price, stats } = await getMarketData(binancePublic, symbol);
 
     // Analisar com DeepSeek
@@ -142,8 +142,8 @@ async function main() {
       entryPrice: decision.price,
       targetPrice: decision.action === 'BUY' ? decision.price * 1.02 : decision.price * 0.98,
       stopPrice: decision.action === 'BUY' ? decision.price * 0.99 : decision.price * 1.01,
-      amount: orderResult ? 100 : 0, // $100 simulado
-      balance: 1000, // Saldo simulado
+      amount: orderResult ? TRADING_CONFIG.TRADE_AMOUNT_USD : 0,
+      balance: TRADING_CONFIG.SIMULATION.INITIAL_BALANCE,
       crypto: 0,
       reason: decision.reason,
       confidence: decision.confidence,
@@ -161,9 +161,9 @@ async function main() {
       trade.actualReturn = 0;
     }
 
-    const tradesFile = path.join(__dirname, 'trades/aiTradingBot.json');
-    TradeStorage.saveTrades([trade], tradesFile);
-    console.log('\n💾 Trade salvo no histórico: aiTradingBot.json');
+    const saveFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.SIMULATION}`);
+    TradeStorage.saveTrades([trade], saveFile);
+    console.log(`\n💾 Trade salvo no histórico: ${TRADING_CONFIG.FILES.SIMULATION}`);
 
     console.log('\n✅ Execução completa do Trading Bot');
 

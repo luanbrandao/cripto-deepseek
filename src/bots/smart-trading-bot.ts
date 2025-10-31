@@ -3,10 +3,11 @@ import { BinancePrivateClient } from '../clients/binance-private-client';
 import { DeepSeekService } from '../clients/deepseek-client';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { calculateRiskReward } from './utils/trade-validators';
-import { logBotHeader, } from './utils/bot-logger';
+import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { getMarketData } from './utils/market-data-fetcher';
 import { analyzeWithDeepSeek } from './utils/deepseek-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
+import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
 import { validateBinanceKeys } from './utils/env-validator';
 import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
@@ -46,7 +47,7 @@ class SmartTradingBot {
     return orderResult;
   }
 
-  async executeTrade(symbol: string = 'BTCUSDT') {
+  async executeTrade(symbol: string = TRADING_CONFIG.DEFAULT_SYMBOL) {
     this.logBotInfo();
 
     try {
@@ -87,8 +88,8 @@ class SmartTradingBot {
   }
 
   private async saveTradeHistory(decision: any, orderResult: any) {
-    const trade = createTradeRecord(decision, orderResult, 'smartTradingBot.json');
-    saveTradeHistory(trade, 'smartTradingBot.json');
+    const trade = createTradeRecord(decision, orderResult, TRADING_CONFIG.FILES.SMART_BOT);
+    saveTradeHistory(trade, TRADING_CONFIG.FILES.SMART_BOT);
   }
 }
 
@@ -99,13 +100,10 @@ async function main() {
   const { apiKey, apiSecret } = keys;
 
   const smartBot = new SmartTradingBot(apiKey, apiSecret);
-  await smartBot.executeTrade('BTCUSDT');
+  await smartBot.executeTrade();
 }
 
-console.log('⚠️  ATENÇÃO: Smart Bot executará ordens REAIS na Binance!');
-console.log('🧠 Análise dupla: EMA + DeepSeek AI para máxima precisão');
-console.log('🛑 Pressione Ctrl+C para cancelar ou aguarde 5 segundos para continuar...');
-
-setTimeout(() => {
-  main();
-}, 5000);
+logBotStartup(
+  'Smart Bot',
+  '🧠 Análise dupla: EMA + DeepSeek AI para máxima precisão'
+).then(() => main());

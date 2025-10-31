@@ -4,6 +4,7 @@ import { initializeBotClients, validateTradingConditions } from './utils/bot-ini
 import { executeAndSaveTradeWithValidation, handleBotError } from './utils/bot-executor';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { getMarketData } from './utils/market-data-fetcher';
+import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -21,7 +22,7 @@ async function main() {
       return;
     }
 
-    const symbol = 'BNBUSDT';
+    const symbol = TRADING_CONFIG.DEFAULT_SYMBOL;
     const { price, stats, klines } = await getMarketData(binancePublic, symbol);
 
     console.log('\n🧠 Analisando mercado com DeepSeek AI...');
@@ -38,7 +39,7 @@ async function main() {
     const orderResult = await executeAndSaveTradeWithValidation(
       decision, 
       binancePrivate, 
-      'realTradingBot.json', 
+      TRADING_CONFIG.FILES.REAL_BOT, 
       'REAL'
     );
 

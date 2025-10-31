@@ -3,6 +3,7 @@ import { initializeBotClients, validateTradingConditions } from './utils/bot-ini
 import { executeAndSaveTradeWithValidation, handleBotError } from './utils/bot-executor';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { logMarketInfo } from './utils/market-data-logger';
+import { TRADING_CONFIG } from './config/trading-config';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
 import * as dotenv from 'dotenv';
 import { BinancePublicClient } from '../clients/binance-public-client';
@@ -25,7 +26,10 @@ class EmaTradingBot {
   constructor(apiKey: string, apiSecret: string) {
     this.binancePublic = new BinancePublicClient();
     this.binancePrivate = new BinancePrivateClient(apiKey, apiSecret);
-    this.emaAnalyzer = new EmaAnalyzer({ fastPeriod: 12, slowPeriod: 26 });
+    this.emaAnalyzer = new EmaAnalyzer({ 
+      fastPeriod: TRADING_CONFIG.EMA.FAST_PERIOD, 
+      slowPeriod: TRADING_CONFIG.EMA.SLOW_PERIOD 
+    });
   }
 
   private logBotInfo() {
@@ -74,12 +78,12 @@ class EmaTradingBot {
     return await executeAndSaveTradeWithValidation(
       decision,
       this.binancePrivate,
-      'emaTradingBot.json',
+      TRADING_CONFIG.FILES.EMA_BOT,
       'EMA'
     );
   }
 
-  async executeTrade(symbol: string = 'BTCUSDT') {
+  async executeTrade(symbol: string = TRADING_CONFIG.DEFAULT_SYMBOL) {
     this.logBotInfo();
 
     try {
@@ -114,8 +118,10 @@ async function main() {
   const clients = await initializeBotClients();
   if (!clients) return;
 
-  const emaBot = new EmaTradingBot(clients.binancePrivate.constructor.arguments[0], clients.binancePrivate.constructor.arguments[1]);
-  await emaBot.executeTrade('BTCUSDT');
+  const emaBot = new EmaTradingBot('', '');
+  emaBot['binancePublic'] = clients.binancePublic;
+  emaBot['binancePrivate'] = clients.binancePrivate;
+  await emaBot.executeTrade();
 }
 
 logBotStartup(

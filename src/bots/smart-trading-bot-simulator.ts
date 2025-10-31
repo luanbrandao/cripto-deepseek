@@ -65,10 +65,10 @@ class SmartTradingBotSimulator {
     return simulatedOrder;
   }
 
-  async simulateTrade(symbol: string = 'BTCUSDT') {
+  async simulateTrade(symbol: string = TRADING_CONFIG.DEFAULT_SYMBOL) {
     this.logBotInfo();
 
-    const tradesFile = path.join(__dirname, 'trades/smartTradingBotSimulator.json');
+    const tradesFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.SMART_SIMULATOR}`);
     if (!checkActiveSimulationTradesLimit(tradesFile)) {
       return null;
     }
@@ -105,18 +105,18 @@ class SmartTradingBotSimulator {
   }
 
   private async saveTradeHistory(decision: any, simulatedOrder: any) {
-    const trade = createTradeRecord(decision, simulatedOrder, 'smartTradingBotSimulator.json');
-    saveTradeHistory(trade, 'smartTradingBotSimulator.json');
+    const trade = createTradeRecord(decision, simulatedOrder, TRADING_CONFIG.FILES.SMART_SIMULATOR);
+    saveTradeHistory(trade, TRADING_CONFIG.FILES.SMART_SIMULATOR);
   }
 }
 
 async function main() {
   const smartBotSimulator = new SmartTradingBotSimulator();
-  await smartBotSimulator.simulateTrade('BTCUSDT');
+  await smartBotSimulator.simulateTrade();
 }
 
 logBotStartup(
   'Smart Bot Simulator',
   '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise dupla: EMA + DeepSeek AI',
-  3000
+  TRADING_CONFIG.SIMULATION.STARTUP_DELAY
 ).then(() => main());
