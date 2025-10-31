@@ -19,11 +19,24 @@ export function validateDeepSeekDecision(decision: any): boolean {
   return true;
 }
 
+import { validateRiskReward, calculateRiskReward } from './trade-validators';
+
+export function validateRiskRewardRatio(decision: any): boolean {
+  const { riskPercent, rewardPercent } = calculateRiskReward(decision.confidence);
+  return validateRiskReward(riskPercent, rewardPercent);
+}
+
 export function boostConfidence(decision: any) {
+  // VALIDAÇÃO OBRIGATÓRIA: Risk/Reward 2:1
+  if (!validateRiskRewardRatio(decision)) {
+    throw new Error('Risk/Reward ratio insuficiente - trade cancelado');
+  }
+  
   const boostedConfidence = Math.min(95, decision.confidence + 10);
   decision.confidence = boostedConfidence;
   decision.reason = `${decision.reason} + Tendência de alta confirmada pelo EMA`;
   
   console.log('🎯 DUPLA CONFIRMAÇÃO: EMA + DEEPSEEK AI APROVAM COMPRA!');
+  console.log('✅ Risk/Reward 2:1 confirmado!');
   return decision;
 }

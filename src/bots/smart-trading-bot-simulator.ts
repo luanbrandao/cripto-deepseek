@@ -2,6 +2,7 @@ import { BinancePublicClient } from '../clients/binance-public-client';
 import { DeepSeekService } from '../clients/deepseek-client';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
+import { calculateRiskReward } from './utils/trade-validators';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
 import { getMarketData } from './utils/market-data-fetcher';
 import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
@@ -24,7 +25,9 @@ class SmartTradingBotSimulator {
     console.log('🚀 SMART TRADING BOT SIMULATOR - ANÁLISE DUPLA (EMA + DEEPSEEK AI)');
     console.log('✅ MODO SIMULAÇÃO - Nenhuma ordem real será executada');
     console.log(`💵 Valor simulado por trade: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
-    console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%\n`);
+    console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%`);
+    console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)`);
+    console.log('✅ GARANTIA: Todas as simulações terão reward 2x maior que o risco\n');
   }
 
 
@@ -87,8 +90,14 @@ class SmartTradingBotSimulator {
         return null;
       }
 
-      // 4. Boost de confiança e simular trade
+      // 4. Boost de confiança com validação 2:1 obrigatória
       const boostedDecision = boostConfidence(decision);
+      
+      // 5. VALIDAÇÃO FINAL: Confirmar Risk/Reward 2:1 antes da simulação
+      console.log('🔍 Validação final de Risk/Reward 2:1 para simulação...');
+      const { riskPercent, rewardPercent } = calculateRiskReward(boostedDecision.confidence);
+      console.log(`📊 R/R calculado: ${(rewardPercent*100).toFixed(1)}%/${(riskPercent*100).toFixed(1)}% (${(rewardPercent/riskPercent).toFixed(1)}:1)`);
+      
       return await this.simulateAndSave(boostedDecision);
 
     } catch (error) {

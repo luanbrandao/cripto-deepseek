@@ -5,18 +5,14 @@ import { TradeStorage, Trade } from '../storage/trade-storage';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
 import { getMarketData } from './utils/market-data-fetcher';
 import { validateBinanceKeys } from './utils/env-validator';
+import { TradeDecision, validateTrade, calculateRiskReward } from './utils/trade-validators';
+import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 dotenv.config();
 
-interface TradeDecision {
-  action: 'BUY' | 'SELL' | 'HOLD';
-  confidence: number;
-  reason: string;
-  symbol: string;
-  price: number;
-}
+
 
 // Simulação completa de trading (inclui verificação de conta da Binance e DeepSeek, NÃO FAZ TRADE REAL)
 // apenas testa se está tudo funcionando antes de executar o real-trading-bot
@@ -90,9 +86,13 @@ async function executeTradeDecision(decision: TradeDecision, binancePrivate: Bin
   }
 }
 
+
+
 async function main() {
   console.log('🚀 ANÁLISE DE MERCADO COM DEEPSEEK AI e API privada da Binance');
   console.log('🚀 NÃO EXECUTA TRADE REAIS');
+  console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)`);
+  console.log('✅ GARANTIA: Simulação terá reward 2x maior que o risco\n');
 
   const tradesFile = path.join(__dirname, 'trades/aiTradingBot.json');
   if (!checkActiveSimulationTradesLimit(tradesFile)) {
@@ -112,7 +112,7 @@ async function main() {
 
   try {
     // Obter dados de mercado
-    const symbol = 'BTCUSDT';
+    const symbol = 'BNBUSDT';
     const { price, stats } = await getMarketData(binancePublic, symbol);
 
     // Analisar com DeepSeek
@@ -128,6 +128,14 @@ async function main() {
     // Interpretar análise e tomar decisão
     const decision = await parseDeepSeekAnalysis(analysis, symbol, parseFloat(price.price));
 
+    // VALIDAÇÃO COMPLETA: Confiança + Ação + Risk/Reward 2:1
+    const { riskPercent, rewardPercent } = calculateRiskReward(decision.confidence);
+    
+    if (!validateTrade(decision, riskPercent, rewardPercent)) {
+      console.log('❌ Simulação cancelada - Validações falharam');
+      return;
+    }
+    
     // Executar trade (simulado)
     const orderResult = await executeTradeDecision(decision, binancePrivate);
 
@@ -138,8 +146,8 @@ async function main() {
       action: decision.action,
       price: decision.price,
       entryPrice: decision.price,
-      targetPrice: decision.action === 'BUY' ? decision.price * 1.03 : decision.price * 0.97,
-      stopPrice: decision.action === 'BUY' ? decision.price * 0.98 : decision.price * 1.02,
+      targetPrice: decision.action === 'BUY' ? decision.price * 1.02 : decision.price * 0.98,
+      stopPrice: decision.action === 'BUY' ? decision.price * 0.99 : decision.price * 1.01,
       amount: orderResult ? 100 : 0, // $100 simulado
       balance: 1000, // Saldo simulado
       crypto: 0,
@@ -147,9 +155,9 @@ async function main() {
       confidence: decision.confidence,
       status: orderResult ? 'pending' : 'completed',
       riskReturn: {
-        potentialGain: decision.price * 0.03,
-        potentialLoss: decision.price * 0.02,
-        riskRewardRatio: 1.5
+        potentialGain: decision.price * 0.02,  // 2% gain
+        potentialLoss: decision.price * 0.01,  // 1% loss
+        riskRewardRatio: 2.0                   // SEMPRE 2:1
       }
     };
 

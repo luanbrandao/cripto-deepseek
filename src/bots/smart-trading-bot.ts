@@ -5,6 +5,7 @@ import { TradeExecutor } from './services/trade-executor';
 import { AnalysisParser } from './services/analysis-parser';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
+import { calculateRiskReward } from './utils/trade-validators';
 import { checkActiveTradesLimit } from './utils/trade-limit-checker';
 import { getMarketData } from './utils/market-data-fetcher';
 import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
@@ -33,7 +34,8 @@ class SmartTradingBot {
     console.log('🚀 SMART TRADING BOT - ANÁLISE DUPLA (EMA + DEEPSEEK AI)');
     console.log('⚠️  ATENÇÃO: Este bot executará ordens reais na Binance!');
     console.log(`💵 Valor por trade: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
-    console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%\n`);
+    console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%`);
+    console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (MÍNIMO)\n`);
   }
 
   private async executeAndSave(decision: any) {
@@ -73,8 +75,14 @@ class SmartTradingBot {
         return null;
       }
 
-      // 5. Boost de confiança e executar trade
+      // 5. Boost de confiança com validação 2:1 obrigatória
       const boostedDecision = boostConfidence(decision);
+      
+      // 6. VALIDAÇÃO FINAL: Garantir que TradeExecutor também valide 2:1
+      console.log('🔍 Validação final de Risk/Reward antes da execução...');
+      const { riskPercent, rewardPercent } = calculateRiskReward(boostedDecision.confidence);
+      console.log(`📊 R/R calculado: ${(rewardPercent*100).toFixed(1)}%/${(riskPercent*100).toFixed(1)}% (${(rewardPercent/riskPercent).toFixed(1)}:1)`);
+      
       return await this.executeAndSave(boostedDecision);
 
     } catch (error) {

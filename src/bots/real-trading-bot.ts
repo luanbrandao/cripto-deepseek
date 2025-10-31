@@ -4,6 +4,7 @@ import { DeepSeekService } from '../clients/deepseek-client';
 import { TradeExecutor } from './services/trade-executor';
 import { AnalysisParser } from './services/analysis-parser';
 import { TRADING_CONFIG } from './config/trading-config';
+import { calculateRiskReward } from './utils/trade-validators';
 import * as dotenv from 'dotenv';
 import { checkActiveTradesLimit } from './utils/trade-limit-checker';
 import { getMarketData } from './utils/market-data-fetcher';
@@ -26,7 +27,8 @@ async function main() {
   console.log('⚠️  ATENÇÃO: Este bot executará ordens reais na Binance!');
   console.log(`💵 Valor por trade: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
   console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%`);
-  console.log(`🎯 Risk/Reward: Dinâmico (mínimo ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 para executar)\n`);
+  console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)`);
+  console.log('✅ GARANTIA: Todos os trades terão reward 2x maior que o risco\n');
 
   try {
     if (!await checkActiveTradesLimit(binancePrivate)) {
@@ -46,6 +48,11 @@ async function main() {
     console.log(analysis.substring(0, 500) + '...');
 
     const decision = await AnalysisParser.parseDeepSeekAnalysis(analysis, symbol, parseFloat(price.price));
+    
+    console.log('🔍 VALIDAÇÃO FINAL: Verificando Risk/Reward 2:1 obrigatório...');
+    const { riskPercent, rewardPercent } = calculateRiskReward(decision.confidence);
+    console.log(`📊 R/R calculado: ${(rewardPercent*100).toFixed(1)}%/${(riskPercent*100).toFixed(1)}% (${(rewardPercent/riskPercent).toFixed(1)}:1)`);
+    
     const orderResult = await TradeExecutor.executeRealTrade(decision, binancePrivate);
 
     const trade = createTradeRecord(decision, orderResult, 'realTradingBot.json');

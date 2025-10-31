@@ -60,12 +60,19 @@ export class TradeExecutor {
 
     console.log(`📊 Risk/Reward: ${(rewardPercent * 100).toFixed(1)}%/${(riskPercent * 100).toFixed(1)}% (${riskRewardRatio.toFixed(1)}:1)`);
 
-    if (!RiskManager.validateRiskReward(riskPercent, rewardPercent)) {
-      console.log(`❌ Trade rejeitado - R/R ${riskRewardRatio.toFixed(1)}:1 < ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
+    // VALIDAÇÃO RIGOROSA: MÍNIMO 2:1
+    if (riskRewardRatio < TRADING_CONFIG.MIN_RISK_REWARD_RATIO) {
+      console.log(`❌ Trade REJEITADO - R/R ${riskRewardRatio.toFixed(2)}:1 < ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (MÍNIMO OBRIGATÓRIO)`);
       return false;
     }
 
-    console.log(`✅ Risk/Reward aprovado: ${riskRewardRatio.toFixed(1)}:1`);
+    // VALIDAÇÃO EXTRA: Garantir que é pelo menos 2:1
+    if (!RiskManager.validateRiskReward(riskPercent, rewardPercent)) {
+      console.log(`❌ Trade rejeitado - Falha na validação do RiskManager`);
+      return false;
+    }
+
+    console.log(`✅ Risk/Reward APROVADO: ${riskRewardRatio.toFixed(1)}:1 (≥ 2:1)`);
     return true;
   }
 

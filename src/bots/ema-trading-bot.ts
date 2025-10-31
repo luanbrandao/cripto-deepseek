@@ -2,6 +2,7 @@ import { BinancePublicClient } from '../clients/binance-public-client';
 import { BinancePrivateClient } from '../clients/binance-private-client';
 import { TradeExecutor } from './services/trade-executor';
 import { TRADING_CONFIG } from './config/trading-config';
+import { TradeDecision, validateTrade, calculateRiskReward } from './utils/trade-validators';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
 import { checkActiveTradesLimit } from './utils/trade-limit-checker';
 import { logMarketInfo } from './utils/market-data-logger';
@@ -16,13 +17,7 @@ interface MarketData {
   currentPrice: number;
 }
 
-interface TradeDecision {
-  action: 'BUY' | 'SELL' | 'HOLD';
-  confidence: number;
-  reason: string;
-  symbol: string;
-  price: number;
-}
+
 
 class EmaTradingBot {
   private binancePublic: BinancePublicClient;
@@ -39,7 +34,8 @@ class EmaTradingBot {
     console.log('🚀 EMA TRADING BOT - ESTRATÉGIA EMA 12/26');
     console.log('⚠️  ATENÇÃO: Este bot executará ordens reais na Binance!');
     console.log(`💵 Valor por trade: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
-    console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%\n`);
+    console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%`);
+    console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)\n`);
   }
 
   private async getMarketData(symbol: string): Promise<MarketData> {
@@ -76,18 +72,8 @@ class EmaTradingBot {
   }
 
   private validateDecision(decision: TradeDecision): boolean {
-    if (decision.action === 'HOLD') {
-      console.log('⏸️ EMA recomenda aguardar - mercado sem sinal claro');
-      return false;
-    }
-
-    if (decision.confidence < TRADING_CONFIG.MIN_CONFIDENCE) {
-      console.log(`⏸️ Confiança ${decision.confidence}% < ${TRADING_CONFIG.MIN_CONFIDENCE}% mínimo`);
-      return false;
-    }
-
-    console.log(`✅ Sinal EMA aprovado: ${decision.action} com ${decision.confidence}% confiança`);
-    return true;
+    const { riskPercent, rewardPercent } = calculateRiskReward(decision.confidence);
+    return validateTrade(decision, riskPercent, rewardPercent);
   }
 
   private async executeAndSave(decision: TradeDecision) {

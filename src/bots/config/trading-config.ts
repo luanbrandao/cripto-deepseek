@@ -2,11 +2,15 @@ export const TRADING_CONFIG = {
   TRADE_AMOUNT_USD: 15,
   MIN_CONFIDENCE: 70,
   TRADE_COOLDOWN_MINUTES: 5,
-  MIN_RISK_REWARD_RATIO: 2.0,
+  
+  // GARANTIA 2:1 - Reward sempre 2x maior que risco
+  MIN_RISK_REWARD_RATIO: 2.0,  // OBRIGATÓRIO: Mínimo 2:1
+  
   RISK: {
-    BASE_PERCENT: 0.5,
-    MAX_PERCENT: 1.5
+    BASE_PERCENT: 0.5,    // 0.5% risco mínimo → 1.0% reward
+    MAX_PERCENT: 1.5      // 1.5% risco máximo → 3.0% reward
   }
+  // Resultado: Risk 0.5%-1.5% | Reward 1.0%-3.0% (sempre 2:1)
 };
 
 export class TradingState {
