@@ -1,18 +1,17 @@
 import { BinancePublicClient } from '../clients/binance-public-client';
 import { BinancePrivateClient } from '../clients/binance-private-client';
 import { DeepSeekService } from '../clients/deepseek-client';
-import { TradeExecutor } from './services/trade-executor';
-import { AnalysisParser } from './services/analysis-parser';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
-import { TRADING_CONFIG } from './config/trading-config';
 import { calculateRiskReward } from './utils/trade-validators';
-import { checkActiveTradesLimit } from './utils/trade-limit-checker';
+import { logBotHeader, } from './utils/bot-logger';
 import { getMarketData } from './utils/market-data-fetcher';
-import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
-import { validateBinanceKeys } from './utils/env-validator';
 import { analyzeWithDeepSeek } from './utils/deepseek-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
 import * as dotenv from 'dotenv';
+import { validateBinanceKeys } from './utils/env-validator';
+import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
+import { checkActiveTradesLimit } from './utils/trade-limit-checker';
+import { TradeExecutor } from './services/trade-executor';
 
 dotenv.config();
 
@@ -31,11 +30,7 @@ class SmartTradingBot {
 
 
   private logBotInfo() {
-    console.log('🚀 SMART TRADING BOT - ANÁLISE DUPLA (EMA + DEEPSEEK AI)');
-    console.log('⚠️  ATENÇÃO: Este bot executará ordens reais na Binance!');
-    console.log(`💵 Valor por trade: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
-    console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%`);
-    console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (MÍNIMO)\n`);
+    logBotHeader('SMART TRADING BOT', 'Análise Dupla (EMA + DeepSeek AI)');
   }
 
   private async executeAndSave(decision: any) {
@@ -77,12 +72,12 @@ class SmartTradingBot {
 
       // 5. Boost de confiança com validação 2:1 obrigatória
       const boostedDecision = boostConfidence(decision);
-      
+
       // 6. VALIDAÇÃO FINAL: Garantir que TradeExecutor também valide 2:1
       console.log('🔍 Validação final de Risk/Reward antes da execução...');
       const { riskPercent, rewardPercent } = calculateRiskReward(boostedDecision.confidence);
-      console.log(`📊 R/R calculado: ${(rewardPercent*100).toFixed(1)}%/${(riskPercent*100).toFixed(1)}% (${(rewardPercent/riskPercent).toFixed(1)}:1)`);
-      
+      console.log(`📊 R/R calculado: ${(rewardPercent * 100).toFixed(1)}%/${(riskPercent * 100).toFixed(1)}% (${(rewardPercent / riskPercent).toFixed(1)}:1)`);
+
       return await this.executeAndSave(boostedDecision);
 
     } catch (error) {

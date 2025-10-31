@@ -1,12 +1,12 @@
-import { BinancePublicClient } from '../clients/binance-public-client';
+
 import { BinancePrivateClient } from '../clients/binance-private-client';
-import { DeepSeekService } from '../clients/deepseek-client';
 import { TradeStorage, Trade } from '../storage/trade-storage';
+import { TradeDecision, validateTrade, calculateRiskReward } from './utils/trade-validators';
+import { initializeBotClients } from './utils/bot-initializer';
+import { logBotHeader, logBotStartup } from './utils/bot-logger';
+import { handleBotError } from './utils/bot-executor';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
 import { getMarketData } from './utils/market-data-fetcher';
-import { validateBinanceKeys } from './utils/env-validator';
-import { TradeDecision, validateTrade, calculateRiskReward } from './utils/trade-validators';
-import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -89,24 +89,18 @@ async function executeTradeDecision(decision: TradeDecision, binancePrivate: Bin
 
 
 async function main() {
-  console.log('🚀 ANÁLISE DE MERCADO COM DEEPSEEK AI e API privada da Binance');
-  console.log('🚀 NÃO EXECUTA TRADE REAIS');
-  console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)`);
-  console.log('✅ GARANTIA: Simulação terá reward 2x maior que o risco\n');
+  logBotHeader('SIMULATION BOT', 'DeepSeek AI + API Binance - SIMULAÇÃO COMPLETA');
+  console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
 
   const tradesFile = path.join(__dirname, 'trades/aiTradingBot.json');
   if (!checkActiveSimulationTradesLimit(tradesFile)) {
     return;
   }
 
-  const keys = validateBinanceKeys();
-  if (!keys) return;
+  const clients = await initializeBotClients();
+  if (!clients) return;
 
-  const { apiKey, apiSecret } = keys;
-
-  const binancePublic = new BinancePublicClient();
-  const binancePrivate = new BinancePrivateClient(apiKey, apiSecret);
-  const deepseek = new DeepSeekService();
+  const { binancePublic, binancePrivate, deepseek } = clients;
 
   console.log('🚀 Iniciando Trading Bot com DeepSeek AI');
 
@@ -130,12 +124,12 @@ async function main() {
 
     // VALIDAÇÃO COMPLETA: Confiança + Ação + Risk/Reward 2:1
     const { riskPercent, rewardPercent } = calculateRiskReward(decision.confidence);
-    
+
     if (!validateTrade(decision, riskPercent, rewardPercent)) {
       console.log('❌ Simulação cancelada - Validações falharam');
       return;
     }
-    
+
     // Executar trade (simulado)
     const orderResult = await executeTradeDecision(decision, binancePrivate);
 
@@ -174,8 +168,11 @@ async function main() {
     console.log('\n✅ Execução completa do Trading Bot');
 
   } catch (error) {
-    console.error('❌ Erro no Trading Bot:', error);
+    handleBotError('Simulation Bot', error);
   }
 }
 
-main();
+logBotStartup(
+  'Simulation Bot',
+  '🧪 Simulação completa com DeepSeek AI'
+).then(() => main());

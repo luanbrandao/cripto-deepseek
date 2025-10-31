@@ -1,14 +1,12 @@
+import { TradeDecision, validateTrade, calculateRiskReward } from './utils/trade-validators';
+import { initializeBotClients, validateTradingConditions } from './utils/bot-initializer';
+import { executeAndSaveTradeWithValidation, handleBotError } from './utils/bot-executor';
+import { logBotHeader, logBotStartup } from './utils/bot-logger';
+import { logMarketInfo } from './utils/market-data-logger';
+import EmaAnalyzer from '../analyzers/emaAnalyzer';
+import * as dotenv from 'dotenv';
 import { BinancePublicClient } from '../clients/binance-public-client';
 import { BinancePrivateClient } from '../clients/binance-private-client';
-import { TradeExecutor } from './services/trade-executor';
-import { TRADING_CONFIG } from './config/trading-config';
-import { TradeDecision, validateTrade, calculateRiskReward } from './utils/trade-validators';
-import EmaAnalyzer from '../analyzers/emaAnalyzer';
-import { checkActiveTradesLimit } from './utils/trade-limit-checker';
-import { logMarketInfo } from './utils/market-data-logger';
-import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
-import { validateBinanceKeys } from './utils/env-validator';
-import * as dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -31,11 +29,7 @@ class EmaTradingBot {
   }
 
   private logBotInfo() {
-    console.log('🚀 EMA TRADING BOT - ESTRATÉGIA EMA 12/26');
-    console.log('⚠️  ATENÇÃO: Este bot executará ordens reais na Binance!');
-    console.log(`💵 Valor por trade: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
-    console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%`);
-    console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)\n`);
+    logBotHeader('EMA TRADING BOT', 'Médias Móveis Exponenciais (EMA 12/26)');
   }
 
   private async getMarketData(symbol: string): Promise<MarketData> {
@@ -56,9 +50,9 @@ class EmaTradingBot {
 
   private analyzeWithEma(symbol: string, marketData: MarketData): TradeDecision {
     console.log('\n📊 Analisando mercado com EMA 12/26...');
-    
+
     const analysis = this.emaAnalyzer.analyze(marketData);
-    
+
     console.log(`📈 Sinal EMA: ${analysis.action} (${analysis.confidence}%)`);
     console.log(`💭 Razão: ${analysis.reason}`);
 
@@ -77,16 +71,12 @@ class EmaTradingBot {
   }
 
   private async executeAndSave(decision: TradeDecision) {
-    const orderResult = await TradeExecutor.executeRealTrade(decision, this.binancePrivate);
-    await this.saveTradeHistory(decision, orderResult);
-
-    if (orderResult) {
-      console.log('\n🎯 EMA TRADE EXECUTADO COM SUCESSO!');
-      console.log('📱 Monitore a posição');
-      console.log('⚠️  Trading automatizado envolve riscos!');
-    }
-
-    return orderResult;
+    return await executeAndSaveTradeWithValidation(
+      decision,
+      this.binancePrivate,
+      'emaTradingBot.json',
+      'EMA'
+    );
   }
 
   async executeTrade(symbol: string = 'BTCUSDT') {
@@ -94,7 +84,7 @@ class EmaTradingBot {
 
     try {
       // 1. Verificar trades ativos
-      if (!await checkActiveTradesLimit(this.binancePrivate)) {
+      if (!await validateTradingConditions(this.binancePrivate)) {
         return null;
       }
 
@@ -113,31 +103,22 @@ class EmaTradingBot {
       return await this.executeAndSave(decision);
 
     } catch (error) {
-      console.error('❌ Erro no EMA Trading Bot:', error);
-      return null;
+      return handleBotError('EMA Trading Bot', error);
     }
   }
 
-  private async saveTradeHistory(decision: TradeDecision, orderResult: any) {
-    const trade = createTradeRecord(decision, orderResult, 'emaTradingBot.json');
-    saveTradeHistory(trade, 'emaTradingBot.json');
-  }
+
 }
 
 async function main() {
-  const keys = validateBinanceKeys();
-  if (!keys) return;
+  const clients = await initializeBotClients();
+  if (!clients) return;
 
-  const { apiKey, apiSecret } = keys;
-
-  const emaBot = new EmaTradingBot(apiKey, apiSecret);
+  const emaBot = new EmaTradingBot(clients.binancePrivate.constructor.arguments[0], clients.binancePrivate.constructor.arguments[1]);
   await emaBot.executeTrade('BTCUSDT');
 }
 
-console.log('⚠️  ATENÇÃO: EMA Bot executará ordens REAIS na Binance!');
-console.log('📊 Estratégia: Médias Móveis Exponenciais (EMA 12/26)');
-console.log('🛑 Pressione Ctrl+C para cancelar ou aguarde 5 segundos para continuar...');
-
-setTimeout(() => {
-  main();
-}, 5000);
+logBotStartup(
+  'EMA Bot',
+  '📊 Estratégia: Médias Móveis Exponenciais (EMA 12/26)'
+).then(() => main());

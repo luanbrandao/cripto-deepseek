@@ -3,6 +3,8 @@ import { DeepSeekService } from '../clients/deepseek-client';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { calculateRiskReward } from './utils/trade-validators';
+import { logBotHeader, logBotStartup } from './utils/bot-logger';
+import { handleBotError } from './utils/bot-executor';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
 import { getMarketData } from './utils/market-data-fetcher';
 import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
@@ -24,10 +26,7 @@ class SmartTradingBotSimulator {
   private logBotInfo() {
     console.log('🚀 SMART TRADING BOT SIMULATOR - ANÁLISE DUPLA (EMA + DEEPSEEK AI)');
     console.log('✅ MODO SIMULAÇÃO - Nenhuma ordem real será executada');
-    console.log(`💵 Valor simulado por trade: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
-    console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%`);
-    console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)`);
-    console.log('✅ GARANTIA: Todas as simulações terão reward 2x maior que o risco\n');
+    logBotHeader('SIMULADOR SMART BOT', 'Análise Dupla (EMA + DeepSeek AI) - SIMULAÇÃO');
   }
 
 
@@ -101,8 +100,7 @@ class SmartTradingBotSimulator {
       return await this.simulateAndSave(boostedDecision);
 
     } catch (error) {
-      console.error('❌ Erro no Smart Trading Bot Simulator:', error);
-      return null;
+      return handleBotError('Smart Trading Bot Simulator', error);
     }
   }
 
@@ -117,11 +115,8 @@ async function main() {
   await smartBotSimulator.simulateTrade('BTCUSDT');
 }
 
-console.log('🧪 SMART TRADING BOT SIMULATOR');
-console.log('✅ Modo seguro - Apenas simulação, sem trades reais');
-console.log('🧠 Análise dupla: EMA + DeepSeek AI');
-console.log('⏳ Iniciando em 3 segundos...');
-
-setTimeout(() => {
-  main();
-}, 3000);
+logBotStartup(
+  'Smart Bot Simulator',
+  '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise dupla: EMA + DeepSeek AI',
+  3000
+).then(() => main());
