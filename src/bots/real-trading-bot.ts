@@ -3,7 +3,7 @@ import { calculateRiskReward } from './utils/trade-validators';
 import { initializeBotClients, validateTradingConditions } from './utils/bot-initializer';
 import { executeAndSaveTradeWithValidation, handleBotError } from './utils/bot-executor';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
-import { getMarketData } from './utils/market-data-fetcher';
+import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
 
@@ -15,26 +15,27 @@ async function main() {
 
   const { binancePublic, binancePrivate, deepseek } = clients;
 
-  logBotHeader('BOT DE TRADING REAL COM DEEPSEEK AI', 'Análise de IA + Execução Real');
+  logBotHeader('MULTI-SYMBOL REAL TRADING BOT', 'Análise de Múltiplas Moedas + DeepSeek AI');
 
   try {
     if (!await validateTradingConditions(binancePrivate)) {
       return;
     }
 
-    const symbol = TRADING_CONFIG.DEFAULT_SYMBOL;
-    const { price, stats, klines } = await getMarketData(binancePublic, symbol);
-
-    console.log('\n🧠 Analisando mercado com DeepSeek AI...');
-    const analysis = await deepseek.analyzeMarket(
-      { price, stats, klines },
-      `Analyze ${symbol} market data including 24h klines. Provide a CLEAR trading recommendation: BUY, SELL, or HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators.`
+    const symbols = TRADING_CONFIG.SYMBOLS;
+    const bestAnalysis = await analyzeMultipleSymbols(
+      symbols, 
+      binancePublic, 
+      deepseek,
+      AnalysisParser.parseDeepSeekAnalysis
     );
-
-    console.log('\n📋 Análise DeepSeek (primeiros 500 chars):');
-    console.log(analysis.substring(0, 500) + '...');
-
-    const decision = await AnalysisParser.parseDeepSeekAnalysis(analysis, symbol, parseFloat(price.price));
+    
+    if (!bestAnalysis) {
+      console.log('\n⏸️ Nenhuma oportunidade de trade encontrada');
+      return;
+    }
+    
+    const decision = bestAnalysis.decision;
     
     const orderResult = await executeAndSaveTradeWithValidation(
       decision, 
