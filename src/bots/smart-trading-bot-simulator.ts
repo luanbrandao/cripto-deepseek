@@ -1,5 +1,4 @@
-import { BinancePublicClient } from '../clients/binance-public-client';
-import { DeepSeekService } from '../clients/deepseek-client';
+import { BaseTradingBot } from './base-trading-bot';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { calculateRiskReward } from './utils/trade-validators';
@@ -12,38 +11,33 @@ import { analyzeWithDeepSeek } from './utils/deepseek-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
 import * as path from 'path';
 
-class SmartTradingBotSimulator {
-  private binancePublic: BinancePublicClient;
-  private deepseek: DeepSeekService;
+export class SmartTradingBotSimulator extends BaseTradingBot {
   private trendAnalyzer: MarketTrendAnalyzer;
 
   constructor() {
-    this.binancePublic = new BinancePublicClient();
-    this.deepseek = new DeepSeekService();
+    super(undefined, undefined, true);
     this.trendAnalyzer = new MarketTrendAnalyzer();
   }
 
-  private logBotInfo() {
+  protected logBotInfo() {
     console.log('🚀 MULTI-SYMBOL SMART TRADING BOT SIMULATOR');
     console.log('✅ MODO SIMULAÇÃO - Nenhuma ordem real será executada');
     logBotHeader('SIMULADOR MULTI-SYMBOL SMART BOT', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - SIMULAÇÃO');
   }
 
-
   private simulateTradeExecution(decision: any) {
     console.log('\n🚨 SIMULANDO EXECUÇÃO DE ORDEM');
-    console.log(`📝 Ordem simulada: ${decision.action} ${decision.symbol} - $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
+    console.log(`📝 Ordem simulada: ${decision.action} ${decision.symbol} - $${this.getTradeAmount()}`);
     console.log(`📊 Confiança final: ${decision.confidence}%`);
     console.log(`💭 Razão: ${decision.reason}`);
 
-    // Simular resultado da ordem
     const simulatedOrder = {
       orderId: 'SIM_' + Date.now(),
       symbol: decision.symbol,
       side: decision.action,
       price: decision.price,
       status: 'SIMULATED',
-      executedQty: (TRADING_CONFIG.TRADE_AMOUNT_USD / decision.price).toFixed(6)
+      executedQty: (this.getTradeAmount() / decision.price).toFixed(6)
     };
 
     console.log('✅ Ordem simulada com sucesso!');
@@ -65,7 +59,7 @@ class SmartTradingBotSimulator {
     return simulatedOrder;
   }
 
-  async simulateTrade() {
+  async executeTrade() {
     this.logBotInfo();
 
     const tradesFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.SMART_SIMULATOR}`);
@@ -74,14 +68,13 @@ class SmartTradingBotSimulator {
     }
 
     try {
-      // 1. Analisar múltiplas moedas com DeepSeek
-      const symbols = TRADING_CONFIG.SYMBOLS;
+      const symbols = this.getSymbols();
       const bestAnalysis = await analyzeMultipleSymbols(
         symbols,
         this.binancePublic,
-        this.deepseek,
+        this.deepseek!,
         async (analysis: string, symbol: string, price: number) => {
-          return await analyzeWithDeepSeek(this.deepseek, symbol, { price: { price: price.toString() }, stats: {} });
+          return await analyzeWithDeepSeek(this.deepseek!, symbol, { price: { price: price.toString() }, stats: {} });
         }
       );
       
@@ -90,21 +83,17 @@ class SmartTradingBotSimulator {
         return null;
       }
 
-      // 2. Verificar tendência com EMA para a moeda escolhida
       const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(bestAnalysis.symbol);
       if (!validateTrendAnalysis(trendAnalysis, true)) {
         return null;
       }
 
-      // 3. Validar decisão do DeepSeek
       if (!validateDeepSeekDecision(bestAnalysis.decision)) {
         return null;
       }
 
-      // 4. Boost de confiança com validação 2:1 obrigatória
       const boostedDecision = boostConfidence(bestAnalysis.decision);
       
-      // 5. VALIDAÇÃO FINAL: Confirmar Risk/Reward 2:1 antes da simulação
       console.log('🔍 Validação final de Risk/Reward 2:1 para simulação...');
       const { riskPercent, rewardPercent } = calculateRiskReward(boostedDecision.confidence);
       console.log(`📊 R/R calculado: ${(rewardPercent*100).toFixed(1)}%/${(riskPercent*100).toFixed(1)}% (${(rewardPercent/riskPercent).toFixed(1)}:1)`);
@@ -124,7 +113,7 @@ class SmartTradingBotSimulator {
 
 async function main() {
   const smartBotSimulator = new SmartTradingBotSimulator();
-  await smartBotSimulator.simulateTrade();
+  await smartBotSimulator.executeTrade();
 }
 
 logBotStartup(

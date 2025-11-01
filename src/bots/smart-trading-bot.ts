@@ -1,6 +1,4 @@
-import { BinancePublicClient } from '../clients/binance-public-client';
-import { BinancePrivateClient } from '../clients/binance-private-client';
-import { DeepSeekService } from '../clients/deepseek-client';
+import { BaseTradingBot } from './base-trading-bot';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { calculateRiskReward } from './utils/trade-validators';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
@@ -16,21 +14,15 @@ import { TradeExecutor } from './services/trade-executor';
 
 dotenv.config();
 
-class SmartTradingBot {
-  private binancePublic: BinancePublicClient;
-  private binancePrivate: BinancePrivateClient;
-  private deepseek: DeepSeekService;
+export class SmartTradingBot extends BaseTradingBot {
   private trendAnalyzer: MarketTrendAnalyzer;
 
   constructor(apiKey: string, apiSecret: string) {
-    this.binancePublic = new BinancePublicClient();
-    this.binancePrivate = new BinancePrivateClient(apiKey, apiSecret);
-    this.deepseek = new DeepSeekService();
+    super(apiKey, apiSecret, true);
     this.trendAnalyzer = new MarketTrendAnalyzer();
   }
 
-
-  private logBotInfo() {
+  protected logBotInfo() {
     logBotHeader('MULTI-SYMBOL SMART TRADING BOT', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas');
   }
 
@@ -51,19 +43,17 @@ class SmartTradingBot {
     this.logBotInfo();
 
     try {
-      // 1. Verificar trades ativos
       if (!await checkActiveTradesLimit(this.binancePrivate)) {
         return null;
       }
 
-      // 2. Analisar múltiplas moedas com DeepSeek
-      const symbols = TRADING_CONFIG.SYMBOLS;
+      const symbols = this.getSymbols();
       const bestAnalysis = await analyzeMultipleSymbols(
         symbols,
         this.binancePublic,
-        this.deepseek,
+        this.deepseek!,
         async (analysis: string, symbol: string, price: number) => {
-          return await analyzeWithDeepSeek(this.deepseek, symbol, { price: { price: price.toString() }, stats: {} });
+          return await analyzeWithDeepSeek(this.deepseek!, symbol, { price: { price: price.toString() }, stats: {} });
         }
       );
       
@@ -72,21 +62,17 @@ class SmartTradingBot {
         return null;
       }
 
-      // 3. Verificar tendência com EMA para a moeda escolhida
       const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(bestAnalysis.symbol);
       if (!validateTrendAnalysis(trendAnalysis)) {
         return null;
       }
 
-      // 4. Validar decisão do DeepSeek
       if (!validateDeepSeekDecision(bestAnalysis.decision)) {
         return null;
       }
 
-      // 5. Boost de confiança com validação 2:1 obrigatória
       const boostedDecision = boostConfidence(bestAnalysis.decision);
 
-      // 6. VALIDAÇÃO FINAL: Garantir que TradeExecutor também valide 2:1
       console.log('🔍 Validação final de Risk/Reward antes da execução...');
       const { riskPercent, rewardPercent } = calculateRiskReward(boostedDecision.confidence);
       console.log(`📊 R/R calculado: ${(rewardPercent * 100).toFixed(1)}%/${(riskPercent * 100).toFixed(1)}% (${(rewardPercent / riskPercent).toFixed(1)}:1)`);
@@ -110,7 +96,6 @@ async function main() {
   if (!keys) return;
 
   const { apiKey, apiSecret } = keys;
-
   const smartBot = new SmartTradingBot(apiKey, apiSecret);
   await smartBot.executeTrade();
 }

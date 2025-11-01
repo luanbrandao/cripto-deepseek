@@ -58,7 +58,6 @@ export class TradeSimulator {
       
       this.symbol = bestAnalysis.symbol;
       
-      // Executar trade da melhor oportunidade
       const klines = await this.binance.getKlines(this.symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
       const currentPrice = parseFloat(klines[klines.length - 1][4]);
       
@@ -77,12 +76,10 @@ export class TradeSimulator {
       try {
         console.log(`\n📊 Analisando ${symbol}...`);
         
-        // Obter dados históricos
         const klines = await this.binance.getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
         const prices = klines.map((k: any) => parseFloat(k[4]));
         const currentPrice = prices[prices.length - 1];
 
-        // Preparar dados baseado no tipo de analisador
         let marketData: any;
         const analyzerName = this.analyzer.name || this.analyzer.constructor.name;
         
@@ -98,10 +95,8 @@ export class TradeSimulator {
           marketData = { price24h: prices, currentPrice };
         }
 
-        // Analisar mercado
         const analysis = this.analyzer.analyze(marketData);
         
-        // Calcular score
         let score = 0;
         if (analysis.action === 'BUY' || analysis.action === 'SELL') {
           score = analysis.confidence;
@@ -115,7 +110,6 @@ export class TradeSimulator {
       }
     }
     
-    // Log resumo
     console.log('\n📋 RESUMO DAS ANÁLISES:');
     console.log('═'.repeat(60));
     analyses.forEach(analysis => {
@@ -124,7 +118,6 @@ export class TradeSimulator {
     });
     console.log('═'.repeat(60));
     
-    // Encontrar melhor oportunidade
     const validAnalyses = analyses.filter(a => a.analysis.action !== 'HOLD');
     const bestAnalysis = validAnalyses.sort((a, b) => b.score - a.score)[0];
     
@@ -146,7 +139,6 @@ export class TradeSimulator {
     return null;
   }
 
-  // Método legado para compatibilidade
   async simulateSingle() {
     console.log(`🎯 Iniciando simulação para ${this.symbol}`);
     console.log(`💰 Saldo inicial: $${this.portfolio.balance}\n`);
@@ -156,17 +148,14 @@ export class TradeSimulator {
     }
 
     try {
-      // Obter dados históricos
       const klines = await this.binance.getKlines(this.symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
-      const prices = klines.map((k: any) => parseFloat(k[4])); // Close prices
+      const prices = klines.map((k: any) => parseFloat(k[4]));
       const currentPrice = prices[prices.length - 1];
 
-      // Preparar dados baseado no tipo de analisador
       let marketData: any;
       const analyzerName = this.analyzer.name || this.analyzer.constructor.name;
       
       if (analyzerName === 'Analyzer123') {
-        // Dados para 123Analyzer (candles OHLC)
         const candles = klines.map((k: any) => ({
           open: parseFloat(k[1]),
           high: parseFloat(k[2]),
@@ -175,20 +164,15 @@ export class TradeSimulator {
         }));
         marketData = { candles, currentPrice };
       } else {
-        // Dados para SimpleAnalyzer e EmaAnalyzer (apenas preços)
         marketData = { price24h: prices, currentPrice };
       }
 
-      // Analisar mercado
       const analysis = this.analyzer.analyze ? this.analyzer.analyze(marketData) : this.analyzer.analyze(marketData);
 
       console.log(`📊 Análise: ${analysis.action} (${analysis.confidence}%)`);
       console.log(`📝 Razão: ${analysis.reason}`);
 
-      // Executar trade
       this.executeTrade(analysis, currentPrice);
-
-      // Mostrar resultado
       this.showResults(currentPrice);
 
     } catch (error) {
@@ -197,7 +181,7 @@ export class TradeSimulator {
   }
 
   private executeTrade(analysis: any, currentPrice: number) {
-    const amount = analysis.suggested_amount * 100; // $100 por unidade
+    const amount = analysis.suggested_amount * 100;
     let tradeAmount = 0;
 
     if (analysis.action === 'BUY' && this.portfolio.balance >= amount) {
@@ -221,16 +205,13 @@ export class TradeSimulator {
       console.log(`📊 Preço atual: $${currentPrice.toFixed(2)}`);
     }
 
-    // Calcular preços alvo e stop
     const targetPrice = analysis.action === 'BUY' ? currentPrice * 1.05 : currentPrice * 0.95;
     const stopPrice = analysis.action === 'BUY' ? currentPrice * 0.97 : currentPrice * 1.03;
 
-    // Calcular risco e retorno
     const potentialGain = Math.abs(targetPrice - currentPrice);
     const potentialLoss = Math.abs(stopPrice - currentPrice);
     const riskRewardRatio = potentialGain / potentialLoss;
 
-    // Salvar trade no histórico
     const trade: Trade = {
       timestamp: new Date().toISOString(),
       symbol: this.symbol,
@@ -246,31 +227,28 @@ export class TradeSimulator {
       confidence: analysis.confidence,
       status: 'pending',
       riskReturn: {
-        potentialGain,
-        potentialLoss,
-        riskRewardRatio
+        potentialGain: potentialGain,
+        potentialLoss: potentialLoss,
+        riskRewardRatio: riskRewardRatio
       }
     };
 
-    // Só salvar se não for HOLD (padrão encontrado)
-    if (analysis.action !== 'HOLD') {
-      this.trades.push(trade);
-      TradeStorage.saveTrades(this.trades, this.tradesFile);
-    }
+    this.trades.push(trade);
+    TradeStorage.saveTrades(this.trades, this.tradesFile);
   }
 
   private showResults(currentPrice: number) {
-    const cryptoValue = this.portfolio.crypto * currentPrice;
-    const totalValue = this.portfolio.balance + cryptoValue;
+    const totalValue = this.portfolio.balance + (this.portfolio.crypto * currentPrice);
     const profit = totalValue - 1000;
+    const profitPercent = (profit / 1000) * 100;
 
-    console.log('\n📈 RESULTADO DA SIMULAÇÃO:');
-    console.log(`💵 Saldo: $${this.portfolio.balance.toFixed(2)}`);
-    console.log(`🪙 Crypto: ${this.portfolio.crypto.toFixed(6)} ($${cryptoValue.toFixed(2)})`);
-    console.log(`💎 Valor Total: $${totalValue.toFixed(2)}`);
-    console.log(`${profit >= 0 ? '📈' : '📉'} P&L: $${profit.toFixed(2)} (${((profit / 1000) * 100).toFixed(2)}%)`);
-    console.log(`🔄 Trades: ${this.portfolio.totalTrades}`);
+    console.log('\n📊 RESULTADO DA SIMULAÇÃO:');
+    console.log('═'.repeat(40));
+    console.log(`💰 Saldo em USD: $${this.portfolio.balance.toFixed(2)}`);
+    console.log(`🪙 Crypto: ${this.portfolio.crypto.toFixed(6)}`);
+    console.log(`💎 Valor total: $${totalValue.toFixed(2)}`);
+    console.log(`📈 Lucro/Prejuízo: $${profit.toFixed(2)} (${profitPercent.toFixed(2)}%)`);
+    console.log(`🔢 Total de trades: ${this.portfolio.totalTrades}`);
+    console.log('═'.repeat(40));
   }
-
-
 }
