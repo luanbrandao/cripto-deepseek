@@ -101,16 +101,19 @@ export class EmaTradingBot extends BaseTradingBot {
   }
 }
 
-async function main() {
-  const keys = validateBinanceKeys();
-  if (!keys) return;
+// Só executa se for chamado diretamente (não importado)
+if (require.main === module) {
+  async function main() {
+    const keys = validateBinanceKeys();
+    if (!keys) return;
 
-  const { apiKey, apiSecret } = keys;
-  const emaBot = new EmaTradingBot(apiKey, apiSecret);
-  await emaBot.executeTrade();
+    const { apiKey, apiSecret } = keys;
+    const emaBot = new EmaTradingBot(apiKey, apiSecret);
+    await emaBot.executeTrade();
+  }
+
+  logBotStartup(
+    'EMA Bot',
+    '📊 Estratégia: Médias Móveis Exponenciais (EMA 12/26)'
+  ).then(() => main());
 }
-
-logBotStartup(
-  'EMA Bot',
-  '📊 Estratégia: Médias Móveis Exponenciais (EMA 12/26)'
-).then(() => main());

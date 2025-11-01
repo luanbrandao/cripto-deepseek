@@ -224,16 +224,19 @@ export class RealTradingBotSimulator extends BaseTradingBot {
   }
 }
 
-async function main() {
-  const keys = validateBinanceKeys();
-  if (!keys) return;
+// Só executa se for chamado diretamente (não importado)
+if (require.main === module) {
+  async function main() {
+    const keys = validateBinanceKeys();
+    if (!keys) return;
 
-  const { apiKey, apiSecret } = keys;
-  const simulator = new RealTradingBotSimulator(apiKey, apiSecret);
-  await simulator.executeTrade();
+    const { apiKey, apiSecret } = keys;
+    const simulator = new RealTradingBotSimulator(apiKey, apiSecret);
+    await simulator.executeTrade();
+  }
+
+  logBotStartup(
+    'Real Trading Bot Simulator',
+    '🧪 Simulação do Real Trading Bot com múltiplas moedas + DeepSeek AI'
+  ).then(() => main());
 }
-
-logBotStartup(
-  'Real Trading Bot Simulator',
-  '🧪 Simulação do Real Trading Bot com múltiplas moedas + DeepSeek AI'
-).then(() => main());

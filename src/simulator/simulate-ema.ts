@@ -18,4 +18,7 @@ async function runEmaSimulation() {
   await simulator.simulate(TRADING_CONFIG.SYMBOLS);
 }
 
-runEmaSimulation();
+// Só executa se for chamado diretamente (não importado)
+if (require.main === module) {
+  runEmaSimulation();
+}

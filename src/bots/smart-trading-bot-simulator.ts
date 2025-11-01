@@ -136,13 +136,16 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
   }
 }
 
-async function main() {
-  const smartBotSimulator = new SmartTradingBotSimulator();
-  await smartBotSimulator.executeTrade();
-}
+// Só executa se for chamado diretamente (não importado)
+if (require.main === module) {
+  async function main() {
+    const smartBotSimulator = new SmartTradingBotSimulator();
+    await smartBotSimulator.executeTrade();
+  }
 
-logBotStartup(
-  'Smart Bot Simulator',
-  '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise dupla: EMA + DeepSeek AI',
-  TRADING_CONFIG.SIMULATION.STARTUP_DELAY
-).then(() => main());
+  logBotStartup(
+    'Smart Bot Simulator',
+    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise dupla: EMA + DeepSeek AI',
+    TRADING_CONFIG.SIMULATION.STARTUP_DELAY
+  ).then(() => main());
+}

@@ -11,4 +11,7 @@ async function runSimulation123() {
   await simulator.simulate(TRADING_CONFIG.SYMBOLS);
 }
 
-runSimulation123();
+// Só executa se for chamado diretamente (não importado)
+if (require.main === module) {
+  runSimulation123();
+}

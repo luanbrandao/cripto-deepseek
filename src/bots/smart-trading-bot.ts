@@ -116,16 +116,19 @@ export class SmartTradingBot extends BaseTradingBot {
   }
 }
 
-async function main() {
-  const keys = validateBinanceKeys();
-  if (!keys) return;
+// Só executa se for chamado diretamente (não importado)
+if (require.main === module) {
+  async function main() {
+    const keys = validateBinanceKeys();
+    if (!keys) return;
 
-  const { apiKey, apiSecret } = keys;
-  const smartBot = new SmartTradingBot(apiKey, apiSecret);
-  await smartBot.executeTrade();
+    const { apiKey, apiSecret } = keys;
+    const smartBot = new SmartTradingBot(apiKey, apiSecret);
+    await smartBot.executeTrade();
+  }
+
+  logBotStartup(
+    'Smart Bot',
+    '🧠 Análise dupla: EMA + DeepSeek AI para máxima precisão'
+  ).then(() => main());
 }
-
-logBotStartup(
-  'Smart Bot',
-  '🧠 Análise dupla: EMA + DeepSeek AI para máxima precisão'
-).then(() => main());

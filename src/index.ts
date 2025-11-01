@@ -71,4 +71,7 @@ async function main() {
   }
 }
 
-main();
+// Só executa se for chamado diretamente (não importado)
+if (require.main === module) {
+  main();
+}

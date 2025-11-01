@@ -55,16 +55,19 @@ export class RealTradingBot extends BaseTradingBot {
   }
 }
 
-async function main() {
-  const keys = validateBinanceKeys();
-  if (!keys) return;
+// Só executa se for chamado diretamente (não importado)
+if (require.main === module) {
+  async function main() {
+    const keys = validateBinanceKeys();
+    if (!keys) return;
 
-  const { apiKey, apiSecret } = keys;
-  const realBot = new RealTradingBot(apiKey, apiSecret);
-  await realBot.executeTrade();
+    const { apiKey, apiSecret } = keys;
+    const realBot = new RealTradingBot(apiKey, apiSecret);
+    await realBot.executeTrade();
+  }
+
+  logBotStartup(
+    'Real Trading Bot',
+    '💰 Certifique-se de que entende os riscos envolvidos'
+  ).then(() => main());
 }
-
-logBotStartup(
-  'Real Trading Bot',
-  '💰 Certifique-se de que entende os riscos envolvidos'
-).then(() => main());
