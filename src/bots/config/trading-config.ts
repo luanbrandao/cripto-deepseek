@@ -50,9 +50,9 @@ export const TRADING_CONFIG = {
   // CONFIGURAÇÕES DE ARQUIVOS
   FILES: {
     REAL_BOT: 'realTradingBot.json',
+    REAL_BOT_SIMULATOR: 'realTradingBotSimulator.json',
     SMART_BOT: 'smartTradingBot.json',
     EMA_BOT: 'emaTradingBot.json',
-    SIMULATION: 'aiTradingBot.json',
     SMART_SIMULATOR: 'smartTradingBotSimulator.json'
   }
   // Resultado: Risk 0.5%-1.5% | Reward 1.0%-3.0% (sempre 2:1)
