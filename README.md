@@ -158,6 +158,9 @@ TIMEFRAME: '4h' + PERIODS: 24 = Analisa 24 velas de 4h (4d histórico)
 
 ```
 src/
+├── analyzers/               # Analisadores de padrões
+│   ├── 123Analyzer.ts              # Padrão 123 de reversão
+│   └── emaAnalyzer.ts              # Análise EMA crossover
 ├── clients/                 # Clientes de API
 │   ├── binance-public-client.ts
 │   ├── binance-private-client.ts
@@ -167,27 +170,52 @@ src/
 │   │   └── trading-config.ts      # Configurações centralizadas
 │   ├── services/
 │   │   ├── analysis-parser.ts
+│   │   ├── market-trend-analyzer.ts
 │   │   ├── risk-manager.ts         # Garantia 2:1
 │   │   └── trade-executor.ts       # Validação rigorosa
 │   ├── utils/
-│   │   ├── multi-symbol-analyzer.ts  # Análise múltiplas moedas
-│   │   ├── trade-validators.ts       # Validações centralizadas
-│   │   ├── bot-logger.ts            # Logs padronizados
 │   │   ├── bot-executor.ts          # Execução unificada
-│   │   └── bot-initializer.ts       # Inicialização comum
+│   │   ├── bot-initializer.ts       # Inicialização comum
+│   │   ├── bot-logger.ts            # Logs padronizados
+│   │   ├── deepseek-analyzer.ts     # Análise DeepSeek
+│   │   ├── env-validator.ts         # Validação de ambiente
+│   │   ├── market-data-fetcher.ts   # Busca dados de mercado
+│   │   ├── market-data-logger.ts    # Logs de dados
+│   │   ├── multi-symbol-analyzer.ts # Análise múltiplas moedas
+│   │   ├── simulation-limit-checker.ts # Limites simulação
+│   │   ├── trade-history-saver.ts   # Histórico de trades
+│   │   ├── trade-limit-checker.ts   # Limites de trading
+│   │   ├── trade-validators.ts      # Validações centralizadas
+│   │   └── trend-validator.ts       # Validação de tendências
 │   ├── types/
 │   │   └── trading.ts
+│   ├── base-trading-bot.ts          # Classe base dos bots
 │   ├── real-trading-bot.ts          # Multi-symbol + IA
+│   ├── real-trading-bot-simulator.ts # Simulador Real Bot
 │   ├── smart-trading-bot.ts         # EMA + IA + Multi-symbol
-│   ├── ema-trading-bot.ts           # EMA puro + Multi-symbol
-│   └── simulation-bot.ts            # Simulação multi-moeda
+│   ├── smart-trading-bot-simulator.ts # Simulador Smart Bot
+│   └── ema-trading-bot.ts           # EMA puro + Multi-symbol
+├── examples/                # Exemplos de uso
+│   └── binance-public-api.ts
+├── monitor/                 # Monitoramento
+│   └── trade-monitor.ts             # Monitor de trades
 ├── simulator/               # Simuladores de estratégia
 │   ├── trade-simulator.ts           # Simulador multi-moeda
 │   ├── simulate-123.ts              # Padrão 123 + múltiplas moedas
 │   └── simulate-ema.ts              # EMA + múltiplas moedas
 ├── storage/                 # Persistência de dados
 │   └── trade-storage.ts
-└── index.ts                # Análise sem execução
+├── tests-connections/       # Testes de conexão
+│   ├── test-binance-private.ts
+│   ├── test-binance-public.ts
+│   └── test-deepseek.ts
+├── trades/                  # Arquivos de trades
+│   └── deepseekAnalysis.json
+├── check-trades.ts          # Verificação de trades
+├── config.ts                # Configurações gerais
+├── diagnose-400-error.ts    # Diagnóstico de erros
+├── index.ts                 # Análise sem execução
+└── test-risk-reward.ts      # Teste de risk/reward
 ```
 
 ## 🧬 Evolução dos Bots de Trading
@@ -298,21 +326,28 @@ Comparar scores → Escolher melhor → Boost +10% → Executar R/R 2:1
 - **Boost de confiança**: +10% quando EMA + IA concordam
 - **Máxima precisão**: 85-90% de assertividade esperada
 
-### **4. Multi-Symbol Smart Bot Simulator (smart-trading-bot-simulator.ts)**
+### **4. Real Trading Bot Simulator (real-trading-bot-simulator.ts)**
+- **Simulação do Real Bot**: Toda lógica do Real Trading Bot sem executar trades
+- **Análise multi-moeda**: DeepSeek AI para múltiplas criptomoedas
+- **Seleção simulada**: Escolhe a melhor oportunidade sem executar
+- **Segurança total**: Nenhuma ordem é executada na exchange
+- **Logs detalhados**: Processo completo de seleção e justificativa
+
+### **5. Multi-Symbol Smart Bot Simulator (smart-trading-bot-simulator.ts)**
 - **Simulação multi-moeda**: Toda lógica do Smart Bot para múltiplas moedas
 - **Análise dupla**: EMA + DeepSeek AI para cada criptomoeda
 - **Seleção simulada**: Escolhe a melhor oportunidade sem executar
 - **Segurança total**: Nenhuma ordem é executada na exchange
 - **Logs detalhados**: Processo completo de seleção e justificativa
 
-### **5. Multi-Symbol EMA Trading Bot (ema-trading-bot.ts) - Nível 1**
+### **6. Multi-Symbol EMA Trading Bot (ema-trading-bot.ts) - Nível 1**
 - **EMA multi-moeda**: Análise EMA 12/26 em múltiplas criptomoedas
 - **Seleção automática**: Escolhe a moeda com melhor sinal EMA
 - **Configuração centralizada**: Períodos EMA configuráveis
 - **Análise técnica pura**: Sem dependência de IA
 - **Risk/Reward garantido**: Sempre 2:1
 
-### **6. Simulações de Estratégias**
+### **7. Simulações de Estratégias**
 
 #### **Multi-Symbol Simulação 123 (simulate-123.ts)**
 - **Estratégia**: Padrão 123 de reversão em múltiplas moedas
@@ -336,7 +371,7 @@ npm run simulate-123    # Padrão 123 + múltiplas moedas
 npm run simulate-ema    # EMA 12/26 + múltiplas moedas
 ```
 
-### **7. Monitor de Trades (trade-monitor.ts)**
+### **8. Monitor de Trades (monitor/trade-monitor.ts)**
 - **Função**: Verifica e atualiza o status dos trades de teste
 - **Monitoramento**: Compara preço atual com targets e stops
 - **Atualização automática**: Marca trades como 'win' ou 'loss'
@@ -361,8 +396,8 @@ if (preçoAtual >= stopPrice) → LOSS
 - `actualReturn`: Retorno efetivo calculado
 
 ```bash
-# Monitorar trades
-npm run monitor-trades
+# Monitorar trades (adicionar script no package.json)
+ts-node src/monitor/trade-monitor.ts
 ```
 
 ## 📈 Métricas e Logging
@@ -470,7 +505,7 @@ npm run ema-trading-bot         # Multi-Symbol EMA Bot (Técnico)
 
 # Simuladores multi-moeda (sem trades reais)
 npm run smart-trading-bot-simulator  # Simulador Smart Bot
-npm run simulation-bot               # Simulador completo
+npm run real-trading-bot-simulator   # Simulador Real Bot
 
 # Simulações de estratégias multi-moeda
 npm run simulate-123    # Padrão 123 + múltiplas moedas
