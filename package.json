@@ -13,7 +13,7 @@
     "test-deepseek": "ts-node src/tests-connections/test-deepseek.ts",
     "test-binance-public": "ts-node src/tests-connections/test-binance-public.ts",
     "test-binance-private": "ts-node src/tests-connections/test-binance-private.ts",
-    "simulation-bot": "ts-node src/bots/simulation-bot.ts",
+    "real-trading-bot-simulator": "ts-node src/bots/real-trading-bot-simulator.ts",
     "real-trading-bot": "ts-node src/bots/real-trading-bot.ts",
     "smart-trading-bot": "ts-node src/bots/smart-trading-bot.ts",
     "smart-trading-bot-simulator": "ts-node src/bots/smart-trading-bot-simulator.ts",

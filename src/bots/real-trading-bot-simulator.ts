@@ -18,13 +18,13 @@ interface SymbolAnalysis {
   score: number;
 }
 
-export class SimulationBot extends BaseTradingBot {
+export class RealTradingBotSimulator extends BaseTradingBot {
   constructor(apiKey: string, apiSecret: string) {
     super(apiKey, apiSecret, true);
   }
 
   protected logBotInfo() {
-    logBotHeader('MULTI-SYMBOL SIMULATION BOT', 'Análise de Múltiplas Moedas + DeepSeek AI');
+    logBotHeader('REAL TRADING BOT SIMULATOR', 'Simulação do Real Trading Bot Multi-Moeda');
     console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
   }
 
@@ -219,7 +219,7 @@ export class SimulationBot extends BaseTradingBot {
       return orderResult;
 
     } catch (error) {
-      return handleBotError('Simulation Bot', error);
+      return handleBotError('Real Trading Bot Simulator', error);
     }
   }
 }
@@ -229,11 +229,11 @@ async function main() {
   if (!keys) return;
 
   const { apiKey, apiSecret } = keys;
-  const simulationBot = new SimulationBot(apiKey, apiSecret);
-  await simulationBot.executeTrade();
+  const simulator = new RealTradingBotSimulator(apiKey, apiSecret);
+  await simulator.executeTrade();
 }
 
 logBotStartup(
-  'Multi-Symbol Simulation Bot',
-  '🧪 Simulação com análise de múltiplas moedas + DeepSeek AI'
+  'Real Trading Bot Simulator',
+  '🧪 Simulação do Real Trading Bot com múltiplas moedas + DeepSeek AI'
 ).then(() => main());
