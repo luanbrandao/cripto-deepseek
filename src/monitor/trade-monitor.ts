@@ -10,6 +10,7 @@ export class TradeMonitor {
   }
 
   async checkTrades(filePath: string): Promise<void> {
+    console.log('🔍 Atualizando trades');
     try {
       if (!fs.existsSync(filePath)) {
         console.log('❌ Arquivo de trades não encontrado');
@@ -30,13 +31,13 @@ export class TradeMonitor {
       for (const trade of pendingTrades) {
         const currentPrice = await this.getCurrentPrice(trade.symbol);
         const result = this.evaluateTrade(trade, currentPrice);
-        
+
         if (result) {
           trade.status = 'completed';
           trade.result = result.outcome;
           trade.exitPrice = currentPrice;
           trade.actualReturn = result.actualReturn;
-          
+
           console.log(`${result.outcome === 'win' ? '🟢' : '🔴'} ${trade.symbol} ${trade.action}: ${result.outcome.toUpperCase()}`);
         }
       }
@@ -68,7 +69,7 @@ export class TradeMonitor {
         return { outcome: 'loss', actualReturn: trade.entryPrice - currentPrice };
       }
     }
-    
+
     return null;
   }
 }

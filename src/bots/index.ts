@@ -7,7 +7,7 @@ export { EmaTradingBot } from './ema-trading-bot';
 export { SmartTradingBot } from './smart-trading-bot';
 
 // Simulation bots
-export { SimulationBot } from './simulation-bot';
+export { RealTradingBotSimulator } from './real-trading-bot-simulator';
 export { SmartTradingBotSimulator } from './smart-trading-bot-simulator';
 
 // Simulator

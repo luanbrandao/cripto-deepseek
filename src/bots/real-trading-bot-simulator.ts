@@ -157,7 +157,7 @@ export class RealTradingBotSimulator extends BaseTradingBot {
   async executeTrade() {
     this.logBotInfo();
 
-    const tradesFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.SIMULATION}`);
+    const tradesFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR}`);
     if (!checkActiveSimulationTradesLimit(tradesFile)) {
       return null;
     }
@@ -211,9 +211,9 @@ export class RealTradingBotSimulator extends BaseTradingBot {
         trade.actualReturn = 0;
       }
 
-      const saveFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.SIMULATION}`);
+      const saveFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR}`);
       TradeStorage.saveTrades([trade], saveFile);
-      console.log(`\n💾 Trade salvo no histórico: ${TRADING_CONFIG.FILES.SIMULATION}`);
+      console.log(`\n💾 Trade salvo no histórico: ${TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR}`);
 
       console.log('\n✅ Execução completa do Trading Bot');
       return orderResult;
