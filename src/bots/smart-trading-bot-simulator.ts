@@ -84,7 +84,7 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
         const currentPrice = prices[prices.length - 1];
         const emaAnalysis = this.emaAnalyzer.analyze({ price24h: prices, currentPrice });
         
-        if (emaAnalysis.action === 'BUY') {
+        if (emaAnalysis.action === 'BUY' && emaAnalysis.reason.includes('Tendência de alta confirmada')) {
           validSymbols.push(symbol);
         }
       }
