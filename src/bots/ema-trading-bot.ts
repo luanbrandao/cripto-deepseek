@@ -21,14 +21,14 @@ export class EmaTradingBot extends BaseTradingBot {
 
   constructor(apiKey: string, apiSecret: string) {
     super(apiKey, apiSecret, false);
-    this.emaAnalyzer = new EmaAnalyzer({ 
-      fastPeriod: TRADING_CONFIG.EMA.FAST_PERIOD, 
-      slowPeriod: TRADING_CONFIG.EMA.SLOW_PERIOD 
+    this.emaAnalyzer = new EmaAnalyzer({
+      fastPeriod: TRADING_CONFIG.EMA.FAST_PERIOD,
+      slowPeriod: TRADING_CONFIG.EMA.SLOW_PERIOD
     });
   }
 
   protected logBotInfo() {
-    logBotHeader('EMA TRADING BOT', 'Médias Móveis Exponenciais (EMA 12/26)');
+    logBotHeader('EMA TRADING BOT', `Médias Móveis Exponenciais (EMA ${TRADING_CONFIG.EMA.FAST_PERIOD}/${TRADING_CONFIG.EMA.SLOW_PERIOD})'`);
   }
 
   private async getMarketData(symbol: string): Promise<MarketData> {
@@ -48,7 +48,7 @@ export class EmaTradingBot extends BaseTradingBot {
   }
 
   private analyzeWithEma(symbol: string, marketData: MarketData): TradeDecision {
-    console.log('\n📊 Analisando mercado com EMA 12/26...');
+    console.log(`\n📊 Analisando mercado com EMA ${TRADING_CONFIG.EMA.FAST_PERIOD}/${TRADING_CONFIG.EMA.SLOW_PERIOD}...`);
 
     const analysis = this.emaAnalyzer.analyze(marketData);
 

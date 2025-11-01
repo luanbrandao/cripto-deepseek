@@ -9,14 +9,20 @@ import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-check
 import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
 import { analyzeWithDeepSeek } from './utils/deepseek-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
+import EmaAnalyzer from '../analyzers/emaAnalyzer';
 import * as path from 'path';
 
 export class SmartTradingBotSimulator extends BaseTradingBot {
   private trendAnalyzer: MarketTrendAnalyzer;
+  private emaAnalyzer: EmaAnalyzer;
 
   constructor() {
     super(undefined, undefined, true);
     this.trendAnalyzer = new MarketTrendAnalyzer();
+    this.emaAnalyzer = new EmaAnalyzer({
+      fastPeriod: TRADING_CONFIG.EMA.FAST_PERIOD,
+      slowPeriod: TRADING_CONFIG.EMA.SLOW_PERIOD
+    });
   }
 
   protected logBotInfo() {
@@ -69,8 +75,27 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
 
     try {
       const symbols = this.getSymbols();
+      
+      // Filtrar símbolos com EMA de alta primeiro
+      const validSymbols = [];
+      for (const symbol of symbols) {
+        const klines = await this.binancePublic.getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
+        const prices = klines.map((k: any) => parseFloat(k[4]));
+        const currentPrice = prices[prices.length - 1];
+        const emaAnalysis = this.emaAnalyzer.analyze({ price24h: prices, currentPrice });
+        
+        if (emaAnalysis.action === 'BUY') {
+          validSymbols.push(symbol);
+        }
+      }
+      
+      if (validSymbols.length === 0) {
+        console.log('\n⏸️ Nenhuma moeda com EMA de alta encontrada');
+        return null;
+      }
+      
       const bestAnalysis = await analyzeMultipleSymbols(
-        symbols,
+        validSymbols,
         this.binancePublic,
         this.deepseek!,
         async (analysis: string, symbol: string, price: number) => {
