@@ -1,7 +1,7 @@
 export const TRADING_CONFIG = {
   // CONFIGURAÇÕES DE MOEDA E TRADING
-  SYMBOLS: ['BTCUSDT', 'BNBUSDT', 'ETHUSDT', 'ADAUSDT'], // Array de moedas para análise
-  SYMBOLS_EXAMPLE: ['BTCUSDT', 'BNBUSDT', 'ETHUSDT', 'ADAUSDT'], // Array de moedas para análise
+  SYMBOLS: ['BTCUSDT', 'BNBUSDT', 'ETHUSDT', 'SOLUSDT'], // Array de moedas para análise
+  SYMBOLS_EXAMPLE: ['BTCUSDT', 'BNBUSDT', 'ETHUSDT', 'SOLUSDT'], // Array de moedas para análise
   DEFAULT_SYMBOL: 'BTCUSDT',        // Moeda padrão para bots single-symbol
   TRADE_AMOUNT_USD: 15,             // Valor por trade
 
@@ -51,7 +51,7 @@ export const TRADING_CONFIG = {
   // CONFIGURAÇÕES DE LIMITES
   LIMITS: {
     OPEN_ORDERS: 2,                 // Cada trade criado na binance, cria uma order de alvo e uma order de stop
-    MAX_ACTIVE_TRADES: 4,           // Máximo de trades ativos para bots reais
+    MAX_ACTIVE_TRADES: 2,           // Máximo de trades ativos para bots reais
     MAX_TRADES_PER_SYMBOL: 1        // Máximo de trades por símbolo
   },
 
