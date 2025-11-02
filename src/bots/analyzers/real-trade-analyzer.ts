@@ -10,7 +10,7 @@ import { TRADING_CONFIG } from '../config/trading-config';
  * - Win Rate esperado: 75-80%
  * - Configurável: Timeframe e períodos via TRADING_CONFIG
  */
-export async function analyzeWithRealTradeDeepSeek(deepseek: DeepSeekService, symbol: string, marketData: any) {
+export async function analyzeWithRealTrade(deepseek: DeepSeekService, symbol: string, marketData: any) {
   console.log('\n🧠 Analisando mercado com DeepSeek AI (Real-Trade)...');
   
   const analysis = await deepseek.analyzeMarket(

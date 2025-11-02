@@ -3,7 +3,7 @@ import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { calculateRiskReward } from './utils/trade-validators';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
-import { analyzeWithDeepSeek } from './utils/deepseek-analyzer';
+import { analyzeWithSmartTrade } from './analyzers/smart-trade-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
 import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
@@ -46,7 +46,7 @@ export class SmartTradingBot extends BaseTradingBot {
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
-    return await analyzeWithDeepSeek(this.deepseek!, symbol, marketData);
+    return await analyzeWithSmartTrade(this.deepseek!, symbol, marketData);
   }
 
   async executeTrade() {

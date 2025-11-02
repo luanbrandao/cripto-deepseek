@@ -7,7 +7,7 @@ import { handleBotError } from './utils/bot-executor';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
 import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
-import { analyzeWithDeepSeek } from './utils/deepseek-analyzer';
+import { analyzeWithSmartTrade } from './analyzers/smart-trade-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
 import * as path from 'path';
@@ -67,7 +67,7 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
-    return await analyzeWithDeepSeek(this.deepseek!, symbol, marketData);
+    return await analyzeWithSmartTrade(this.deepseek!, symbol, marketData);
   }
 
   async executeTrade() {

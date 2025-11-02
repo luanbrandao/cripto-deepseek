@@ -8,7 +8,7 @@ import { AnalysisParser } from '../services/analysis-parser';
  * - Ideal para: Bull markets, traders conservadores
  * - Win Rate esperado: 85-90%
  */
-export async function analyzeWithDeepSeek(deepseek: DeepSeekService, symbol: string, marketData: any) {
+export async function analyzeWithSmartTrade(deepseek: DeepSeekService, symbol: string, marketData: any) {
   console.log('\n🧠 Analisando mercado com DeepSeek AI (Smart-Trade)...');
   
   const analysis = await deepseek.analyzeMarket(
@@ -16,7 +16,7 @@ export async function analyzeWithDeepSeek(deepseek: DeepSeekService, symbol: str
     `Analyze ${symbol} market data including 24h klines. Focus on BULLISH signals only. Provide a CLEAR BUY recommendation if conditions are favorable, otherwise HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators for upward momentum.`
   );
 
-  console.log('\n📋 Análise DeepSeek (primeiros 500 chars):');
+  console.log('\n📋 Análise DeepSeek Smart-Trade (primeiros 500 chars):');
   console.log(analysis.substring(0, 500) + '...');
 
   return await AnalysisParser.parseDeepSeekAnalysis(analysis, symbol, parseFloat(marketData.price.price));

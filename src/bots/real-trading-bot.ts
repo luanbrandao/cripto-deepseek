@@ -3,7 +3,7 @@ import { validateTradingConditions } from './utils/bot-initializer';
 import { executeAndSaveTradeWithValidation, handleBotError } from './utils/bot-executor';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
-import { analyzeWithRealTradeDeepSeek } from './utils/real-trade-deepseek-analyzer';
+import { analyzeWithRealTrade } from './analyzers/real-trade-analyzer';
 import { validateBinanceKeys } from './utils/env-validator';
 import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
@@ -20,7 +20,7 @@ export class RealTradingBot extends BaseTradingBot {
   }
 
   private async analyzeWithRealTradeLogic(symbol: string, marketData: any) {
-    return await analyzeWithRealTradeDeepSeek(this.deepseek!, symbol, marketData);
+    return await analyzeWithRealTrade(this.deepseek!, symbol, marketData);
   }
 
   async executeTrade() {

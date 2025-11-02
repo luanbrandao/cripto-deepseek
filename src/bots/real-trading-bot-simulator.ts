@@ -6,7 +6,7 @@ import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { handleBotError } from './utils/bot-executor';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
-import { analyzeWithRealTradeDeepSeek } from './utils/real-trade-deepseek-analyzer';
+import { analyzeWithRealTrade } from './analyzers/real-trade-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -31,7 +31,7 @@ export class RealTradingBotSimulator extends BaseTradingBot {
 
   private async analyzeWithRealTradeLogic(symbol: string, marketData: any): Promise<TradeDecision> {
     // Usar a lógica do Real-Trade: BUY, SELL ou HOLD
-    return await analyzeWithRealTradeDeepSeek(this.deepseek!, symbol, marketData);
+    return await analyzeWithRealTrade(this.deepseek!, symbol, marketData);
   }
 
   private async executeTradeDecision(decision: TradeDecision) {
