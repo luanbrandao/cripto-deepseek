@@ -5,6 +5,7 @@ import { executeAndSaveTradeWithValidation, handleBotError } from './utils/bot-e
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { logMarketInfo } from './utils/market-data-logger';
 import { validateBinanceKeys } from './utils/env-validator';
+import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
 import * as dotenv from 'dotenv';
@@ -28,7 +29,7 @@ export class EmaTradingBot extends BaseTradingBot {
   }
 
   protected logBotInfo() {
-    logBotHeader('EMA TRADING BOT', `Médias Móveis Exponenciais (EMA ${TRADING_CONFIG.EMA.FAST_PERIOD}/${TRADING_CONFIG.EMA.SLOW_PERIOD})'`);
+    logBotHeader('MULTI-SYMBOL EMA TRADING BOT', `Médias Móveis Exponenciais (EMA ${TRADING_CONFIG.EMA.FAST_PERIOD}/${TRADING_CONFIG.EMA.SLOW_PERIOD}) + Múltiplas Moedas`);
   }
 
   private async getMarketData(symbol: string): Promise<MarketData> {
@@ -78,7 +79,7 @@ export class EmaTradingBot extends BaseTradingBot {
     );
   }
 
-  async executeTrade(symbol: string = TRADING_CONFIG.DEFAULT_SYMBOL) {
+  async executeTrade() {
     this.logBotInfo();
 
     try {
@@ -86,9 +87,25 @@ export class EmaTradingBot extends BaseTradingBot {
         return null;
       }
 
-      const marketData = await this.getMarketData(symbol);
-      const decision = this.analyzeWithEma(symbol, marketData);
-
+      const symbols = this.getSymbols();
+      const bestAnalysis = await analyzeMultipleSymbols(
+        symbols,
+        this.binancePublic,
+        null, // No DeepSeek for EMA bot
+        async (analysis: string, symbol: string, price: number) => {
+          const marketData = await this.getMarketData(symbol);
+          return this.analyzeWithEma(symbol, marketData);
+        },
+        this.binancePrivate
+      );
+      
+      if (!bestAnalysis) {
+        console.log('\n⏸️ Nenhuma oportunidade EMA encontrada');
+        return null;
+      }
+      
+      const decision = bestAnalysis.decision;
+      
       if (!this.validateDecision(decision)) {
         return null;
       }
@@ -96,7 +113,7 @@ export class EmaTradingBot extends BaseTradingBot {
       return await this.executeAndSave(decision);
 
     } catch (error) {
-      return handleBotError('EMA Trading Bot', error);
+      return handleBotError('Multi-Symbol EMA Trading Bot', error);
     }
   }
 }

@@ -79,7 +79,8 @@ export class SmartTradingBot extends BaseTradingBot {
         this.deepseek!,
         async (analysis: string, symbol: string, price: number) => {
           return await analyzeWithDeepSeek(this.deepseek!, symbol, { price: { price: price.toString() }, stats: {} });
-        }
+        },
+        this.binancePrivate
       );
       
       if (!bestAnalysis) {

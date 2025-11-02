@@ -100,7 +100,10 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
         this.deepseek!,
         async (analysis: string, symbol: string, price: number) => {
           return await analyzeWithDeepSeek(this.deepseek!, symbol, { price: { price: price.toString() }, stats: {} });
-        }
+        },
+        undefined,
+        true,
+        TRADING_CONFIG.FILES.SMART_SIMULATOR
       );
       
       if (!bestAnalysis) {

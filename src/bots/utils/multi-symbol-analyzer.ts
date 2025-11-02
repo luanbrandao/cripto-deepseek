@@ -1,6 +1,8 @@
 import { TradeDecision } from './trade-validators';
 import { getMarketData } from './market-data-fetcher';
 import { TRADING_CONFIG } from '../config/trading-config';
+import { hasActiveTradeForSymbol } from './symbol-trade-checker';
+import { BinancePrivateClient } from '../../clients/binance-private-client';
 
 export interface SymbolAnalysis {
   symbol: string;
@@ -12,7 +14,10 @@ export async function analyzeMultipleSymbols(
   symbols: string[], 
   binancePublic: any, 
   deepseek: any,
-  parseAnalysisFunction: (analysis: string, symbol: string, price: number) => Promise<TradeDecision>
+  parseAnalysisFunction: (analysis: string, symbol: string, price: number) => Promise<TradeDecision>,
+  binancePrivate?: BinancePrivateClient,
+  isSimulation: boolean = false,
+  simulationFile?: string
 ): Promise<SymbolAnalysis | null> {
   console.log(`\n🔍 Analisando ${symbols.length} moedas para encontrar a melhor oportunidade...`);
   
@@ -20,15 +25,27 @@ export async function analyzeMultipleSymbols(
   
   for (const symbol of symbols) {
     try {
+      // Verificar se já existe trade ativo para este símbolo
+      if (await hasActiveTradeForSymbol(binancePrivate, symbol, isSimulation, simulationFile)) {
+        console.log(`⏭️ Pulando ${symbol} - trade já ativo`);
+        continue;
+      }
+      
       console.log(`\n📊 Analisando ${symbol}...`);
       const { price, stats, klines } = await getMarketData(binancePublic, symbol);
       
-      const analysis = await deepseek.analyzeMarket(
-        { price, stats, klines },
-        `Analyze ${symbol} market data (${TRADING_CONFIG.CHART.TIMEFRAME} timeframe, ${TRADING_CONFIG.CHART.PERIODS} periods) and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning.`
-      );
+      let decision: TradeDecision;
       
-      const decision = await parseAnalysisFunction(analysis, symbol, parseFloat(price.price));
+      if (deepseek) {
+        const analysis = await deepseek.analyzeMarket(
+          { price, stats, klines },
+          `Analyze ${symbol} market data (${TRADING_CONFIG.CHART.TIMEFRAME} timeframe, ${TRADING_CONFIG.CHART.PERIODS} periods) and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning.`
+        );
+        decision = await parseAnalysisFunction(analysis, symbol, parseFloat(price.price));
+      } else {
+        // For EMA bot - call parseAnalysisFunction directly without DeepSeek analysis
+        decision = await parseAnalysisFunction('', symbol, parseFloat(price.price));
+      }
       
       let score = 0;
       if (decision.action === 'BUY' || decision.action === 'SELL') {
