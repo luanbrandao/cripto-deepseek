@@ -63,10 +63,20 @@ CHART: {
   PERIODS: 50                  // Analisa 50 velas = 50 horas de histórico
 }
 
-// Exemplos de configuração:
-// Day Trading:    TIMEFRAME: '15m', PERIODS: 100 (25h histórico)
-// Swing Trading:  TIMEFRAME: '1h',  PERIODS: 50  (50h histórico) 
-// Long Term:      TIMEFRAME: '4h',  PERIODS: 24  (4d histórico)
+// CONFIGURAÇÕES DE LIMITES
+LIMITS: {
+  OPEN_ORDERS: 2,              // Ordens por trade (TP + SL)
+  MAX_ACTIVE_TRADES: 4,        // Máximo de trades reais
+  MAX_TRADES_PER_SYMBOL: 1     // Máximo por moeda (anti-duplicação)
+}
+
+SIMULATION: {
+  MAX_ACTIVE_TRADES: 2         // Máximo de simulações
+}
+
+// FUNÇÕES AUXILIARES
+getMaxActiveTrades(isSimulation)  // Retorna limite dinâmico
+getMaxTradesPerSymbol()          // Retorna limite por símbolo
 
 EMA: { FAST_PERIOD: 12, SLOW_PERIOD: 26 }  // Configurações EMA
 ```
@@ -134,7 +144,9 @@ TIMEFRAME: '4h' + PERIODS: 24 = Analisa 24 velas de 4h (4d histórico)
 ### **Validações Pré-Trade**
 - ✅ Análise comparativa de múltiplas moedas
 - ✅ Seleção automática da melhor oportunidade
-- ✅ Estado de trading (não executar trades simultâneos)
+- ✅ **Verificação anti-duplicação**: API Binance + arquivos locais
+- ✅ **Limite por símbolo**: Máximo 1 trade por moeda
+- ✅ **Limite total**: Máximo 4 trades 
 - ✅ Cooldown entre operações (5 min)
 - ✅ Nível de confiança mínimo (70%)
 - ✅ Risk/reward OBRIGATÓRIO 2:1
@@ -545,7 +557,6 @@ npm run test-risk-reward # Testar validação 2:1
 npm run test-deepseek         # Testar conexão DeepSeek AI
 npm run test-binance-public   # Testar API pública Binance
 npm run test-binance-private  # Testar API privada Binance
-```
 
 ## ⚠️ Avisos Importantes
 
