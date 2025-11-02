@@ -1,9 +1,9 @@
 import { BaseTradingBot } from './base-trading-bot';
-import { AnalysisParser } from './services/analysis-parser';
 import { validateTradingConditions } from './utils/bot-initializer';
 import { executeAndSaveTradeWithValidation, handleBotError } from './utils/bot-executor';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
+import { analyzeWithRealTradeDeepSeek } from './utils/real-trade-deepseek-analyzer';
 import { validateBinanceKeys } from './utils/env-validator';
 import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
@@ -19,6 +19,13 @@ export class RealTradingBot extends BaseTradingBot {
     logBotHeader('MULTI-SYMBOL REAL TRADING BOT', 'Análise de Múltiplas Moedas + DeepSeek AI');
   }
 
+  private async analyzeWithRealTradeLogic(analysis: string, symbol: string, price: number) {
+    return await analyzeWithRealTradeDeepSeek(this.deepseek!, symbol, { 
+      price: { price: price.toString() }, 
+      stats: {} 
+    });
+  }
+
   async executeTrade() {
     this.logBotInfo();
 
@@ -32,7 +39,7 @@ export class RealTradingBot extends BaseTradingBot {
         symbols, 
         this.binancePublic, 
         this.deepseek!,
-        AnalysisParser.parseDeepSeekAnalysis,
+        this.analyzeWithRealTradeLogic.bind(this),
         this.binancePrivate,
         false,
         TRADING_CONFIG.FILES.REAL_BOT

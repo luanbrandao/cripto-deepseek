@@ -6,6 +6,7 @@ import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { handleBotError } from './utils/bot-executor';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
+import { analyzeWithRealTradeDeepSeek } from './utils/real-trade-deepseek-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -28,38 +29,12 @@ export class RealTradingBotSimulator extends BaseTradingBot {
     console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
   }
 
-  private async parseDeepSeekAnalysis(analysis: string, symbol: string, price: number): Promise<TradeDecision> {
-    const analysisLower = analysis.toLowerCase();
-
-    if (analysisLower.includes('buy') || analysisLower.includes('bullish') ||
-      analysisLower.includes('uptrend') || analysisLower.includes('breakout above')) {
-      return {
-        action: 'BUY',
-        confidence: 75,
-        reason: 'DeepSeek AI sugere compra baseado na análise técnica',
-        symbol,
-        price
-      };
-    }
-
-    if (analysisLower.includes('sell') || analysisLower.includes('bearish') ||
-      analysisLower.includes('downtrend') || analysisLower.includes('break below')) {
-      return {
-        action: 'SELL',
-        confidence: 70,
-        reason: 'DeepSeek AI sugere venda baseado na análise técnica',
-        symbol,
-        price
-      };
-    }
-
-    return {
-      action: 'HOLD',
-      confidence: 50,
-      reason: 'DeepSeek AI sugere aguardar - mercado indefinido',
-      symbol,
-      price
-    };
+  private async analyzeWithRealTradeLogic(analysis: string, symbol: string, price: number): Promise<TradeDecision> {
+    // Usar a lógica do Real-Trade: BUY, SELL ou HOLD
+    return await analyzeWithRealTradeDeepSeek(this.deepseek!, symbol, { 
+      price: { price: price.toString() }, 
+      stats: {} 
+    });
   }
 
   private async executeTradeDecision(decision: TradeDecision) {
@@ -111,7 +86,7 @@ export class RealTradingBotSimulator extends BaseTradingBot {
         symbols,
         this.binancePublic,
         this.deepseek!,
-        this.parseDeepSeekAnalysis.bind(this),
+        this.analyzeWithRealTradeLogic.bind(this),
         undefined,
         true,
         TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR
