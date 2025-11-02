@@ -1,4 +1,4 @@
-import { BinancePrivateClient } from './clients/binance-private-client';
+import { BinancePrivateClient } from '../../clients/binance-private-client';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -20,7 +20,7 @@ async function diagnose400Error() {
     const accountInfo = await client.getAccountInfo();
     console.log('✅ Conta acessível');
     console.log(`   Pode negociar: ${accountInfo.canTrade}`);
-    
+
     const usdtBalance = accountInfo.balances.find((b: any) => b.asset === 'USDT');
     const usdtFree = parseFloat(usdtBalance?.free || '0');
     console.log(`   USDT disponível: $${usdtFree.toFixed(2)}\n`);
@@ -29,16 +29,16 @@ async function diagnose400Error() {
 
   } catch (error: any) {
     console.error('\n❌ ERRO 400 DETECTADO:');
-    
+
     if (error.response?.status === 400) {
       console.error('Status: 400 Bad Request');
       console.error('Detalhes:', error.response.data);
-      
+
       const errorCode = error.response.data.code;
       const errorMsg = error.response.data.msg;
-      
+
       console.log('\n🔍 Análise do erro:');
-      
+
       switch (errorCode) {
         case -1021:
           console.log('⏰ Erro de timestamp - Sincronize o relógio do sistema');

@@ -1,15 +1,16 @@
-import { TradeSimulator } from '../simulator/trade-simulator';
-import { TRADING_CONFIG } from '../bots/config/trading-config';
-import EmaAnalyzer from '../analyzers/emaAnalyzer';
+
+import { TRADING_CONFIG } from '../../bots/config/trading-config';
+import EmaAnalyzer from '../../analyzers/emaAnalyzer';
+import { TradeSimulator } from '../../bots';
 
 async function runEmaSimulation() {
   console.log('🚀 MULTI-SYMBOL EMA CROSSOVER SIMULATOR');
   console.log(`📊 Estratégia: EMA ${TRADING_CONFIG.EMA.FAST_PERIOD}/${TRADING_CONFIG.EMA.SLOW_PERIOD} + Múltiplas Moedas\n`);
-  
+
   // Configurar EMA com períodos do config
-  const emaConfig = { 
-    fastPeriod: TRADING_CONFIG.EMA.FAST_PERIOD, 
-    slowPeriod: TRADING_CONFIG.EMA.SLOW_PERIOD 
+  const emaConfig = {
+    fastPeriod: TRADING_CONFIG.EMA.FAST_PERIOD,
+    slowPeriod: TRADING_CONFIG.EMA.SLOW_PERIOD
   };
   const analyzer = new EmaAnalyzer(emaConfig);
 

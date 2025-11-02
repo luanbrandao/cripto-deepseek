@@ -1,4 +1,4 @@
-import { TradeMonitor } from './monitor/trade-monitor';
+import { TradeMonitor } from '../monitor/trade-monitor';
 import * as fs from 'fs';
 
 async function checkTradesContinuously() {
