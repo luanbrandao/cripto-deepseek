@@ -44,7 +44,15 @@ export const TRADING_CONFIG = {
   // CONFIGURAÇÕES DE SIMULAÇÃO
   SIMULATION: {
     STARTUP_DELAY: 3000,            // Delay de startup (ms)
-    INITIAL_BALANCE: 1000           // Saldo inicial simulado
+    INITIAL_BALANCE: 1000,          // Saldo inicial simulado
+    MAX_ACTIVE_TRADES: 2        // Máximo de trades ativos por simulador
+  },
+
+  // CONFIGURAÇÕES DE LIMITES
+  LIMITS: {
+    OPEN_ORDERS: 2,                 // Cada trade criado na binance, cria uma order de alvo e uma order de stop
+    MAX_ACTIVE_TRADES: 4,           // Máximo de trades ativos para bots reais
+    MAX_TRADES_PER_SYMBOL: 1        // Máximo de trades por símbolo
   },
 
   // CONFIGURAÇÕES DE ARQUIVOS
@@ -54,6 +62,17 @@ export const TRADING_CONFIG = {
     SMART_BOT: 'smartTradingBot.json',
     EMA_BOT: 'emaTradingBot.json',
     SMART_SIMULATOR: 'smartTradingBotSimulator.json'
+  },
+
+  // FUNÇÕES AUXILIARES
+  getMaxActiveTrades: (isSimulation: boolean = false): number => {
+    return isSimulation
+      ? TRADING_CONFIG.SIMULATION.MAX_ACTIVE_TRADES
+      : TRADING_CONFIG.LIMITS.MAX_ACTIVE_TRADES * TRADING_CONFIG.LIMITS.OPEN_ORDERS;
+  },
+
+  getMaxTradesPerSymbol: (): number => {
+    return TRADING_CONFIG.LIMITS.MAX_TRADES_PER_SYMBOL;
   }
   // Resultado: Risk 0.5%-1.5% | Reward 1.0%-3.0% (sempre 2:1)
 };

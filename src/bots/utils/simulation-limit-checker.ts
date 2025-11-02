@@ -1,4 +1,5 @@
 import { Trade } from '../../storage/trade-storage';
+import { TRADING_CONFIG } from '../config/trading-config';
 import * as fs from 'fs';
 
 export function checkActiveSimulationTradesLimit(tradesFile: string): boolean {
@@ -12,10 +13,11 @@ export function checkActiveSimulationTradesLimit(tradesFile: string): boolean {
 
     const trades: Trade[] = JSON.parse(data);
     const activeTrades = trades.filter(trade => trade.status === 'pending').length;
+    const maxTrades = TRADING_CONFIG.getMaxActiveTrades(true);
 
-    if (activeTrades >= 6) {
-      console.log(`⏸️ Máximo de 2 trades ativos atingido (${activeTrades} ativos)`);
-      console.log('⏳ Aguardando finalização de trades para executar novos');
+    if (activeTrades >= maxTrades) {
+      console.log(`⏸️ Máximo de ${maxTrades} simulações ativas atingido (${activeTrades} ativas)`);
+      console.log('⏳ Aguardando finalização de simulações para executar novas');
       return false;
     }
     return true;
