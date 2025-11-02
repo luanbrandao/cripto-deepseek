@@ -25,16 +25,13 @@ export class RealTradingBotSimulator extends BaseTradingBot {
   }
 
   protected logBotInfo() {
-    logBotHeader('REAL TRADING BOT SIMULATOR', 'Simulação do Real Trading Bot Multi-Moeda');
     console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
+    logBotHeader('REAL TRADING BOT SIMULATOR', 'Simulação do Real Trading Bot Multi-Moeda');
   }
 
-  private async analyzeWithRealTradeLogic(symbol: string, price: number): Promise<TradeDecision> {
+  private async analyzeWithRealTradeLogic(symbol: string, marketData: any): Promise<TradeDecision> {
     // Usar a lógica do Real-Trade: BUY, SELL ou HOLD
-    return await analyzeWithRealTradeDeepSeek(this.deepseek!, symbol, { 
-      price: { price: price.toString() }, 
-      stats: {} 
-    });
+    return await analyzeWithRealTradeDeepSeek(this.deepseek!, symbol, marketData);
   }
 
   private async executeTradeDecision(decision: TradeDecision) {
@@ -67,8 +64,6 @@ export class RealTradingBotSimulator extends BaseTradingBot {
       return null;
     }
   }
-
-
 
   async executeTrade() {
     this.logBotInfo();

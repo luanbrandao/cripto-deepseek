@@ -13,7 +13,7 @@ export interface SymbolAnalysis {
 export async function analyzeMultipleSymbols(
   symbols: string[], 
   binancePublic: any, 
-  parseAnalysisFunction: (symbol: string, price: number) => Promise<TradeDecision>,
+  parseAnalysisFunction: (symbol: string, marketData: any) => Promise<TradeDecision>,
   binancePrivate?: BinancePrivateClient,
   isSimulation: boolean = false,
   simulationFile?: string
@@ -41,7 +41,7 @@ export async function analyzeMultipleSymbols(
       // Chamar parseAnalysisFunction que fará a análise apropriada
       // Para bots com DeepSeek: parseAnalysisFunction fará a análise
       // Para bots EMA: parseAnalysisFunction usará dados técnicos
-      const decision = await parseAnalysisFunction(symbol, parseFloat(price.price));
+      const decision = await parseAnalysisFunction(symbol, { price, stats, klines });
       
       let score = 0;
       if (decision.action === 'BUY' || decision.action === 'SELL') {

@@ -26,6 +26,7 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
   }
 
   protected logBotInfo() {
+    console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
     console.log('🚀 MULTI-SYMBOL SMART TRADING BOT SIMULATOR');
     console.log('✅ MODO SIMULAÇÃO - Nenhuma ordem real será executada');
     logBotHeader('SIMULADOR MULTI-SYMBOL SMART BOT', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - SIMULAÇÃO');
@@ -65,8 +66,8 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
     return simulatedOrder;
   }
 
-  private async analyzeWithSmartTradeLogic(symbol: string, price: number) {
-    return await analyzeWithDeepSeek(this.deepseek!, symbol, { price: { price: price.toString() }, stats: {} });
+  private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
+    return await analyzeWithDeepSeek(this.deepseek!, symbol, marketData);
   }
 
   async executeTrade() {
@@ -79,7 +80,7 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
 
     try {
       const symbols = this.getSymbols();
-      
+
       // Filtrar símbolos com EMA de alta primeiro
       const validSymbols = [];
       for (const symbol of symbols) {
@@ -87,17 +88,17 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
         const prices = klines.map((k: any) => parseFloat(k[4]));
         const currentPrice = prices[prices.length - 1];
         const emaAnalysis = this.emaAnalyzer.analyze({ price24h: prices, currentPrice });
-        
+
         if (emaAnalysis.action === 'BUY' && emaAnalysis.reason.includes('Tendência de alta confirmada')) {
           validSymbols.push(symbol);
         }
       }
-      
+
       if (validSymbols.length === 0) {
         console.log('\n⏸️ Nenhuma moeda com EMA de alta encontrada');
         return null;
       }
-      
+
       const bestAnalysis = await analyzeMultipleSymbols(
         validSymbols,
         this.binancePublic,
@@ -106,7 +107,7 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
         true,
         TRADING_CONFIG.FILES.SMART_SIMULATOR
       );
-      
+
       if (!bestAnalysis) {
         console.log('\n⏸️ Nenhuma oportunidade de simulação encontrada');
         return null;
@@ -122,11 +123,11 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
       }
 
       const boostedDecision = boostConfidence(bestAnalysis.decision);
-      
+
       console.log('🔍 Validação final de Risk/Reward 2:1 para simulação...');
       const { riskPercent, rewardPercent } = calculateRiskReward(boostedDecision.confidence);
-      console.log(`📊 R/R calculado: ${(rewardPercent*100).toFixed(1)}%/${(riskPercent*100).toFixed(1)}% (${(rewardPercent/riskPercent).toFixed(1)}:1)`);
-      
+      console.log(`📊 R/R calculado: ${(rewardPercent * 100).toFixed(1)}%/${(riskPercent * 100).toFixed(1)}% (${(rewardPercent / riskPercent).toFixed(1)}:1)`);
+
       return await this.simulateAndSave(boostedDecision);
 
     } catch (error) {

@@ -45,8 +45,8 @@ export class SmartTradingBot extends BaseTradingBot {
     return orderResult;
   }
 
-  private async analyzeWithSmartTradeLogic(symbol: string, price: number) {
-    return await analyzeWithDeepSeek(this.deepseek!, symbol, { price: { price: price.toString() }, stats: {} });
+  private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
+    return await analyzeWithDeepSeek(this.deepseek!, symbol, marketData);
   }
 
   async executeTrade() {

@@ -19,11 +19,8 @@ export class RealTradingBot extends BaseTradingBot {
     logBotHeader('MULTI-SYMBOL REAL TRADING BOT', 'Análise de Múltiplas Moedas + DeepSeek AI');
   }
 
-  private async analyzeWithRealTradeLogic(symbol: string, price: number) {
-    return await analyzeWithRealTradeDeepSeek(this.deepseek!, symbol, { 
-      price: { price: price.toString() }, 
-      stats: {} 
-    });
+  private async analyzeWithRealTradeLogic(symbol: string, marketData: any) {
+    return await analyzeWithRealTradeDeepSeek(this.deepseek!, symbol, marketData);
   }
 
   async executeTrade() {
