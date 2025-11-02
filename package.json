@@ -25,7 +25,9 @@
     "test-all-bots-validation": "ts-node src/scripts/tests/test-all-bots-validation.ts",
     "test-all-simulators": "ts-node src/scripts/tests/test-all-simulators.ts",
     "test-multismart-bot-simulator": "ts-node src/scripts/tests/test-multismart-bot-simulator.ts",
+    "test-multi-smart-bot": "ts-node src/scripts/tests/test-multi-smart-bot.ts",
     "multismart-trading-bot-simulator": "ts-node src/bots/multi-smart-trading-bot-simulator.ts",
+    "multi-smart-trading-bot": "ts-node src/bots/multi-smart-trading-bot.ts",
     "real-trading-bot-simulator-cron": "ts-node src/crons/real-trading-bot-simulator-cron.ts",
     "smart-trading-bot-simulator-cron": "ts-node src/crons/smart-trading-bot-simulator-cron.ts",
     "smart-trading-bot-cron": "ts-node src/crons/smart-trading-bot-cron.ts"
