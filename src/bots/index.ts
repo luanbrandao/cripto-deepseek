@@ -11,7 +11,7 @@ export { RealTradingBotSimulator } from './real-trading-bot-simulator';
 export { SmartTradingBotSimulator } from './smart-trading-bot-simulator';
 
 // Simulator
-export { TradeSimulator } from '../simulator/trade-simulator';
+export { TradeSimulator } from '../scripts/simulators/trade-simulator';
 
 // Configuration
 export { TRADING_CONFIG } from './config/trading-config';

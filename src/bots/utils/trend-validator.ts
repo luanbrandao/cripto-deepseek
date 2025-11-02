@@ -32,11 +32,36 @@ export function boostConfidence(decision: any) {
     throw new Error('Risk/Reward ratio insuficiente - trade cancelado');
   }
   
-  const boostedConfidence = Math.min(95, decision.confidence + 10);
+  // Intelligent boost based on multiple criteria
+  let boost = 0;
+  
+  // Base EMA confirmation boost
+  boost += 5;
+  
+  // Additional boost based on current confidence level
+  if (decision.confidence >= 85) {
+    boost += 3; // High confidence gets smaller boost
+  } else if (decision.confidence >= 75) {
+    boost += 6; // Medium confidence gets medium boost
+  } else {
+    boost += 8; // Lower confidence gets higher boost
+  }
+  
+  // Smart Score boost (if available in reason)
+  if (decision.reason && decision.reason.includes('Smart Score:')) {
+    const scoreMatch = decision.reason.match(/Smart Score: ([0-9.]+)/);
+    if (scoreMatch) {
+      const smartScore = parseFloat(scoreMatch[1]);
+      if (smartScore > 90) boost += 4;
+      else if (smartScore > 85) boost += 2;
+    }
+  }
+  
+  const boostedConfidence = Math.min(95, decision.confidence + boost);
   decision.confidence = boostedConfidence;
-  decision.reason = `${decision.reason} + Tendência de alta confirmada pelo EMA`;
+  decision.reason = `${decision.reason} + EMA confirmado (+${boost}% boost)`;
   
   console.log('🎯 DUPLA CONFIRMAÇÃO: EMA + DEEPSEEK AI APROVAM COMPRA!');
-  console.log('✅ Risk/Reward 2:1 confirmado!');
+  console.log(`✅ Risk/Reward 2:1 confirmado! Boost inteligente: +${boost}%`);
   return decision;
 }
