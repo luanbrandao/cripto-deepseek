@@ -29,16 +29,15 @@ export class TradeMonitor {
       console.log(`🔍 Verificando ${pendingTrades.length} trades pendentes...`);
 
       for (const trade of pendingTrades) {
-        const currentPrice = await this.getCurrentPrice(trade.symbol);
-        const result = this.evaluateTrade(trade, currentPrice);
+        const result = await this.evaluateTradeWithHistory(trade);
 
         if (result) {
           trade.status = 'completed';
           trade.result = result.outcome;
-          trade.exitPrice = currentPrice;
+          trade.exitPrice = result.exitPrice;
           trade.actualReturn = result.actualReturn;
 
-          console.log(`${result.outcome === 'win' ? '🟢' : '🔴'} ${trade.symbol} ${trade.action}: ${result.outcome.toUpperCase()}`);
+          console.log(`${result.outcome === 'win' ? '🟢' : '🔴'} ${trade.symbol} ${trade.action}: ${result.outcome.toUpperCase()} @ $${result.exitPrice}`);
         }
       }
 
@@ -55,21 +54,73 @@ export class TradeMonitor {
     return parseFloat(priceData.price);
   }
 
-  private evaluateTrade(trade: Trade, currentPrice: number): { outcome: 'win' | 'loss', actualReturn: number } | null {
-    if (trade.action === 'BUY') {
-      if (currentPrice >= trade.targetPrice) {
-        return { outcome: 'win', actualReturn: currentPrice - trade.entryPrice };
-      } else if (currentPrice <= trade.stopPrice) {
-        return { outcome: 'loss', actualReturn: currentPrice - trade.entryPrice };
-      }
-    } else if (trade.action === 'SELL') {
-      if (currentPrice <= trade.targetPrice) {
-        return { outcome: 'win', actualReturn: trade.entryPrice - currentPrice };
-      } else if (currentPrice >= trade.stopPrice) {
-        return { outcome: 'loss', actualReturn: trade.entryPrice - currentPrice };
-      }
-    }
+  private async getCandleHistory(symbol: string): Promise<{high: number, low: number, timestamp: number}[]> {
+    // Buscar últimos 30 minutos de dados (1m interval)
+    const klines = await this.binance.getKlines(symbol, '1m', 30);
+    return klines.map((k: any) => ({
+      high: parseFloat(k[2]),  // High price
+      low: parseFloat(k[3]),   // Low price
+      timestamp: k[0]          // Open time
+    }));
+  }
 
-    return null;
+  private async evaluateTradeWithHistory(trade: Trade): Promise<{ outcome: 'win' | 'loss', actualReturn: number, exitPrice: number } | null> {
+    try {
+      const candleHistory = await this.getCandleHistory(trade.symbol);
+      
+      console.log(`\n🔍 Avaliando ${trade.symbol} ${trade.action}:`);
+      console.log(`📊 Target: ${trade.targetPrice} | Stop: ${trade.stopPrice}`);
+      
+      const allHighs = candleHistory.map(c => c.high);
+      const allLows = candleHistory.map(c => c.low);
+      console.log(`📈 Mínimo absoluto: ${Math.min(...allLows)} | Máximo absoluto: ${Math.max(...allHighs)}`);
+      
+      // Verificar cada candle no histórico para ver qual condição foi atingida primeiro
+      for (let i = 0; i < candleHistory.length; i++) {
+        const candle = candleHistory[i];
+        
+        if (trade.action === 'BUY') {
+          // Para BUY: verificar se HIGH atingiu target ou LOW atingiu stop
+          if (candle.high >= trade.targetPrice) {
+            console.log(`✅ WIN: Candle ${i} - High ${candle.high} >= Target ${trade.targetPrice}`);
+            return {
+              outcome: 'win',
+              actualReturn: trade.targetPrice - trade.entryPrice,
+              exitPrice: trade.targetPrice
+            };
+          } else if (candle.low <= trade.stopPrice) {
+            console.log(`❌ LOSS: Candle ${i} - Low ${candle.low} <= Stop ${trade.stopPrice}`);
+            return {
+              outcome: 'loss',
+              actualReturn: trade.stopPrice - trade.entryPrice,
+              exitPrice: trade.stopPrice
+            };
+          }
+        } else if (trade.action === 'SELL') {
+          // Para SELL: verificar se LOW atingiu target ou HIGH atingiu stop
+          if (candle.low <= trade.targetPrice) {
+            console.log(`✅ WIN: Candle ${i} - Low ${candle.low} <= Target ${trade.targetPrice}`);
+            return {
+              outcome: 'win',
+              actualReturn: trade.entryPrice - trade.targetPrice,
+              exitPrice: trade.targetPrice
+            };
+          } else if (candle.high >= trade.stopPrice) {
+            console.log(`❌ LOSS: Candle ${i} - High ${candle.high} >= Stop ${trade.stopPrice}`);
+            return {
+              outcome: 'loss',
+              actualReturn: trade.entryPrice - trade.stopPrice,
+              exitPrice: trade.stopPrice
+            };
+          }
+        }
+      }
+      
+      console.log(`⏳ Trade ainda pendente - nenhuma condição atingida`);
+      return null; // Trade ainda pendente
+    } catch (error) {
+      console.error(`❌ Erro ao avaliar trade ${trade.symbol}:`, error);
+      return null;
+    }
   }
 }
