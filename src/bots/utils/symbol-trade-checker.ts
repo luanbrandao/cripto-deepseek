@@ -38,16 +38,14 @@ function hasActiveSimulationTradeForSymbol(symbol: string, simulationFile: strin
     const tradesData = fs.readFileSync(tradesPath, 'utf8');
     const trades = JSON.parse(tradesData);
     
-    // Verifica se há trades pendentes para o símbolo nas últimas 24h
-    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    // Verifica se há trades pendentes para o símbolo
     const activeSimulationTrade = trades.some((trade: any) => 
       trade.symbol === symbol && 
-      trade.status === 'pending' &&
-      new Date(trade.timestamp).getTime() > oneDayAgo
+      trade.status === 'pending'
     );
     
     if (activeSimulationTrade) {
-      console.log(`⚠️ Simulação ativa encontrada para ${symbol} - Pulando para evitar duplicação`);
+      console.log(`⚠️ Trade ativo encontrado para ${symbol} - Pulando para evitar duplicação`);
       return true;
     }
     

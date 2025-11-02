@@ -26,7 +26,12 @@ export async function analyzeMultipleSymbols(
   for (const symbol of symbols) {
     try {
       // Verificar se já existe trade ativo para este símbolo
-      if (await hasActiveTradeForSymbol(binancePrivate, symbol, isSimulation, simulationFile)) {
+      const hasActiveTrade = binancePrivate 
+        ? await hasActiveTradeForSymbol(binancePrivate, symbol) ||
+          await hasActiveTradeForSymbol(undefined, symbol, false, simulationFile)
+        : await hasActiveTradeForSymbol(undefined, symbol, isSimulation, simulationFile);
+      
+      if (hasActiveTrade) {
         console.log(`⏭️ Pulando ${symbol} - trade já ativo`);
         continue;
       }

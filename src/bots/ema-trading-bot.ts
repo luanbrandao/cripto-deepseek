@@ -96,7 +96,9 @@ export class EmaTradingBot extends BaseTradingBot {
           const marketData = await this.getMarketData(symbol);
           return this.analyzeWithEma(symbol, marketData);
         },
-        this.binancePrivate
+        this.binancePrivate,
+        false,
+        TRADING_CONFIG.FILES.EMA_BOT
       );
       
       if (!bestAnalysis) {

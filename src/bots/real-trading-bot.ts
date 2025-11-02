@@ -33,7 +33,9 @@ export class RealTradingBot extends BaseTradingBot {
         this.binancePublic, 
         this.deepseek!,
         AnalysisParser.parseDeepSeekAnalysis,
-        this.binancePrivate
+        this.binancePrivate,
+        false,
+        TRADING_CONFIG.FILES.REAL_BOT
       );
       
       if (!bestAnalysis) {

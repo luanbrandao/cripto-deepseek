@@ -20,7 +20,9 @@
     "ema-trading-bot": "ts-node src/bots/ema-trading-bot.ts",
     "diagnose-400": "ts-node src/diagnose-400-error.ts",
     "test-risk-reward": "ts-node src/test-risk-reward.ts",
-    "test-symbol-checker": "ts-node src/bots/test-symbol-checker.ts"
+    "test-symbol-checker": "ts-node src/bots/test-symbol-checker.ts",
+    "test-real-bot-validation": "ts-node src/bots/test-real-bot-validation.ts",
+    "test-all-bots-validation": "ts-node src/bots/test-all-bots-validation.ts"
   },
   "dependencies": {
     "axios": "^1.6.0",

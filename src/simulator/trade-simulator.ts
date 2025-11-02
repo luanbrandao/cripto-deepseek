@@ -1,6 +1,7 @@
 import { BinancePublicClient } from '../clients/binance-public-client';
 import { TradeStorage, Trade } from '../storage/trade-storage';
 import { checkActiveSimulationTradesLimit } from '../bots/utils/simulation-limit-checker';
+import { hasActiveTradeForSymbol } from '../bots/utils/symbol-trade-checker';
 import { TRADING_CONFIG } from '../bots/config/trading-config';
 import * as path from 'path';
 
@@ -74,6 +75,12 @@ export class TradeSimulator {
     
     for (const symbol of symbols) {
       try {
+        // Verificar se já existe trade ativo para este símbolo
+        if (await hasActiveTradeForSymbol(undefined, symbol, true, this.tradesFile)) {
+          console.log(`⏭️ Pulando ${symbol} - simulação já ativa`);
+          continue;
+        }
+        
         console.log(`\n📊 Analisando ${symbol}...`);
         
         const klines = await this.binance.getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);

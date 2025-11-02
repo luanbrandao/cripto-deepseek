@@ -80,7 +80,9 @@ export class SmartTradingBot extends BaseTradingBot {
         async (analysis: string, symbol: string, price: number) => {
           return await analyzeWithDeepSeek(this.deepseek!, symbol, { price: { price: price.toString() }, stats: {} });
         },
-        this.binancePrivate
+        this.binancePrivate,
+        false,
+        TRADING_CONFIG.FILES.SMART_BOT
       );
       
       if (!bestAnalysis) {
