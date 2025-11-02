@@ -79,6 +79,11 @@ export class EmaTradingBot extends BaseTradingBot {
     );
   }
 
+  private async analyzeSymbolWithEma(symbol: string, _price: number): Promise<TradeDecision> {
+    const marketData = await this.getMarketData(symbol);
+    return this.analyzeWithEma(symbol, marketData);
+  }
+
   async executeTrade() {
     this.logBotInfo();
 
@@ -91,11 +96,7 @@ export class EmaTradingBot extends BaseTradingBot {
       const bestAnalysis = await analyzeMultipleSymbols(
         symbols,
         this.binancePublic,
-        null, // No DeepSeek for EMA bot
-        async (analysis: string, symbol: string, price: number) => {
-          const marketData = await this.getMarketData(symbol);
-          return this.analyzeWithEma(symbol, marketData);
-        },
+        this.analyzeSymbolWithEma.bind(this),
         this.binancePrivate,
         false,
         TRADING_CONFIG.FILES.EMA_BOT

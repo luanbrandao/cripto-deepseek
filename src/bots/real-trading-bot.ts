@@ -19,7 +19,7 @@ export class RealTradingBot extends BaseTradingBot {
     logBotHeader('MULTI-SYMBOL REAL TRADING BOT', 'Análise de Múltiplas Moedas + DeepSeek AI');
   }
 
-  private async analyzeWithRealTradeLogic(analysis: string, symbol: string, price: number) {
+  private async analyzeWithRealTradeLogic(symbol: string, price: number) {
     return await analyzeWithRealTradeDeepSeek(this.deepseek!, symbol, { 
       price: { price: price.toString() }, 
       stats: {} 
@@ -38,7 +38,6 @@ export class RealTradingBot extends BaseTradingBot {
       const bestAnalysis = await analyzeMultipleSymbols(
         symbols, 
         this.binancePublic, 
-        this.deepseek!,
         this.analyzeWithRealTradeLogic.bind(this),
         this.binancePrivate,
         false,

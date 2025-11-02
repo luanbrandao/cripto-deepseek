@@ -29,7 +29,7 @@ export class RealTradingBotSimulator extends BaseTradingBot {
     console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
   }
 
-  private async analyzeWithRealTradeLogic(analysis: string, symbol: string, price: number): Promise<TradeDecision> {
+  private async analyzeWithRealTradeLogic(symbol: string, price: number): Promise<TradeDecision> {
     // Usar a lógica do Real-Trade: BUY, SELL ou HOLD
     return await analyzeWithRealTradeDeepSeek(this.deepseek!, symbol, { 
       price: { price: price.toString() }, 
@@ -85,7 +85,6 @@ export class RealTradingBotSimulator extends BaseTradingBot {
       const bestAnalysis = await analyzeMultipleSymbols(
         symbols,
         this.binancePublic,
-        this.deepseek!,
         this.analyzeWithRealTradeLogic.bind(this),
         undefined,
         true,

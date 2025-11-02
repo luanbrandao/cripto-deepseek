@@ -13,8 +13,7 @@ export interface SymbolAnalysis {
 export async function analyzeMultipleSymbols(
   symbols: string[], 
   binancePublic: any, 
-  deepseek: any,
-  parseAnalysisFunction: (analysis: string, symbol: string, price: number) => Promise<TradeDecision>,
+  parseAnalysisFunction: (symbol: string, price: number) => Promise<TradeDecision>,
   binancePrivate?: BinancePrivateClient,
   isSimulation: boolean = false,
   simulationFile?: string
@@ -39,18 +38,10 @@ export async function analyzeMultipleSymbols(
       console.log(`\n📊 Analisando ${symbol}...`);
       const { price, stats, klines } = await getMarketData(binancePublic, symbol);
       
-      let decision: TradeDecision;
-      
-      if (deepseek) {
-        const analysis = await deepseek.analyzeMarket(
-          { price, stats, klines },
-          `Analyze ${symbol} market data (${TRADING_CONFIG.CHART.TIMEFRAME} timeframe, ${TRADING_CONFIG.CHART.PERIODS} periods) and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning.`
-        );
-        decision = await parseAnalysisFunction(analysis, symbol, parseFloat(price.price));
-      } else {
-        // For EMA bot - call parseAnalysisFunction directly without DeepSeek analysis
-        decision = await parseAnalysisFunction('', symbol, parseFloat(price.price));
-      }
+      // Chamar parseAnalysisFunction que fará a análise apropriada
+      // Para bots com DeepSeek: parseAnalysisFunction fará a análise
+      // Para bots EMA: parseAnalysisFunction usará dados técnicos
+      const decision = await parseAnalysisFunction(symbol, parseFloat(price.price));
       
       let score = 0;
       if (decision.action === 'BUY' || decision.action === 'SELL') {

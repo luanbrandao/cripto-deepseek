@@ -65,6 +65,10 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
     return simulatedOrder;
   }
 
+  private async analyzeWithSmartTradeLogic(symbol: string, price: number) {
+    return await analyzeWithDeepSeek(this.deepseek!, symbol, { price: { price: price.toString() }, stats: {} });
+  }
+
   async executeTrade() {
     this.logBotInfo();
 
@@ -97,10 +101,7 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
       const bestAnalysis = await analyzeMultipleSymbols(
         validSymbols,
         this.binancePublic,
-        this.deepseek!,
-        async (analysis: string, symbol: string, price: number) => {
-          return await analyzeWithDeepSeek(this.deepseek!, symbol, { price: { price: price.toString() }, stats: {} });
-        },
+        this.analyzeWithSmartTradeLogic.bind(this),
         undefined,
         true,
         TRADING_CONFIG.FILES.SMART_SIMULATOR
