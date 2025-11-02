@@ -1,9 +1,6 @@
 import cron from 'node-cron';
 import { SmartTradingBot } from '../bots/smart-trading-bot';
-import { TradeMonitor } from '../monitor/trade-monitor';
-import path from 'path';
 import * as dotenv from 'dotenv';
-import { TRADING_CONFIG } from '../bots/config/trading-config';
 import { validateBinanceKeys } from '../bots/utils/env-validator';
 
 dotenv.config();
@@ -17,22 +14,13 @@ if (!keys) {
 }
 
 const { apiKey, apiSecret } = keys;
-const tradesFilePath = path.join(__dirname, '../bots/trades', TRADING_CONFIG.FILES.SMART_BOT);
 
 cron.schedule('*/5 * * * *', async () => {
   const timestamp = new Date().toLocaleString('pt-BR');
-  console.log(`\n⏰ [${timestamp}] Executando Smart Trading Bot + Monitor...`);
+  console.log(`\n⏰ [${timestamp}] Executando Smart Trading Bot...`);
 
   try {
-    const monitor = new TradeMonitor();
     const bot = new SmartTradingBot(apiKey, apiSecret);
-
-    console.log('🔍 Verificando status dos trades...');
-    await monitor.checkTrades(tradesFilePath);
-
-    console.log('\n\n\n')
-
-    console.log('🤖 Iniciando trading real...');
     const tradeResult = await bot.executeTrade();
 
     if (tradeResult) {

@@ -1,10 +1,7 @@
 import cron from 'node-cron';
 // Import direto da classe sem executar o main
 import { RealTradingBotSimulator } from '../bots/real-trading-bot-simulator';
-import { TradeMonitor } from '../monitor/trade-monitor';
-import path from 'path';
 import * as dotenv from 'dotenv';
-import { TRADING_CONFIG } from '../bots/config/trading-config';
 import { validateBinanceKeys } from '../bots/utils/env-validator';
 
 dotenv.config();
@@ -19,27 +16,13 @@ if (!keys) {
 }
 
 const { apiKey, apiSecret } = keys;
-const tradesFilePath = path.join(__dirname, '../bots/trades', TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR);
 
 cron.schedule('*/5 * * * *', async () => {
   const timestamp = new Date().toLocaleString('pt-BR');
-  console.log(`\n⏰ [${timestamp}] Executando Real Trading Bot Simulator + Monitor...`);
+  console.log(`\n⏰ [${timestamp}] Executando Real Trading Bot Simulator...`);
 
   try {
-    // Criar instâncias apenas quando necessário
-    const monitor = new TradeMonitor();
-
-    // Criar bot sem executar a função main automática
     const bot = new RealTradingBotSimulator(apiKey, apiSecret);
-
-    // Executar o monitor de trades
-    console.log('🔍 Verificando status dos trades...');
-    await monitor.checkTrades(tradesFilePath);
-
-    console.log('\n\n\n')
-
-    // Executar o bot de trading
-    console.log('🤖 Iniciando simulação de trading...');
     const tradeResult = await bot.executeTrade();
 
     if (tradeResult) {
