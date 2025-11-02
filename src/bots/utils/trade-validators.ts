@@ -95,3 +95,40 @@ export function calculateRiskReward(confidence: number): { riskPercent: number; 
     rewardPercent: rewardPercent / 100
   };
 }
+
+/**
+ * Calcula risk/reward dinâmico - apenas valida se ganho é 2x maior que risco
+ * Não modifica valores, apenas verifica se atendem ao critério 2:1
+ */
+export function calculateRiskRewardDynamic(entryPrice: number, targetPrice: number, stopPrice: number, action: 'BUY' | 'SELL'): { riskPercent: number; rewardPercent: number; isValid: boolean } {
+  let potentialGain: number;
+  let potentialLoss: number;
+  
+  if (action === 'BUY') {
+    potentialGain = targetPrice - entryPrice;
+    potentialLoss = entryPrice - stopPrice;
+  } else { // SELL
+    potentialGain = entryPrice - targetPrice;
+    potentialLoss = stopPrice - entryPrice;
+  }
+  
+  const riskPercent = Math.abs(potentialLoss) / entryPrice;
+  const rewardPercent = Math.abs(potentialGain) / entryPrice;
+  const ratio = rewardPercent / riskPercent;
+  
+  console.log(`📊 Risk/Reward Dinâmico: ${(rewardPercent * 100).toFixed(2)}%/${(riskPercent * 100).toFixed(2)}% (${ratio.toFixed(2)}:1)`);
+  
+  const isValid = ratio >= TRADING_CONFIG.MIN_RISK_REWARD_RATIO;
+  
+  if (!isValid) {
+    console.log(`❌ RATIO INSUFICIENTE: ${ratio.toFixed(2)}:1 < ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
+  } else {
+    console.log(`✅ RATIO APROVADO: ${ratio.toFixed(2)}:1 (≥ ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1)`);
+  }
+  
+  return {
+    riskPercent,
+    rewardPercent,
+    isValid
+  };
+}

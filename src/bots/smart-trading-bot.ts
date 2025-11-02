@@ -1,6 +1,6 @@
 import { BaseTradingBot } from './base-trading-bot';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
-import { calculateRiskReward } from './utils/trade-validators';
+import { calculateRiskRewardDynamic } from './utils/trade-validators';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
 import { analyzeWithSmartTrade } from './analyzers/smart-trade-analyzer';
@@ -103,8 +103,18 @@ export class SmartTradingBot extends BaseTradingBot {
       const boostedDecision = boostConfidence(bestAnalysis.decision);
 
       console.log('🔍 Validação final de Risk/Reward antes da execução...');
-      const { riskPercent, rewardPercent } = calculateRiskReward(boostedDecision.confidence);
-      console.log(`📊 R/R calculado: ${(rewardPercent * 100).toFixed(1)}%/${(riskPercent * 100).toFixed(1)}% (${(rewardPercent / riskPercent).toFixed(1)}:1)`);
+      
+      // Calcular target e stop prices baseados na confiança
+      const riskPercent = boostedDecision.confidence >= 80 ? 0.5 : boostedDecision.confidence >= 75 ? 1.0 : 1.5;
+      const targetPrice = boostedDecision.price * (1 + (riskPercent * 2) / 100);
+      const stopPrice = boostedDecision.price * (1 - riskPercent / 100);
+      
+      const riskRewardResult = calculateRiskRewardDynamic(boostedDecision.price, targetPrice, stopPrice, boostedDecision.action);
+      
+      if (!riskRewardResult.isValid) {
+        console.log('❌ Trade cancelado - Risk/Reward insuficiente');
+        return null;
+      }
 
       return await this.executeAndSave(boostedDecision);
 
