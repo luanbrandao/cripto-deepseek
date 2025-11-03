@@ -3,6 +3,7 @@ import { validateBinanceKeys } from './utils/env-validator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { handleBotError } from './utils/bot-executor';
 import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
+import { validateTradingConditions } from './utils/bot-initializer';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
 import { analyzeWithRealTrade } from './analyzers/real-trade-analyzer';
 import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
@@ -52,19 +53,25 @@ export class RealTradingBotSimulator extends BaseTradingBot {
   async executeTrade() {
     this.logBotInfo();
 
-    const tradesFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR}`);
-    if (!checkActiveSimulationTradesLimit(tradesFile)) {
-      return null;
-    }
-
     try {
+      // Validar condições de trading (mesmo fluxo do Real Bot)
+      if (!await validateTradingConditions(this.binancePrivate)) {
+        return null;
+      }
+
+      // Verificar limite de simulações
+      const tradesFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR}`);
+      if (!checkActiveSimulationTradesLimit(tradesFile)) {
+        return null;
+      }
+
       const symbols = this.getSymbols();
       const bestAnalysis = await analyzeMultipleSymbols(
         symbols,
         this.binancePublic,
         this.analyzeWithRealTradeLogic.bind(this),
-        undefined,
-        true,
+        this.binancePrivate,  // Passar cliente privado para verificação de trades ativos
+        true,                 // isSimulation = true
         TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR
       );
 
