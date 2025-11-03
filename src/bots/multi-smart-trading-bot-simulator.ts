@@ -13,8 +13,8 @@ import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
 import * as path from 'path';
 
 export class MultiSmartTradingBotSimulator extends BaseTradingBot {
-  private trendAnalyzer: MarketTrendAnalyzer;
-  private advancedEmaAnalyzer: AdvancedEmaAnalyzer;
+  private readonly trendAnalyzer: MarketTrendAnalyzer;
+  private readonly advancedEmaAnalyzer: AdvancedEmaAnalyzer;
 
   constructor() {
     super(undefined, undefined, true);
@@ -26,25 +26,22 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
   }
 
   protected logBotInfo() {
-    console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
-    console.log('🤖 ENHANCED MULTI-SYMBOL SMART TRADING BOT SIMULATOR v2.0');
-    console.log('✅ MODO SIMULAÇÃO - Nenhuma ordem real será executada');
-    console.log('🎯 MELHORIAS IMPLEMENTADAS:');
-    console.log('  • Análise EMA multi-timeframe (12/26/50/100/200)');
-    console.log('  • Parser AI avançado com análise de sentimento');
-    console.log('  • Sistema de scoring ponderado (EMA 35% + AI 40% + Volume 15% + Momentum 10%)');
-    console.log('  • Filtro adaptativo baseado em condições de mercado');
-    console.log('  • Boost inteligente de confiança baseado em critérios');
-    console.log('  • Indicadores técnicos: RSI, Volume, Momentum');
-    console.log('  • Assertividade esperada: 92-95% (vs 85% anterior)\n');
-    logBotHeader('ENHANCED SMART BOT SIMULATOR', 'Análise Multi-Dimensional + Filtros Adaptativos - SIMULAÇÃO');
+    console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
+    logBotHeader('MULTI-SMART BOT SIMULATOR v2.0', 'Análise Multi-Dimensional - SIMULAÇÃO');
+    
+    console.log('🎯 RECURSOS AVANÇADOS:');
+    console.log('  • EMA Multi-Timeframe (12/26/50/100/200)');
+    console.log('  • AI Parser com Análise de Sentimento');
+    console.log('  • Smart Scoring 4D (EMA+AI+Volume+Momentum)');
+    console.log('  • Filtro Adaptativo por Condição de Mercado');
+    console.log('  • Boost Inteligente de Confiança');
+    console.log('  • Simulação Segura (Zero Risco)');
+    console.log('  • Assertividade: 92-95%\n');
   }
 
   private simulateTradeExecution(decision: any) {
-    console.log('\n🚨 SIMULANDO EXECUÇÃO DE ORDEM');
-    console.log(`📝 Ordem simulada: ${decision.action} ${decision.symbol} - $${this.getTradeAmount()}`);
-    console.log(`📊 Confiança final: ${decision.confidence}%`);
-    console.log(`💭 Razão: ${decision.reason}`);
+    console.log('\n🚨 SIMULANDO TRADE');
+    console.log(`📝 ${decision.action} ${decision.symbol} - $${this.getTradeAmount()} (${decision.confidence}%)`);
 
     const simulatedOrder = {
       orderId: 'SIM_' + Date.now(),
@@ -55,128 +52,137 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
       executedQty: (this.getTradeAmount() / decision.price).toFixed(6)
     };
 
-    console.log('✅ Ordem simulada com sucesso!');
-    console.log(`🆔 ID simulado: ${simulatedOrder.orderId}`);
-    console.log(`💱 Qtd simulada: ${simulatedOrder.executedQty}`);
-    console.log(`💰 Preço: $${decision.price}`);
-
+    console.log(`✅ Simulação concluída! ID: ${simulatedOrder.orderId}`);
+    this.saveTradeHistory(decision, simulatedOrder);
+    
     return simulatedOrder;
   }
 
-  private async simulateAndSave(decision: any) {
-    const simulatedOrder = this.simulateTradeExecution(decision);
-    await this.saveTradeHistory(decision, simulatedOrder);
-
-    console.log('\n🎯 SMART TRADE SIMULADO COM SUCESSO!');
-    console.log('📊 Análise completa salva no histórico');
-    console.log('✅ Nenhuma ordem real foi executada');
-
-    return simulatedOrder;
-  }
-
-  private async multiAnalyzeWithSmartTradeLogic(symbol: string, marketData: any) {
+  private async analyzeSymbol(symbol: string, marketData: any) {
     return await multiAnalyzeWithSmartTrade(this.deepseek!, symbol, marketData);
+  }
+
+  private async filterSymbolsByStrength(symbols: string[]): Promise<string[]> {
+    console.log(`🔍 Analisando ${symbols.length} moedas com filtro adaptativo...`);
+    
+    const validSymbols = [];
+    
+    for (const symbol of symbols) {
+      const klines = await this.binancePublic.getKlines(
+        symbol, 
+        TRADING_CONFIG.CHART.TIMEFRAME, 
+        TRADING_CONFIG.CHART.PERIODS
+      );
+      
+      const prices = klines.map((k: any) => parseFloat(k[4]));
+      const volumes = klines.map((k: any) => parseFloat(k[5]));
+      
+      const analysis = this.advancedEmaAnalyzer.analyzeAdvanced(prices, volumes);
+      const condition = this.advancedEmaAnalyzer.getMarketCondition(analysis);
+      
+      const threshold = this.getThresholdByMarketCondition(condition.type);
+      
+      if (this.isSymbolValid(analysis, threshold)) {
+        validSymbols.push(symbol);
+        console.log(`✅ ${symbol}: ${analysis.overallStrength.toFixed(1)} (${condition.type})`);
+      } else {
+        console.log(`❌ ${symbol}: ${analysis.overallStrength.toFixed(1)} < ${threshold}`);
+      }
+    }
+    
+    return validSymbols;
+  }
+
+  private getThresholdByMarketCondition(marketType: string): number {
+    switch (marketType) {
+      case 'BULL_MARKET': return 65;
+      case 'BEAR_MARKET': return 85;
+      default: return 75;
+    }
+  }
+
+  private isSymbolValid(analysis: any, threshold: number): boolean {
+    return analysis.overallStrength > threshold &&
+           (this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
+            this.advancedEmaAnalyzer.isModerateUptrend(analysis));
+  }
+
+  private async validateDecision(decision: any, symbol: string): Promise<boolean> {
+    // 1. Validar tendência EMA
+    const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
+    if (!validateTrendAnalysis(trendAnalysis, true)) return false;
+
+    // 2. Validar decisão DeepSeek
+    if (!validateDeepSeekDecision(decision)) return false;
+
+    // 3. Aplicar boost inteligente
+    const boostedDecision = boostConfidence(decision);
+
+    // 4. Validação completa (confiança + ação + risk/reward)
+    const { riskPercent, rewardPercent } = calculateRiskReward(boostedDecision.confidence);
+    if (!validateTrade(boostedDecision, riskPercent, rewardPercent)) {
+      console.log('❌ Validações falharam');
+      return false;
+    }
+
+    // Atualizar decisão com boost
+    Object.assign(decision, boostedDecision);
+    return true;
   }
 
   async executeTrade() {
     this.logBotInfo();
 
+    // 1. Verificar limites de simulações ativas
     const tradesFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.SMART_SIMULATOR}`);
     if (!checkActiveSimulationTradesLimit(tradesFile)) {
       return null;
     }
 
     try {
+      // 2. Filtrar moedas por força técnica
       const symbols = this.getSymbols();
-
-      // Filtro adaptativo baseado em análise avançada
-      const validSymbols = [];
-
-      for (const symbol of symbols) {
-        const klines = await this.binancePublic.getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
-        const prices = klines.map((k: any) => parseFloat(k[4]));
-        const volumes = klines.map((k: any) => parseFloat(k[5]));
-
-        const advancedAnalysis = this.advancedEmaAnalyzer.analyzeAdvanced(prices, volumes);
-        const marketCondition = this.advancedEmaAnalyzer.getMarketCondition(advancedAnalysis);
-
-        // Adaptive filtering based on market conditions
-        const threshold = marketCondition.type === 'BULL_MARKET' ? 65 :
-          marketCondition.type === 'BEAR_MARKET' ? 85 : 75;
-
-        if (advancedAnalysis.overallStrength > threshold &&
-          (this.advancedEmaAnalyzer.isStrongUptrend(advancedAnalysis) ||
-            this.advancedEmaAnalyzer.isModerateUptrend(advancedAnalysis))) {
-          validSymbols.push(symbol);
-          console.log(`✅ ${symbol}: Strength ${advancedAnalysis.overallStrength.toFixed(1)} (${marketCondition.type})`);
-        } else {
-          console.log(`❌ ${symbol}: Strength ${advancedAnalysis.overallStrength.toFixed(1)} < ${threshold} (${marketCondition.type})`);
-        }
-      }
-
+      const validSymbols = await this.filterSymbolsByStrength(symbols);
+      
       if (validSymbols.length === 0) {
-        console.log('\n⏸️ Nenhuma moeda passou no filtro avançado');
+        console.log('\n⏸️ Nenhuma moeda passou no filtro');
         return null;
       }
 
-      console.log(`\n🎯 ${validSymbols.length} moedas aprovadas no filtro adaptativo: ${validSymbols.join(', ')}`);
+      console.log(`\n🎯 ${validSymbols.length} moedas aprovadas: ${validSymbols.join(', ')}`);
 
+      // 3. Analisar e selecionar melhor oportunidade
       const bestAnalysis = await analyzeMultipleSymbols(
         validSymbols,
         this.binancePublic,
-        this.multiAnalyzeWithSmartTradeLogic.bind(this),
+        this.analyzeSymbol.bind(this),
         undefined,
         true,
         TRADING_CONFIG.FILES.SMART_SIMULATOR
       );
 
       if (!bestAnalysis) {
-        console.log('\n⏸️ Nenhuma oportunidade de simulação encontrada');
+        console.log('\n⏸️ Nenhuma oportunidade encontrada');
         return null;
       }
 
-      const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(bestAnalysis.symbol);
-      if (!validateTrendAnalysis(trendAnalysis, true)) {
+      // 4. Validar decisão final
+      if (!(await this.validateDecision(bestAnalysis.decision, bestAnalysis.symbol))) {
         return null;
       }
 
-      if (!validateDeepSeekDecision(bestAnalysis.decision)) {
-        return null;
-      }
-
-      const boostedDecision = boostConfidence(bestAnalysis.decision);
-
-      // VALIDAÇÃO OBRIGATÓRIA: Confiança mínima do TRADING_CONFIG
-      console.log('🔍 Validação de confiança mínima...');
-      if (!validateConfidence(boostedDecision)) {
-        console.log('❌ Simulação cancelada - Confiança insuficiente');
-        return null;
-      }
-
-      console.log('🔍 Validação final de Risk/Reward 2:1 para simulação...');
-
-      // Calcular target e stop prices baseados na confiança
-      const riskPercent = boostedDecision.confidence >= 80 ? 0.5 : boostedDecision.confidence >= 75 ? 1.0 : 1.5;
-      const targetPrice = boostedDecision.price * (1 + (riskPercent * 2) / 100);
-      const stopPrice = boostedDecision.price * (1 - riskPercent / 100);
-
-      const riskRewardResult = calculateRiskRewardDynamic(boostedDecision.price, targetPrice, stopPrice, boostedDecision.action);
-
-      if (!riskRewardResult.isValid) {
-        console.log('❌ Simulação cancelada - Risk/Reward insuficiente');
-        return null;
-      }
-
-      return await this.simulateAndSave(boostedDecision);
+      // 5. Simular trade
+      return this.simulateTradeExecution(bestAnalysis.decision);
 
     } catch (error) {
-      return handleBotError('Smart Trading Bot Simulator', error);
+      return handleBotError('Multi-Smart Trading Bot Simulator', error);
     }
   }
 
-  private async saveTradeHistory(decision: any, simulatedOrder: any) {
+  private saveTradeHistory(decision: any, simulatedOrder: any): void {
     const trade = createTradeRecord(decision, simulatedOrder, TRADING_CONFIG.FILES.SMART_SIMULATOR);
     saveTradeHistory(trade, TRADING_CONFIG.FILES.SMART_SIMULATOR);
+    console.log('💾 Simulação salva no histórico');
   }
 }
 
