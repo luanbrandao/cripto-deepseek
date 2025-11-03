@@ -1,7 +1,8 @@
 import { BaseTradingBot } from './base-trading-bot';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
-import { validateTrade, calculateRiskReward } from './utils/trade-validators';
+import { validateTrade, calculateRiskReward, calculateRiskRewardDynamic } from './utils/trade-validators';
+import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { handleBotError } from './utils/bot-executor';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
@@ -11,7 +12,6 @@ import { multiAnalyzeWithSmartTrade } from './analyzers/multi-smart-trade-analyz
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
 import { TradeExecutor } from './services/trade-executor';
-import * as path from 'path';
 
 export class MultiSmartTradingBot extends BaseTradingBot {
   private readonly trendAnalyzer: MarketTrendAnalyzer;
@@ -29,7 +29,7 @@ export class MultiSmartTradingBot extends BaseTradingBot {
   protected logBotInfo() {
     console.log('⚠️  EXECUTA TRADES REAIS NA BINANCE ⚠️\n');
     logBotHeader('MULTI-SMART TRADING BOT v2.0', 'Análise Multi-Dimensional + Trades Reais');
-    
+
     console.log('🎯 RECURSOS AVANÇADOS:');
     console.log('  • EMA Multi-Timeframe (12/26/50/100/200)');
     console.log('  • AI Parser com Análise de Sentimento');
@@ -45,12 +45,12 @@ export class MultiSmartTradingBot extends BaseTradingBot {
     console.log(`📝 ${decision.action} ${decision.symbol} - $${this.getTradeAmount()} (${decision.confidence}%)`);
 
     const tradeResult = await TradeExecutor.executeRealTrade(decision, this.binancePrivate!);
-    
+
     if (tradeResult) {
       console.log(`✅ Trade executado! ID: ${tradeResult.orderId}`);
       await this.saveTradeHistory(decision, tradeResult);
     }
-    
+
     return tradeResult;
   }
 
@@ -60,24 +60,24 @@ export class MultiSmartTradingBot extends BaseTradingBot {
 
   private async filterSymbolsByStrength(symbols: string[]): Promise<string[]> {
     console.log(`🔍 Analisando ${symbols.length} moedas com filtro adaptativo...`);
-    
+
     const validSymbols = [];
-    
+
     for (const symbol of symbols) {
       const klines = await this.binancePublic.getKlines(
-        symbol, 
-        TRADING_CONFIG.CHART.TIMEFRAME, 
+        symbol,
+        TRADING_CONFIG.CHART.TIMEFRAME,
         TRADING_CONFIG.CHART.PERIODS
       );
-      
+
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const volumes = klines.map((k: any) => parseFloat(k[5]));
-      
+
       const analysis = this.advancedEmaAnalyzer.analyzeAdvanced(prices, volumes);
       const condition = this.advancedEmaAnalyzer.getMarketCondition(analysis);
-      
+
       const threshold = this.getThresholdByMarketCondition(condition.type);
-      
+
       if (this.isSymbolValid(analysis, threshold)) {
         validSymbols.push(symbol);
         console.log(`✅ ${symbol}: ${analysis.overallStrength.toFixed(1)} (${condition.type})`);
@@ -85,7 +85,7 @@ export class MultiSmartTradingBot extends BaseTradingBot {
         console.log(`❌ ${symbol}: ${analysis.overallStrength.toFixed(1)} < ${threshold}`);
       }
     }
-    
+
     return validSymbols;
   }
 
@@ -99,8 +99,8 @@ export class MultiSmartTradingBot extends BaseTradingBot {
 
   private isSymbolValid(analysis: any, threshold: number): boolean {
     return analysis.overallStrength > threshold &&
-           (this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
-            this.advancedEmaAnalyzer.isModerateUptrend(analysis));
+      (this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
+        this.advancedEmaAnalyzer.isModerateUptrend(analysis));
   }
 
   private async validateDecision(decision: any, symbol: string): Promise<boolean> {
@@ -115,9 +115,23 @@ export class MultiSmartTradingBot extends BaseTradingBot {
     const boostedDecision = boostConfidence(decision);
 
     // 4. Validação completa (confiança + ação + risk/reward)
-    const { riskPercent, rewardPercent } = calculateRiskReward(boostedDecision.confidence);
-    if (!validateTrade(boostedDecision, riskPercent, rewardPercent)) {
-      console.log('❌ Validações falharam');
+    console.log('🔍 Validação final de Risk/Reward antes da execução...');
+    
+    const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
+      boostedDecision.price,
+      boostedDecision.confidence,
+      boostedDecision.action
+    );
+    
+    const riskRewardResult = calculateRiskRewardDynamic(
+      boostedDecision.price, 
+      targetPrice, 
+      stopPrice, 
+      boostedDecision.action
+    );
+    
+    if (!riskRewardResult.isValid) {
+      console.log('❌ Validações falharam - Risk/Reward insuficiente');
       return false;
     }
 
@@ -138,7 +152,7 @@ export class MultiSmartTradingBot extends BaseTradingBot {
       // 2. Filtrar moedas por força técnica
       const symbols = this.getSymbols();
       const validSymbols = await this.filterSymbolsByStrength(symbols);
-      
+
       if (validSymbols.length === 0) {
         console.log('\n⏸️ Nenhuma moeda passou no filtro');
         return null;

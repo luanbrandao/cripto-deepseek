@@ -2,6 +2,7 @@ import { BaseTradingBot } from './base-trading-bot';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { calculateRiskRewardDynamic, validateConfidence } from './utils/trade-validators';
+import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { handleBotError } from './utils/bot-executor';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
@@ -134,9 +135,11 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
       console.log('🔍 Validação final de Risk/Reward 2:1 para simulação...');
 
       // Calcular target e stop prices baseados na confiança
-      const riskPercent = boostedDecision.confidence >= 80 ? 0.5 : boostedDecision.confidence >= 75 ? 1.0 : 1.5;
-      const targetPrice = boostedDecision.price * (1 + (riskPercent * 2) / 100);
-      const stopPrice = boostedDecision.price * (1 - riskPercent / 100);
+      const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
+        boostedDecision.price, 
+        boostedDecision.confidence, 
+        boostedDecision.action
+      );
 
       const riskRewardResult = calculateRiskRewardDynamic(boostedDecision.price, targetPrice, stopPrice, boostedDecision.action);
 

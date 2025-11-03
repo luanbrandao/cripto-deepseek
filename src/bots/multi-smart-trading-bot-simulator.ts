@@ -2,6 +2,7 @@ import { BaseTradingBot } from './base-trading-bot';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { calculateRiskRewardDynamic, validateTrade, calculateRiskReward, validateConfidence } from './utils/trade-validators';
+import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { handleBotError } from './utils/bot-executor';
 import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
@@ -119,9 +120,23 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
     const boostedDecision = boostConfidence(decision);
 
     // 4. Validação completa (confiança + ação + risk/reward)
-    const { riskPercent, rewardPercent } = calculateRiskReward(boostedDecision.confidence);
-    if (!validateTrade(boostedDecision, riskPercent, rewardPercent)) {
-      console.log('❌ Validações falharam');
+    console.log('🔍 Validação final de Risk/Reward para simulação...');
+    
+    const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
+      boostedDecision.price,
+      boostedDecision.confidence,
+      boostedDecision.action
+    );
+    
+    const riskRewardResult = calculateRiskRewardDynamic(
+      boostedDecision.price, 
+      targetPrice, 
+      stopPrice, 
+      boostedDecision.action
+    );
+    
+    if (!riskRewardResult.isValid) {
+      console.log('❌ Validações falharam - Risk/Reward insuficiente');
       return false;
     }
 
