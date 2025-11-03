@@ -1,7 +1,7 @@
 import { BaseTradingBot } from './base-trading-bot';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
-import { calculateRiskRewardDynamic, validateTrade, calculateRiskReward, validateConfidence } from './utils/trade-validators';
+import { calculateRiskRewardDynamic } from './utils/trade-validators';
 import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { handleBotError } from './utils/bot-executor';
@@ -54,7 +54,6 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
     };
 
     console.log(`✅ Simulação concluída! ID: ${simulatedOrder.orderId}`);
-    this.saveTradeHistory(decision, simulatedOrder);
     
     return simulatedOrder;
   }
@@ -187,14 +186,21 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
       }
 
       // 5. Simular trade
-      return this.simulateTradeExecution(bestAnalysis.decision);
+      const simulatedOrder = this.simulateTradeExecution(bestAnalysis.decision);
+      await this.saveTradeHistory(bestAnalysis.decision, simulatedOrder);
+
+      console.log('\n🎯 MULTI-SMART TRADE SIMULADO COM SUCESSO!');
+      console.log('📊 Análise completa salva no histórico');
+      console.log('✅ Nenhuma ordem real foi executada');
+
+      return simulatedOrder;
 
     } catch (error) {
       return handleBotError('Multi-Smart Trading Bot Simulator', error);
     }
   }
 
-  private saveTradeHistory(decision: any, simulatedOrder: any): void {
+  private async saveTradeHistory(decision: any, simulatedOrder: any): Promise<void> {
     const trade = createTradeRecord(decision, simulatedOrder, TRADING_CONFIG.FILES.SMART_SIMULATOR);
     saveTradeHistory(trade, TRADING_CONFIG.FILES.SMART_SIMULATOR);
     console.log('💾 Simulação salva no histórico');
@@ -210,7 +216,7 @@ if (require.main === module) {
 
   logBotStartup(
     'Multi Smart Bot Simulator',
-    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise dupla: EMA + DeepSeek AI',
+    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise multi-dimensional avançada',
     TRADING_CONFIG.SIMULATION.STARTUP_DELAY
   ).then(() => main());
 }
