@@ -1,24 +1,31 @@
 import { BaseTradingBot } from './base-trading-bot';
+import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { calculateRiskRewardDynamic } from './utils/trade-validators';
 import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
-import { handleBotError } from './utils/bot-executor';
-import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
-import { checkActiveSimulationTradesLimit } from './utils/simulation-limit-checker';
-import { createTradeRecord, saveTradeHistory } from './utils/trade-history-saver';
 import { multiAnalyzeWithSmartTrade } from './analyzers/multi-smart-trade-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
-import * as path from 'path';
 
 export class MultiSmartTradingBotSimulator extends BaseTradingBot {
+  private flowManager: BotFlowManager;
   private readonly trendAnalyzer: MarketTrendAnalyzer;
   private readonly advancedEmaAnalyzer: AdvancedEmaAnalyzer;
 
   constructor() {
     super(undefined, undefined, true);
+    
+    const config: BotConfig = {
+      name: 'Multi-Smart Trading Bot Simulator',
+      isSimulation: true,
+      tradesFile: TRADING_CONFIG.FILES.SMART_SIMULATOR,
+      requiresFiltering: true,
+      requiresValidation: true
+    };
+    
+    this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
     this.advancedEmaAnalyzer = new AdvancedEmaAnalyzer({
       fastPeriod: TRADING_CONFIG.EMA.FAST_PERIOD,
@@ -40,24 +47,6 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
     console.log('  • Assertividade: 92-95%\n');
   }
 
-  private simulateTradeExecution(decision: any) {
-    console.log('\n🚨 SIMULANDO TRADE');
-    console.log(`📝 ${decision.action} ${decision.symbol} - $${this.getTradeAmount()} (${decision.confidence}%)`);
-
-    const simulatedOrder = {
-      orderId: 'SIM_' + Date.now(),
-      symbol: decision.symbol,
-      side: decision.action,
-      price: decision.price,
-      status: 'SIMULATED',
-      executedQty: (this.getTradeAmount() / decision.price).toFixed(6)
-    };
-
-    console.log(`✅ Simulação concluída! ID: ${simulatedOrder.orderId}`);
-    
-    return simulatedOrder;
-  }
-
   private async analyzeSymbol(symbol: string, marketData: any) {
     return await multiAnalyzeWithSmartTrade(this.deepseek!, symbol, marketData);
   }
@@ -68,7 +57,7 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
     const validSymbols = [];
     
     for (const symbol of symbols) {
-      const klines = await this.binancePublic.getKlines(
+      const klines = await this.getBinancePublic().getKlines(
         symbol, 
         TRADING_CONFIG.CHART.TIMEFRAME, 
         TRADING_CONFIG.CHART.PERIODS
@@ -107,7 +96,8 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
             this.advancedEmaAnalyzer.isModerateUptrend(analysis));
   }
 
-  private async validateDecision(decision: any, symbol: string): Promise<boolean> {
+  private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
+    if (!symbol) return false;
     // 1. Validar tendência EMA
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
     if (!validateTrendAnalysis(trendAnalysis, true)) return false;
@@ -146,64 +136,11 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
 
   async executeTrade() {
     this.logBotInfo();
-
-    // 1. Verificar limites de simulações ativas
-    const tradesFile = path.join(__dirname, `trades/${TRADING_CONFIG.FILES.SMART_SIMULATOR}`);
-    if (!checkActiveSimulationTradesLimit(tradesFile)) {
-      return null;
-    }
-
-    try {
-      // 2. Filtrar moedas por força técnica
-      const symbols = this.getSymbols();
-      const validSymbols = await this.filterSymbolsByStrength(symbols);
-      
-      if (validSymbols.length === 0) {
-        console.log('\n⏸️ Nenhuma moeda passou no filtro');
-        return null;
-      }
-
-      console.log(`\n🎯 ${validSymbols.length} moedas aprovadas: ${validSymbols.join(', ')}`);
-
-      // 3. Analisar e selecionar melhor oportunidade
-      const bestAnalysis = await analyzeMultipleSymbols(
-        validSymbols,
-        this.binancePublic,
-        this.analyzeSymbol.bind(this),
-        undefined,
-        true,
-        TRADING_CONFIG.FILES.SMART_SIMULATOR
-      );
-
-      if (!bestAnalysis) {
-        console.log('\n⏸️ Nenhuma oportunidade encontrada');
-        return null;
-      }
-
-      // 4. Validar decisão final
-      if (!(await this.validateDecision(bestAnalysis.decision, bestAnalysis.symbol))) {
-        return null;
-      }
-
-      // 5. Simular trade
-      const simulatedOrder = this.simulateTradeExecution(bestAnalysis.decision);
-      await this.saveTradeHistory(bestAnalysis.decision, simulatedOrder);
-
-      console.log('\n🎯 MULTI-SMART TRADE SIMULADO COM SUCESSO!');
-      console.log('📊 Análise completa salva no histórico');
-      console.log('✅ Nenhuma ordem real foi executada');
-
-      return simulatedOrder;
-
-    } catch (error) {
-      return handleBotError('Multi-Smart Trading Bot Simulator', error);
-    }
-  }
-
-  private async saveTradeHistory(decision: any, simulatedOrder: any): Promise<void> {
-    const trade = createTradeRecord(decision, simulatedOrder, TRADING_CONFIG.FILES.SMART_SIMULATOR);
-    saveTradeHistory(trade, TRADING_CONFIG.FILES.SMART_SIMULATOR);
-    console.log('💾 Simulação salva no histórico');
+    return await this.flowManager.executeStandardFlow(
+      this.analyzeSymbol.bind(this),
+      this.filterSymbolsByStrength.bind(this),
+      this.validateMultiSmartDecision.bind(this)
+    );
   }
 }
 

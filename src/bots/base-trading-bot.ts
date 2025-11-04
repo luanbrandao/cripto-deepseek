@@ -10,25 +10,33 @@ export abstract class BaseTradingBot {
 
   constructor(apiKey?: string, apiSecret?: string, useDeepSeek: boolean = false) {
     this.binancePublic = new BinancePublicClient();
-    
+
     if (apiKey && apiSecret) {
       this.binancePrivate = new BinancePrivateClient(apiKey, apiSecret);
     }
-    
+
     if (useDeepSeek) {
       this.deepseek = new DeepSeekService();
     }
   }
 
   protected abstract logBotInfo(): void;
-  
+
   public abstract executeTrade(...args: any[]): Promise<any>;
 
-  protected getSymbols(): string[] {
+  public getSymbols(): string[] {
     return TRADING_CONFIG.SYMBOLS;
   }
 
-  protected getTradeAmount(): number {
+  public getTradeAmount(): number {
     return TRADING_CONFIG.TRADE_AMOUNT_USD;
+  }
+
+  public getBinancePublic(): BinancePublicClient {
+    return this.binancePublic;
+  }
+
+  public getBinancePrivate(): BinancePrivateClient {
+    return this.binancePrivate;
   }
 }

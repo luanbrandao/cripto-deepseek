@@ -1,11 +1,9 @@
 import { BaseTradingBot } from './base-trading-bot';
+import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
 import { TradeDecision, validateTrade, calculateRiskReward } from './utils/trade-validators';
-import { validateTradingConditions } from './utils/bot-initializer';
-import { executeAndSaveTradeWithValidation, handleBotError } from './utils/bot-executor';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { logMarketInfo } from './utils/market-data-logger';
 import { validateBinanceKeys } from './utils/env-validator';
-import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
 import * as dotenv from 'dotenv';
@@ -18,10 +16,20 @@ interface MarketData {
 }
 
 export class EmaTradingBot extends BaseTradingBot {
+  private flowManager: BotFlowManager;
   private emaAnalyzer: EmaAnalyzer;
 
   constructor(apiKey: string, apiSecret: string) {
     super(apiKey, apiSecret, false);
+    
+    const config: BotConfig = {
+      name: 'Multi-Symbol EMA Trading Bot',
+      isSimulation: false,
+      tradesFile: TRADING_CONFIG.FILES.EMA_BOT,
+      requiresValidation: true
+    };
+    
+    this.flowManager = new BotFlowManager(this, config);
     this.emaAnalyzer = new EmaAnalyzer({
       fastPeriod: TRADING_CONFIG.EMA.FAST_PERIOD,
       slowPeriod: TRADING_CONFIG.EMA.SLOW_PERIOD
@@ -33,12 +41,12 @@ export class EmaTradingBot extends BaseTradingBot {
   }
 
   private async getMarketData(symbol: string): Promise<MarketData> {
-    const klines = await this.binancePublic.getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
+    const klines = await this.getBinancePublic().getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
     const prices = klines.map((k: any) => parseFloat(k[4]));
     const currentPrice = prices[prices.length - 1];
 
-    const price = await this.binancePublic.getPrice(symbol);
-    const stats = await this.binancePublic.get24hrStats(symbol);
+    const price = await this.getBinancePublic().getPrice(symbol);
+    const stats = await this.getBinancePublic().get24hrStats(symbol);
 
     logMarketInfo(symbol, price, stats);
 
@@ -65,59 +73,23 @@ export class EmaTradingBot extends BaseTradingBot {
     };
   }
 
-  private validateDecision(decision: TradeDecision): boolean {
+  private async analyzeSymbolWithEma(symbol: string, marketData: any): Promise<TradeDecision> {
+    const fullMarketData = await this.getMarketData(symbol);
+    return this.analyzeWithEma(symbol, fullMarketData);
+  }
+
+  private async validateEmaDecision(decision: TradeDecision): Promise<boolean> {
     const { riskPercent, rewardPercent } = calculateRiskReward(decision.confidence);
     return validateTrade(decision, riskPercent, rewardPercent);
   }
 
-  private async executeAndSave(decision: TradeDecision) {
-    return await executeAndSaveTradeWithValidation(
-      decision,
-      this.binancePrivate,
-      TRADING_CONFIG.FILES.EMA_BOT,
-      'EMA'
-    );
-  }
-
-  private async analyzeSymbolWithEma(symbol: string, _price: number): Promise<TradeDecision> {
-    const marketData = await this.getMarketData(symbol);
-    return this.analyzeWithEma(symbol, marketData);
-  }
-
   async executeTrade() {
     this.logBotInfo();
-
-    try {
-      if (!await validateTradingConditions(this.binancePrivate)) {
-        return null;
-      }
-
-      const symbols = this.getSymbols();
-      const bestAnalysis = await analyzeMultipleSymbols(
-        symbols,
-        this.binancePublic,
-        this.analyzeSymbolWithEma.bind(this),
-        this.binancePrivate,
-        false,
-        TRADING_CONFIG.FILES.EMA_BOT
-      );
-      
-      if (!bestAnalysis) {
-        console.log('\n⏸️ Nenhuma oportunidade EMA encontrada');
-        return null;
-      }
-      
-      const decision = bestAnalysis.decision;
-      
-      if (!this.validateDecision(decision)) {
-        return null;
-      }
-
-      return await this.executeAndSave(decision);
-
-    } catch (error) {
-      return handleBotError('Multi-Symbol EMA Trading Bot', error);
-    }
+    return await this.flowManager.executeStandardFlow(
+      this.analyzeSymbolWithEma.bind(this),
+      undefined,
+      this.validateEmaDecision.bind(this)
+    );
   }
 }
 

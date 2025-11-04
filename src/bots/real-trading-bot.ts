@@ -1,8 +1,6 @@
 import { BaseTradingBot } from './base-trading-bot';
-import { validateTradingConditions } from './utils/bot-initializer';
-import { executeAndSaveTradeWithValidation, handleBotError } from './utils/bot-executor';
+import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
-import { analyzeMultipleSymbols } from './utils/multi-symbol-analyzer';
 import { analyzeWithRealTrade } from './analyzers/real-trade-analyzer';
 import { validateBinanceKeys } from './utils/env-validator';
 import { TRADING_CONFIG } from './config/trading-config';
@@ -11,8 +9,18 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 export class RealTradingBot extends BaseTradingBot {
+  private flowManager: BotFlowManager;
+
   constructor(apiKey: string, apiSecret: string) {
     super(apiKey, apiSecret, true);
+    
+    const config: BotConfig = {
+      name: 'Real Trading Bot',
+      isSimulation: false,
+      tradesFile: TRADING_CONFIG.FILES.REAL_BOT
+    };
+    
+    this.flowManager = new BotFlowManager(this, config);
   }
 
   protected logBotInfo() {
@@ -25,39 +33,9 @@ export class RealTradingBot extends BaseTradingBot {
 
   async executeTrade() {
     this.logBotInfo();
-
-    try {
-      if (!await validateTradingConditions(this.binancePrivate)) {
-        return null;
-      }
-
-      const symbols = this.getSymbols();
-      const bestAnalysis = await analyzeMultipleSymbols(
-        symbols, 
-        this.binancePublic, 
-        this.analyzeWithRealTradeLogic.bind(this),
-        this.binancePrivate,
-        false,
-        TRADING_CONFIG.FILES.REAL_BOT
-      );
-      
-      if (!bestAnalysis) {
-        console.log('\n⏸️ Nenhuma oportunidade de trade encontrada');
-        return null;
-      }
-      
-      const decision = bestAnalysis.decision;
-      
-      return await executeAndSaveTradeWithValidation(
-        decision, 
-        this.binancePrivate, 
-        TRADING_CONFIG.FILES.REAL_BOT, 
-        'REAL'
-      );
-
-    } catch (error) {
-      return handleBotError('Real Trading Bot', error);
-    }
+    return await this.flowManager.executeStandardFlow(
+      this.analyzeWithRealTradeLogic.bind(this)
+    );
   }
 }
 
