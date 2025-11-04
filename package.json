@@ -30,7 +30,8 @@
     "multi-smart-trading-bot": "ts-node src/bots/multi-smart-trading-bot.ts",
     "real-trading-bot-simulator-cron": "ts-node src/crons/real-trading-bot-simulator-cron.ts",
     "smart-trading-bot-simulator-cron": "ts-node src/crons/smart-trading-bot-simulator-cron.ts",
-    "smart-trading-bot-cron": "ts-node src/crons/smart-trading-bot-cron.ts"
+    "smart-trading-bot-cron": "ts-node src/crons/smart-trading-bot-cron.ts",
+    "run-all-simulators": "ts-node src/scripts/run-all-simulators.ts"
   },
   "dependencies": {
     "axios": "^1.6.0",
