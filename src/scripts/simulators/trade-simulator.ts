@@ -37,7 +37,7 @@ export class TradeSimulator {
     this.binance = new BinancePublicClient();
     this.symbol = symbols ? symbols[0] : TRADING_CONFIG.DEFAULT_SYMBOL;
     const analyzerName = analyzer.name || analyzer.constructor.name;
-    this.tradesFile = tradesFile || path.join(__dirname, `../trades/${analyzerName.toLowerCase()}Trades.json`);
+    this.tradesFile = tradesFile || path.join(__dirname, `../../trades/${analyzerName.toLowerCase()}Trades.json`);
   }
 
   async simulate(symbols: string[] = TRADING_CONFIG.SYMBOLS) {

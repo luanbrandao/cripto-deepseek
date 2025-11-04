@@ -51,7 +51,7 @@ async function main() {
       crypto: 0,
       reason: decision.reason,
       confidence: decision.confidence,
-      status: 'completed',
+      status: 'pending',
       riskReturn: {
         potentialGain: decision.price * rewardPercent,
         potentialLoss: decision.price * riskPercent,

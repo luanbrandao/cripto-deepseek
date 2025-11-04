@@ -67,7 +67,7 @@ export class BotFlowManager {
 
   private async performInitialValidations(): Promise<boolean> {
     if (this.config.isSimulation) {
-      const tradesFile = path.join(__dirname, `../trades/${this.config.tradesFile}`);
+      const tradesFile = path.join(__dirname, `../../trades/${this.config.tradesFile}`);
       return checkActiveSimulationTradesLimit(tradesFile);
     } else {
       return await validateTradingConditions(this.bot.getBinancePrivate());

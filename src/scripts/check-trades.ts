@@ -3,7 +3,7 @@ import * as fs from 'fs';
 
 async function checkTradesContinuously() {
   const monitor = new TradeMonitor();
-  const filePath = './src/bots/trades/realTradingBotSimulator.json';
+  const filePath = './src/trades/ema12-26Trades.json';
 
   console.log('🔄 Iniciando monitoramento contínuo de trades...');
 

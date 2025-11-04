@@ -41,7 +41,7 @@ export function createTradeRecord(decision: any, orderResult: any, fileName: str
 }
 
 export function saveTradeHistory(trade: Trade, fileName: string) {
-  const tradesFile = path.join(__dirname, `../trades/${fileName}`);
+  const tradesFile = path.join(__dirname, `../../trades/${fileName}`);
   TradeStorage.saveTrades([trade], tradesFile);
   console.log(`\n💾 Trade salvo no histórico: ${fileName}`);
 }
