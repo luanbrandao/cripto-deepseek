@@ -35,7 +35,7 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
 
   protected logBotInfo() {
     console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
-    logBotHeader('MULTI-SMART BOT SIMULATOR v2.0', 'Análise Multi-Dimensional - SIMULAÇÃO');
+    logBotHeader('MULTI-SMART BOT SIMULATOR v2.0', 'Análise Multi-Dimensional - SIMULAÇÃO', true);
     
     console.log('🎯 RECURSOS AVANÇADOS:');
     console.log('  • EMA Multi-Timeframe (12/26/50/100/200)');
@@ -154,6 +154,7 @@ if (require.main === module) {
   logBotStartup(
     'Multi Smart Bot Simulator',
     '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise multi-dimensional avançada',
-    TRADING_CONFIG.SIMULATION.STARTUP_DELAY
+    TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
+    true
   ).then(() => main());
 }

@@ -37,7 +37,7 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
     console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
     console.log('🚀 MULTI-SYMBOL SMART TRADING BOT SIMULATOR');
     console.log('✅ MODO SIMULAÇÃO - Nenhuma ordem real será executada');
-    logBotHeader('SIMULADOR MULTI-SYMBOL SMART BOT', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - SIMULAÇÃO');
+    logBotHeader('SIMULADOR MULTI-SYMBOL SMART BOT', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - SIMULAÇÃO', true);
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
@@ -126,6 +126,7 @@ if (require.main === module) {
   logBotStartup(
     'Smart Bot Simulator',
     '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise dupla: EMA + DeepSeek AI',
-    TRADING_CONFIG.SIMULATION.STARTUP_DELAY
+    TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
+    true
   ).then(() => main());
 }

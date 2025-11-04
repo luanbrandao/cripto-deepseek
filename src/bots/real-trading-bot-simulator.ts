@@ -25,7 +25,7 @@ export class RealTradingBotSimulator extends BaseTradingBot {
 
   protected logBotInfo() {
     console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
-    logBotHeader('REAL TRADING BOT SIMULATOR', 'Simulação do Real Trading Bot Multi-Moeda');
+    logBotHeader('REAL TRADING BOT SIMULATOR', 'Simulação do Real Trading Bot Multi-Moeda', true);
   }
 
   private async analyzeWithRealTradeLogic(symbol: string, marketData: any) {
@@ -53,6 +53,8 @@ if (require.main === module) {
 
   logBotStartup(
     'Real Trading Bot Simulator',
-    '🧪 Simulação do Real Trading Bot com múltiplas moedas + DeepSeek AI'
+    '🧪 Simulação do Real Trading Bot com múltiplas moedas + DeepSeek AI',
+    5000,
+    true
   ).then(() => main());
 }
