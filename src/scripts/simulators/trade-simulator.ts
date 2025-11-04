@@ -210,6 +210,7 @@ export class TradeSimulator {
     } else {
       console.log(`⏸️ HOLD: Mantendo posição`);
       console.log(`📊 Preço atual: $${currentPrice.toFixed(2)}`);
+      return; // Não salva trades HOLD
     }
 
     const targetPrice = analysis.action === 'BUY' ? currentPrice * 1.05 : currentPrice * 0.95;
@@ -241,7 +242,8 @@ export class TradeSimulator {
     };
 
     this.trades.push(trade);
-    TradeStorage.saveTrades(this.trades, this.tradesFile);
+    TradeStorage.saveTrades([trade], this.tradesFile);
+    console.log(`💾 Trade simulado salvo: ${this.symbol} ${analysis.action}`);
   }
 
   private showResults(currentPrice: number) {
