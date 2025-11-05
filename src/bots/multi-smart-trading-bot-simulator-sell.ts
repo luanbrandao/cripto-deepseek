@@ -10,7 +10,6 @@ import {
   validateAdvancedBearishTrend, 
   validateAdvancedSellDecision, 
   boostAdvancedSellConfidence,
-  getAdvancedSellThreshold,
   validateAdvancedSellStrength
 } from './utils/advanced-sell-validator';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
@@ -77,7 +76,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
       const analysis = this.advancedEmaAnalyzer.analyzeAdvanced(prices, volumes);
       const condition = this.advancedEmaAnalyzer.getMarketCondition(analysis);
 
-      const threshold = getAdvancedSellThreshold(condition.type);
+      const threshold = this.getThresholdSellMarketCondition(condition.type);
 
       // Validação específica para vendas (oposto do BUY)
       if (this.isSymbolValidForSell(analysis, threshold)) {
@@ -90,6 +89,14 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
 
     console.log(`\n🎯 Símbolos aprovados no filtro BEARISH: [${validSymbols.join(', ')}]`);
     return validSymbols;
+  }
+
+  private getThresholdSellMarketCondition(marketType: string): number {
+    switch (marketType) {
+      case 'BULL_MARKET': return 90;  // Mais rigoroso em mercado de alta
+      case 'BEAR_MARKET': return 70;  // Menos rigoroso em mercado de baixa
+      default: return 80;             // Padrão para mercado lateral
+    }
   }
 
   private isSymbolValidForSell(analysis: any, threshold: number): boolean {
