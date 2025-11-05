@@ -1,4 +1,5 @@
 import { BaseTradingBot } from './base-trading-bot';
+import { BinancePrivateClient } from '../clients/binance-private-client';
 import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
@@ -15,7 +16,15 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
   private readonly advancedEmaAnalyzer: AdvancedEmaAnalyzer;
 
   constructor() {
-    super(undefined, undefined, false);
+    // Inicializar com DeepSeek para análise AI
+    super(undefined, undefined, true);
+    
+    // Inicializar BinancePrivateClient para trades reais
+    const { validateBinanceKeys } = require('./utils/env-validator');
+    const keys = validateBinanceKeys();
+    if (keys) {
+      this.binancePrivate = new BinancePrivateClient(keys.apiKey, keys.apiSecret);
+    }
 
     const config: BotConfig = {
       name: 'Multi-Smart Trading Bot BUY',
