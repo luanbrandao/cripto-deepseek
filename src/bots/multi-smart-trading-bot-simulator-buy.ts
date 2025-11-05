@@ -6,9 +6,9 @@ import { calculateRiskRewardDynamic } from './utils/trade-validators';
 import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { multiAnalyzeWithSmartTradeBuy } from './analyzers/multi-smart-trade-analyzer-buy';
-import { 
-  validateAdvancedBullishTrend, 
-  validateAdvancedBuyDecision, 
+import {
+  validateAdvancedBullishTrend,
+  validateAdvancedBuyDecision,
   boostAdvancedBuyConfidence,
   validateAdvancedBuyStrength
 } from './utils/advanced-buy-validator';
@@ -25,7 +25,7 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Multi-Smart Trading Bot Simulator BUY',
       isSimulation: true,
-      tradesFile: TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY,
+      tradesFile: TRADING_CONFIG.FILES.MULTI_SMART_SIMULATOR_BUY,
       requiresFiltering: true,
       requiresValidation: true
     };
@@ -98,8 +98,8 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   private isSymbolValid(analysis: any, threshold: number): boolean {
     // Validação específica para compras - procura por tendências de alta
     const isBullishTrend = this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
-                          this.advancedEmaAnalyzer.isModerateUptrend(analysis);
-    
+      this.advancedEmaAnalyzer.isModerateUptrend(analysis);
+
     return validateAdvancedBuyStrength(analysis, threshold) && isBullishTrend;
   }
 

@@ -20,7 +20,7 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Multi-Smart Trading Bot BUY',
       isSimulation: false,
-      tradesFile: TRADING_CONFIG.FILES.SMART_BOT_BUY,
+      tradesFile: TRADING_CONFIG.FILES.MULTI_SMART_BUY,
       requiresFiltering: true,
       requiresValidation: true
     };

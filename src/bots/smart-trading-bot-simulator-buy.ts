@@ -18,7 +18,7 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
     super(undefined, undefined, true);
 
     const config: BotConfig = {
-      name: 'Smart Trading Bot Simulator',
+      name: 'Smart Trading Bot Simulator BUY',
       isSimulation: true,
       tradesFile: TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY,
       requiresFiltering: true,

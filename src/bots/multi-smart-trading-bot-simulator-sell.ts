@@ -6,9 +6,9 @@ import { calculateRiskRewardDynamic } from './utils/trade-validators';
 import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { multiAnalyzeWithSmartTradeSell } from './analyzers/multi-smart-trade-analyzer-sell';
-import { 
-  validateAdvancedBearishTrend, 
-  validateAdvancedSellDecision, 
+import {
+  validateAdvancedBearishTrend,
+  validateAdvancedSellDecision,
   boostAdvancedSellConfidence,
   validateAdvancedSellStrength
 } from './utils/advanced-sell-validator';
@@ -25,7 +25,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Multi-Smart Trading Bot Simulator SELL',
       isSimulation: true,
-      tradesFile: TRADING_CONFIG.FILES.SMART_SIMULATOR_SELL,
+      tradesFile: TRADING_CONFIG.FILES.MULTI_SMART_SIMULATOR_SELL,
       requiresFiltering: true,
       requiresValidation: true
     };
@@ -100,7 +100,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   private isSymbolValid(analysis: any, threshold: number): boolean {
     // Validação específica para vendas - procura por tendências de baixa
     const isBearishTrend = this.isBearishByEma(analysis);
-    
+
     return validateAdvancedSellStrength(analysis, threshold) && isBearishTrend;
   }
 
@@ -108,8 +108,8 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     // Lógica para detectar tendência bearish baseada em EMAs
     // Se não houver métodos específicos, usar lógica inversa
     const isUptrend = this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
-                     this.advancedEmaAnalyzer.isModerateUptrend(analysis);
-    
+      this.advancedEmaAnalyzer.isModerateUptrend(analysis);
+
     return !isUptrend && analysis.overallStrength < 60; // Força baixa indica possível bearish
   }
 
