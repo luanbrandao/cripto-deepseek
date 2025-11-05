@@ -8,8 +8,10 @@ const simulators = [
   { name: 'EMA Pattern Simulator', command: 'npm run simulate-ema' },
   { name: 'Support/Resistance Simulator', command: 'npm run simulate-support' },
   { name: 'Real Trading Bot Simulator', command: 'npm run real-trading-bot-simulator' },
-  { name: 'Smart Trading Bot Simulator', command: 'npm run smart-trading-bot-simulator' },
-  { name: 'Multi-Smart Trading Bot Simulator', command: 'npm run multismart-trading-bot-simulator' }
+  { name: 'Smart Trading Bot Simulator BUY', command: 'npm run smart-trading-bot-simulator-buy' },
+  { name: 'Smart Trading Bot Simulator SELL', command: 'npm run smart-trading-bot-simulator-sell' },
+  { name: 'Multi-Smart Trading Bot Simulator BUY', command: 'npm run multi-smart-trading-bot-simulator-buy' },
+  { name: 'Multi-Smart Trading Bot Simulator SELL', command: 'npm run multi-smart-trading-bot-simulator-sell' }
 ];
 
 async function runAllSimulators() {
