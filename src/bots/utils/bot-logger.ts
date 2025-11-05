@@ -1,4 +1,4 @@
-import { TRADING_CONFIG } from '../config/trading-config';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 export function logBotHeader(botName: string, strategy: string, isSimulation: boolean = false) {
   console.log(`🚀 ${botName}`);
@@ -9,9 +9,9 @@ export function logBotHeader(botName: string, strategy: string, isSimulation: bo
     console.log('⚠️  ATENÇÃO: Este bot executará ordens reais na Binance!');
   }
   
-  console.log(`💵 Valor por trade: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
-  console.log(`📊 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%`);
-  console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)`);
+  console.log(`💵 Valor por trade: $${UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD}`);
+  console.log(`📊 Confiança mínima: ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}%`);
+  console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)`);
   console.log(`📈 Estratégia: ${strategy}\n`);
 }
 

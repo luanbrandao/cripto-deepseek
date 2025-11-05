@@ -1,4 +1,4 @@
-import { TRADING_CONFIG } from '../config/trading-config';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 export interface TradeDecision {
   action: 'BUY' | 'SELL' | 'HOLD';
@@ -16,8 +16,8 @@ export function validateRiskReward(riskPercent: number, rewardPercent: number): 
   
   console.log(`📊 Risk/Reward: ${(rewardPercent * 100).toFixed(1)}%/${(riskPercent * 100).toFixed(1)}% (${riskRewardRatio.toFixed(1)}:1)`);
   
-  if (riskRewardRatio < TRADING_CONFIG.MIN_RISK_REWARD_RATIO) {
-    console.log(`❌ TRADE REJEITADO - R/R ${riskRewardRatio.toFixed(1)}:1 < ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (MÍNIMO OBRIGATÓRIO)`);
+  if (riskRewardRatio < UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO) {
+    console.log(`❌ TRADE REJEITADO - R/R ${riskRewardRatio.toFixed(1)}:1 < ${UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (MÍNIMO OBRIGATÓRIO)`);
     return false;
   }
   
@@ -29,12 +29,12 @@ export function validateRiskReward(riskPercent: number, rewardPercent: number): 
  * Valida se a confiança está acima do mínimo
  */
 export function validateConfidence(decision: TradeDecision): boolean {
-  if (decision.confidence < TRADING_CONFIG.MIN_CONFIDENCE) {
-    console.log(`❌ Confiança insuficiente: ${decision.confidence}% < ${TRADING_CONFIG.MIN_CONFIDENCE}%`);
+  if (decision.confidence < UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
+    console.log(`❌ Confiança insuficiente: ${decision.confidence}% < ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}%`);
     return false;
   }
   
-  console.log(`✅ Confiança aprovada: ${decision.confidence}% (≥ ${TRADING_CONFIG.MIN_CONFIDENCE}%)`);
+  console.log(`✅ Confiança aprovada: ${decision.confidence}% (≥ ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}%)`);
   return true;
 }
 
@@ -80,7 +80,7 @@ export function validateTrade(decision: TradeDecision, riskPercent: number, rewa
  * Calcula risk/reward garantindo sempre 2:1
  */
 export function calculateRiskReward(confidence: number): { riskPercent: number; rewardPercent: number } {
-  const { BASE_PERCENT, MAX_PERCENT } = TRADING_CONFIG.RISK;
+  const { BASE_PERCENT, MAX_PERCENT } = UNIFIED_TRADING_CONFIG.RISK;
   
   // Quanto maior a confiança, menor o risco
   const riskPercent = Math.max(BASE_PERCENT, Math.min(MAX_PERCENT, 
@@ -118,12 +118,12 @@ export function calculateRiskRewardDynamic(entryPrice: number, targetPrice: numb
   
   console.log(`📊 Risk/Reward Dinâmico: ${(rewardPercent * 100).toFixed(2)}%/${(riskPercent * 100).toFixed(2)}% (${ratio.toFixed(2)}:1)`);
   
-  const isValid = ratio >= TRADING_CONFIG.MIN_RISK_REWARD_RATIO;
+  const isValid = ratio >= UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO;
   
   if (!isValid) {
-    console.log(`❌ RATIO INSUFICIENTE: ${ratio.toFixed(2)}:1 < ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
+    console.log(`❌ RATIO INSUFICIENTE: ${ratio.toFixed(2)}:1 < ${UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
   } else {
-    console.log(`✅ RATIO APROVADO: ${ratio.toFixed(2)}:1 (≥ ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1)`);
+    console.log(`✅ RATIO APROVADO: ${ratio.toFixed(2)}:1 (≥ ${UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1)`);
   }
   
   return {

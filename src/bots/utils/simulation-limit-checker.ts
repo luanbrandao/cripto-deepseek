@@ -1,5 +1,5 @@
 import { Trade } from '../../storage/trade-storage';
-import { TRADING_CONFIG } from '../config/trading-config';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 import * as fs from 'fs';
 
 export function checkActiveSimulationTradesLimit(tradesFile: string): boolean {
@@ -13,7 +13,7 @@ export function checkActiveSimulationTradesLimit(tradesFile: string): boolean {
 
     const trades: Trade[] = JSON.parse(data);
     const activeTrades = trades.filter(trade => trade.status === 'pending').length;
-    const maxTrades = TRADING_CONFIG.getMaxActiveTrades(true);
+    const maxTrades = UNIFIED_TRADING_CONFIG.getMaxActiveTrades(true);
 
     if (activeTrades >= maxTrades) {
       console.log(`⏸️ Máximo de ${maxTrades} simulações ativas atingido (${activeTrades} ativas)`);

@@ -1,7 +1,7 @@
 import { BaseTradingBot } from '../base-trading-bot';
 import { validateTradingConditions } from './bot-initializer';
 import { checkActiveSimulationTradesLimit } from './simulation-limit-checker';
-import { analyzeMultipleSymbols } from './multi-symbol-analyzer';
+import { UnifiedMultiSymbolAnalyzer } from '../../shared/utils/unified-multi-symbol-analyzer';
 import { executeAndSaveTradeWithValidation, handleBotError } from './bot-executor';
 import { createTradeRecord, saveTradeHistory } from './trade-history-saver';
 import * as path from 'path';
@@ -88,13 +88,16 @@ export class BotFlowManager {
     symbols: string[],
     analyzeFunction: (symbol: string, marketData: any) => Promise<any>
   ) {
-    return await analyzeMultipleSymbols(
+    return await UnifiedMultiSymbolAnalyzer.analyzeMultipleSymbols(
       symbols,
-      this.bot.getBinancePublic(),
       analyzeFunction,
-      this.config.isSimulation ? undefined : this.bot.getBinancePrivate(),
-      this.config.isSimulation,
-      this.config.tradesFile
+      {
+        binancePublic: this.bot.getBinancePublic(),
+        binancePrivate: this.config.isSimulation ? undefined : this.bot.getBinancePrivate(),
+        isSimulation: this.config.isSimulation,
+        simulationFile: this.config.tradesFile,
+        logLevel: 'DETAILED'
+      }
     );
   }
 

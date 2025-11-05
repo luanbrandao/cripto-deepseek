@@ -123,7 +123,7 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
 
 // Só executa se for chamado diretamente (não importado)
 if (require.main === module) {
-  async function main() {
+  const main = async () => {
     const smartBotSimulatorSell = new SmartTradingBotSimulatorSell();
     await smartBotSimulatorSell.executeTrade();
   }

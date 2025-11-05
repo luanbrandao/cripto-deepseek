@@ -1,6 +1,6 @@
 import { TradeStorage, Trade } from '../../storage/trade-storage';
 import { RiskManager } from '../services/risk-manager';
-import { TRADING_CONFIG } from '../config/trading-config';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 import * as path from 'path';
 
 export function createTradeRecord(decision: any, orderResult: any, fileName: string): Trade {
@@ -18,7 +18,7 @@ export function createTradeRecord(decision: any, orderResult: any, fileName: str
     stopPrice: decision.action === 'BUY' 
       ? decision.price * (1 - riskPercent) 
       : decision.price * (1 + riskPercent),
-    amount: orderResult ? TRADING_CONFIG.TRADE_AMOUNT_USD : 0,
+    amount: orderResult ? UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD : 0,
     balance: 0,
     crypto: 0,
     reason: decision.reason,

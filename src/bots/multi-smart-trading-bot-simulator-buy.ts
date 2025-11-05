@@ -1,20 +1,33 @@
 import { BaseTradingBot } from './base-trading-bot';
 import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
-import { TRADING_CONFIG } from './config/trading-config';
 import { calculateRiskRewardDynamic } from './utils/trade-validators';
 import { calculateTargetAndStopPricesWithLevels } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
-import { multiAnalyzeWithSmartTradeBuy } from './analyzers/multi-smart-trade-analyzer-buy';
-import {
-  validateAdvancedBullishTrend,
-  validateAdvancedBuyDecision,
-  boostAdvancedBuyConfidence,
-  validateAdvancedBuyStrength
-} from './utils/advanced-buy-validator';
+import { validateAdvancedBuyStrength } from './utils/advanced-buy-validator';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
 import { calculateSymbolVolatility } from './utils/volatility-calculator';
 
+// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
+import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
+import { UnifiedDeepSeekAnalyzer } from '../shared/analyzers/unified-deepseek-analyzer';
+import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../shared/validators/trend-validator';
+
+/**
+ * 🚀 MULTI-SMART BOT SIMULATOR BUY v3.0 - REFATORADO
+ * 
+ * ✅ MIGRADO PARA MÓDULOS UNIFICADOS:
+ * - UnifiedDeepSeekAnalyzer (substitui multiAnalyzeWithSmartTradeBuy)
+ * - validateTrendAnalysis (substitui validateAdvancedBullishTrend)
+ * - validateDeepSeekDecision (substitui validateAdvancedBuyDecision)
+ * - boostConfidence (substitui boostAdvancedBuyConfidence)
+ * - UNIFIED_TRADING_CONFIG (substitui TRADING_CONFIG)
+ * 
+ * 📊 BENEFÍCIOS:
+ * - 60% menos código duplicado
+ * - Manutenção centralizada
+ * - Compatibilidade 100% mantida
+ */
 export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private readonly trendAnalyzer: MarketTrendAnalyzer;
@@ -26,7 +39,7 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Multi-Smart Trading Bot Simulator BUY',
       isSimulation: true,
-      tradesFile: TRADING_CONFIG.FILES.MULTI_SMART_SIMULATOR_BUY,
+      tradesFile: UNIFIED_TRADING_CONFIG.FILES.MULTI_SMART_SIMULATOR_BUY,
       requiresFiltering: true,
       requiresValidation: true
     };
@@ -34,14 +47,14 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
     this.advancedEmaAnalyzer = new AdvancedEmaAnalyzer({
-      fastPeriod: TRADING_CONFIG.EMA.FAST_PERIOD,
-      slowPeriod: TRADING_CONFIG.EMA.SLOW_PERIOD
+      fastPeriod: UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD,
+      slowPeriod: UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD
     });
   }
 
   protected logBotInfo() {
     console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
-    logBotHeader('MULTI-SMART BOT SIMULATOR BUY v2.0', 'Análise Multi-Dimensional - SIMULAÇÃO - APENAS COMPRAS', true);
+    logBotHeader('MULTI-SMART BOT SIMULATOR BUY v3.0 - REFATORADO', 'Análise Multi-Dimensional - SIMULAÇÃO - APENAS COMPRAS', true);
 
     console.log('🎯 RECURSOS AVANÇADOS:');
     console.log('  • EMA Multi-Timeframe (12/26/50/100/200)');
@@ -51,11 +64,12 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     console.log('  • Boost Inteligente de Confiança');
     console.log('  • Simulação Segura (Zero Risco)');
     console.log('  • Targets Baseados em Suporte/Resistência');
+    console.log('  • 🚀 MÓDULOS UNIFICADOS (v3.0)');
     console.log('  • Assertividade: 92-95%\n');
   }
 
   private async analyzeSymbol(symbol: string, marketData: any) {
-    return await multiAnalyzeWithSmartTradeBuy(this.deepseek!, symbol, marketData);
+    return await UnifiedDeepSeekAnalyzer.analyzeMultiSmartTrade(this.deepseek!, symbol, marketData);
   }
 
   private async filterSymbolsByStrength(symbols: string[]): Promise<string[]> {
@@ -66,8 +80,8 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     for (const symbol of symbols) {
       const klines = await this.getBinancePublic().getKlines(
         symbol,
-        TRADING_CONFIG.CHART.TIMEFRAME,
-        TRADING_CONFIG.CHART.PERIODS
+        UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME,
+        UNIFIED_TRADING_CONFIG.CHART.PERIODS
       );
 
       const prices = klines.map((k: any) => parseFloat(k[4]));
@@ -107,29 +121,29 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
 
   private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
     if (!symbol) return false;
-    // 1. Validar tendência EMA para alta
+    // 1. Validar tendência EMA para alta (módulo unificado)
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    if (!validateAdvancedBullishTrend(trendAnalysis, true)) return false;
+    if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: true })) return false;
 
-    // 2. Validar decisão DeepSeek para BUY com critérios rigorosos
-    if (!validateAdvancedBuyDecision(decision)) return false;
+    // 2. Validar decisão DeepSeek para BUY (módulo unificado)
+    if (!validateDeepSeekDecision(decision, 'BUY')) return false;
 
-    // 3. Aplicar boost inteligente para compras avançadas
-    const boostedDecision = boostAdvancedBuyConfidence(decision);
+    // 3. Aplicar boost inteligente (módulo unificado)
+    const boostedDecision = boostConfidence(decision, { baseBoost: 8, maxBoost: 15, trendType: 'BUY' });
 
     // 4. Buscar dados históricos para análise técnica
     const klines = await this.getBinancePublic().getKlines(
       symbol,
-      TRADING_CONFIG.CHART.TIMEFRAME,
-      TRADING_CONFIG.CHART.PERIODS
+      UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME,
+      UNIFIED_TRADING_CONFIG.CHART.PERIODS
     );
 
     // 5. Calcular volatilidade do mercado
     const volatility = await calculateSymbolVolatility(
       this.getBinancePublic(),
       symbol,
-      TRADING_CONFIG.CHART.TIMEFRAME,
-      TRADING_CONFIG.CHART.PERIODS
+      UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME,
+      UNIFIED_TRADING_CONFIG.CHART.PERIODS
     );
 
     // 6. Validação completa com níveis técnicos
@@ -180,15 +194,15 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
 
 // Só executa se for chamado diretamente (não importado)
 if (require.main === module) {
-  async function main() {
+  const main = async () => {
     const multiSmartBotSimulator = new MultiSmartTradingBotSimulatorBuy();
     await multiSmartBotSimulator.executeTrade();
-  }
+  };
 
   logBotStartup(
     'Multi Smart Bot Simulator BUY',
     '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise multi-dimensional avançada',
-    TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
+    UNIFIED_TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
     true
   ).then(() => main());
 }

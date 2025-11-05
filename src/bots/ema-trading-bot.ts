@@ -4,9 +4,11 @@ import { TradeDecision, validateTrade, calculateRiskReward } from './utils/trade
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { logMarketInfo } from './utils/market-data-logger';
 import { validateBinanceKeys } from './utils/env-validator';
-import { TRADING_CONFIG } from './config/trading-config';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
 import * as dotenv from 'dotenv';
+
+// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
+import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
 
 dotenv.config();
 
@@ -15,6 +17,12 @@ interface MarketData {
   currentPrice: number;
 }
 
+/**
+ * 🚀 EMA TRADING BOT v3.0 - REFATORADO
+ * 
+ * ✅ MIGRADO PARA MÓDULOS UNIFICADOS:
+ * - UNIFIED_TRADING_CONFIG (substitui TRADING_CONFIG)
+ */
 export class EmaTradingBot extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private emaAnalyzer: EmaAnalyzer;
@@ -25,23 +33,23 @@ export class EmaTradingBot extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Multi-Symbol EMA Trading Bot',
       isSimulation: false,
-      tradesFile: TRADING_CONFIG.FILES.EMA_BOT,
+      tradesFile: UNIFIED_TRADING_CONFIG.FILES.EMA_BOT,
       requiresValidation: true
     };
     
     this.flowManager = new BotFlowManager(this, config);
     this.emaAnalyzer = new EmaAnalyzer({
-      fastPeriod: TRADING_CONFIG.EMA.FAST_PERIOD,
-      slowPeriod: TRADING_CONFIG.EMA.SLOW_PERIOD
+      fastPeriod: UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD,
+      slowPeriod: UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD
     });
   }
 
   protected logBotInfo() {
-    logBotHeader('MULTI-SYMBOL EMA TRADING BOT', `Médias Móveis Exponenciais (EMA ${TRADING_CONFIG.EMA.FAST_PERIOD}/${TRADING_CONFIG.EMA.SLOW_PERIOD}) + Múltiplas Moedas`);
+    logBotHeader('MULTI-SYMBOL EMA TRADING BOT v3.0 - REFATORADO', `Médias Móveis Exponenciais (EMA ${UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD}/${UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD}) + Múltiplas Moedas`);
   }
 
   private async getMarketData(symbol: string): Promise<MarketData> {
-    const klines = await this.getBinancePublic().getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
+    const klines = await this.getBinancePublic().getKlines(symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, UNIFIED_TRADING_CONFIG.CHART.PERIODS);
     const prices = klines.map((k: any) => parseFloat(k[4]));
     const currentPrice = prices[prices.length - 1];
 
@@ -57,7 +65,7 @@ export class EmaTradingBot extends BaseTradingBot {
   }
 
   private analyzeWithEma(symbol: string, marketData: MarketData): TradeDecision {
-    console.log(`\n📊 Analisando mercado com EMA ${TRADING_CONFIG.EMA.FAST_PERIOD}/${TRADING_CONFIG.EMA.SLOW_PERIOD}...`);
+    console.log(`\n📊 Analisando mercado com EMA ${UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD}/${UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD}...`);
 
     const analysis = this.emaAnalyzer.analyze(marketData);
 
@@ -95,7 +103,7 @@ export class EmaTradingBot extends BaseTradingBot {
 
 // Só executa se for chamado diretamente (não importado)
 if (require.main === module) {
-  async function main() {
+  const main = async () => {
     const keys = validateBinanceKeys();
     if (!keys) return;
 

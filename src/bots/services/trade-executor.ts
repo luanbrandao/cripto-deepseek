@@ -1,6 +1,6 @@
 import { BinancePrivateClient } from '../../clients/binance-private-client';
 import { TradeDecision } from '../types/trading';
-import { TRADING_CONFIG, TradingState } from '../config/trading-config';
+import { UNIFIED_TRADING_CONFIG, UnifiedTradingState } from '../../shared/config/unified-trading-config';
 import { RiskManager } from './risk-manager';
 
 export class TradeExecutor {
@@ -25,7 +25,7 @@ export class TradeExecutor {
   }
 
   private static canExecuteTrade(decision: TradeDecision): boolean {
-    if (TradingState.isCurrentlyTrading()) {
+    if (UnifiedTradingState.isCurrentlyTrading()) {
       console.log('⏸️ Trade já em execução - aguarde...');
       return false;
     }
@@ -34,8 +34,8 @@ export class TradeExecutor {
       return false;
     }
 
-    if (decision.action === 'HOLD' || decision.confidence < TRADING_CONFIG.MIN_CONFIDENCE) {
-      console.log(`⏸️ Trade não executado - Confiança ${decision.confidence}% < ${TRADING_CONFIG.MIN_CONFIDENCE}% mínimo`);
+    if (decision.action === 'HOLD' || decision.confidence < UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
+      console.log(`⏸️ Trade não executado - Confiança ${decision.confidence}% < ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}% mínimo`);
       return false;
     }
 
@@ -43,10 +43,10 @@ export class TradeExecutor {
   }
 
   private static isInCooldown(): boolean {
-    const timeSinceLastTrade = (Date.now() - TradingState.getLastTradeTime()) / (1000 * 60);
+    const timeSinceLastTrade = (Date.now() - UnifiedTradingState.getLastTradeTime()) / (1000 * 60);
 
-    if (timeSinceLastTrade < TRADING_CONFIG.TRADE_COOLDOWN_MINUTES && TradingState.getLastTradeTime() > 0) {
-      const remainingTime = (TRADING_CONFIG.TRADE_COOLDOWN_MINUTES - timeSinceLastTrade).toFixed(1);
+    if (timeSinceLastTrade < UNIFIED_TRADING_CONFIG.TRADE_COOLDOWN_MINUTES && UnifiedTradingState.getLastTradeTime() > 0) {
+      const remainingTime = (UNIFIED_TRADING_CONFIG.TRADE_COOLDOWN_MINUTES - timeSinceLastTrade).toFixed(1);
       console.log(`⏸️ Cooldown ativo - aguarde ${remainingTime} minutos`);
       return true;
     }
@@ -61,8 +61,8 @@ export class TradeExecutor {
     console.log(`📊 Risk/Reward: ${(rewardPercent * 100).toFixed(1)}%/${(riskPercent * 100).toFixed(1)}% (${riskRewardRatio.toFixed(1)}:1)`);
 
     // VALIDAÇÃO RIGOROSA: MÍNIMO 2:1
-    if (riskRewardRatio < TRADING_CONFIG.MIN_RISK_REWARD_RATIO) {
-      console.log(`❌ Trade REJEITADO - R/R ${riskRewardRatio.toFixed(2)}:1 < ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (MÍNIMO OBRIGATÓRIO)`);
+    if (riskRewardRatio < UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO) {
+      console.log(`❌ Trade REJEITADO - R/R ${riskRewardRatio.toFixed(2)}:1 < ${UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (MÍNIMO OBRIGATÓRIO)`);
       return false;
     }
 
@@ -77,7 +77,7 @@ export class TradeExecutor {
   }
 
   private static async executeTrade(decision: TradeDecision, binancePrivate: BinancePrivateClient) {
-    TradingState.setTradingState(true);
+    UnifiedTradingState.setTradingState(true);
 
     try {
       const accountInfo = await binancePrivate.getAccountInfo();
@@ -89,19 +89,19 @@ export class TradeExecutor {
       const orderResult = await this.placeOrder(decision, binancePrivate);
       await this.createProtectionOrders(orderResult, decision, binancePrivate);
 
-      TradingState.setLastTradeTime(Date.now());
+      UnifiedTradingState.setLastTradeTime(Date.now());
       return orderResult;
 
     } catch (error: any) {
       console.error('❌ Erro ao executar ordem:', error.response?.data || error.message);
       return null;
     } finally {
-      TradingState.setTradingState(false);
+      UnifiedTradingState.setTradingState(false);
     }
   }
 
   private static async placeOrder(decision: TradeDecision, binancePrivate: BinancePrivateClient) {
-    console.log(`\n🚨 EXECUTANDO ORDEM: ${decision.action} ${decision.symbol} - $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
+    console.log(`\n🚨 EXECUTANDO ORDEM: ${decision.action} ${decision.symbol} - $${UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD}`);
 
     if (decision.action !== 'BUY' && decision.action !== 'SELL') {
       throw new Error(`Ação inválida: ${decision.action}`);
@@ -110,7 +110,7 @@ export class TradeExecutor {
     const orderResult = await binancePrivate.createMarketOrder(
       decision.symbol,
       decision.action,
-      TRADING_CONFIG.TRADE_AMOUNT_USD
+      UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD
     );
 
     console.log('✅ Ordem executada!');
@@ -139,8 +139,8 @@ export class TradeExecutor {
 
     console.log(`💰 USDT: $${usdtFree.toFixed(2)}`);
 
-    if (usdtFree < TRADING_CONFIG.TRADE_AMOUNT_USD) {
-      console.log(`❌ Saldo insuficiente. Necessário: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
+    if (usdtFree < UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD) {
+      console.log(`❌ Saldo insuficiente. Necessário: $${UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD}`);
       return false;
     }
 
@@ -155,7 +155,7 @@ export class TradeExecutor {
 
     console.log(`🪙 ${baseAsset}: ${assetFree.toFixed(6)} (~$${assetValueUSD.toFixed(2)})`);
 
-    if (assetValueUSD < TRADING_CONFIG.TRADE_AMOUNT_USD) {
+    if (assetValueUSD < UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD) {
       console.log(`❌ Saldo insuficiente de ${baseAsset}`);
       return false;
     }

@@ -1,10 +1,10 @@
 import { RiskRewardCalculation } from '../types/trading';
-import { TRADING_CONFIG } from '../config/trading-config';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 import { validateRiskReward as centralValidateRiskReward } from '../utils/trade-validators';
 
 export class RiskManager {
   static calculateDynamicRiskReward(avgPrice: number, confidence: number): RiskRewardCalculation {
-    const { BASE_PERCENT, MAX_PERCENT } = TRADING_CONFIG.RISK;
+    const { BASE_PERCENT, MAX_PERCENT } = UNIFIED_TRADING_CONFIG.RISK;
 
     // Quanto maior a confiança, menor o risco
     const riskPercent = Math.max(BASE_PERCENT, Math.min(MAX_PERCENT,

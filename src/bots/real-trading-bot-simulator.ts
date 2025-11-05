@@ -42,7 +42,7 @@ export class RealTradingBotSimulator extends BaseTradingBot {
 
 // Só executa se for chamado diretamente (não importado)
 if (require.main === module) {
-  async function main() {
+  const main = async () => {
     const keys = validateBinanceKeys();
     if (!keys) return;
 

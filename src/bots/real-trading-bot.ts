@@ -1,13 +1,22 @@
 import { BaseTradingBot } from './base-trading-bot';
 import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
-import { analyzeWithRealTrade } from './analyzers/real-trade-analyzer';
 import { validateBinanceKeys } from './utils/env-validator';
-import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
+
+// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
+import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
+import { UnifiedDeepSeekAnalyzer } from '../shared/analyzers/unified-deepseek-analyzer';
 
 dotenv.config();
 
+/**
+ * 🚀 REAL TRADING BOT v3.0 - REFATORADO
+ * 
+ * ✅ MIGRADO PARA MÓDULOS UNIFICADOS:
+ * - UnifiedDeepSeekAnalyzer (substitui analyzeWithRealTrade)
+ * - UNIFIED_TRADING_CONFIG (substitui TRADING_CONFIG)
+ */
 export class RealTradingBot extends BaseTradingBot {
   private flowManager: BotFlowManager;
 
@@ -17,18 +26,18 @@ export class RealTradingBot extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Real Trading Bot',
       isSimulation: false,
-      tradesFile: TRADING_CONFIG.FILES.REAL_BOT
+      tradesFile: UNIFIED_TRADING_CONFIG.FILES.REAL_BOT
     };
     
     this.flowManager = new BotFlowManager(this, config);
   }
 
   protected logBotInfo() {
-    logBotHeader('MULTI-SYMBOL REAL TRADING BOT', 'Análise de Múltiplas Moedas + DeepSeek AI');
+    logBotHeader('MULTI-SYMBOL REAL TRADING BOT v3.0 - REFATORADO', 'Análise de Múltiplas Moedas + DeepSeek AI');
   }
 
   private async analyzeWithRealTradeLogic(symbol: string, marketData: any) {
-    return await analyzeWithRealTrade(this.deepseek!, symbol, marketData);
+    return await UnifiedDeepSeekAnalyzer.analyzeRealTrade(this.deepseek!, symbol, marketData);
   }
 
   async executeTrade() {
@@ -41,7 +50,7 @@ export class RealTradingBot extends BaseTradingBot {
 
 // Só executa se for chamado diretamente (não importado)
 if (require.main === module) {
-  async function main() {
+  const main = async () => {
     const keys = validateBinanceKeys();
     if (!keys) return;
 

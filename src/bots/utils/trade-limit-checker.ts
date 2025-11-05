@@ -1,10 +1,10 @@
 import { BinancePrivateClient } from '../../clients/binance-private-client';
 
-import { TRADING_CONFIG } from '../config/trading-config';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 export async function checkActiveTradesLimit(binancePrivate: BinancePrivateClient): Promise<boolean> {
   const activeTradesCount = await binancePrivate.getActiveTradesCount();
-  const maxTrades = TRADING_CONFIG.getMaxActiveTrades(false);
+  const maxTrades = UNIFIED_TRADING_CONFIG.getMaxActiveTrades(false);
   
   if (activeTradesCount >= maxTrades) {
     console.log(`⏸️ Máximo de ${maxTrades} trades ativos atingido (${activeTradesCount} ativos)`);
