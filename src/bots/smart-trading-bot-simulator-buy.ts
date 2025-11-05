@@ -6,7 +6,7 @@ import { calculateRiskRewardDynamic, validateConfidence } from './utils/trade-va
 import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { analyzeWithSmartTradeBuy } from './analyzers/smart-trade-analyzer-buy';
-import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
+import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/buy-trend-validator';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
 
 export class SmartTradingBotSimulatorBuy extends BaseTradingBot {

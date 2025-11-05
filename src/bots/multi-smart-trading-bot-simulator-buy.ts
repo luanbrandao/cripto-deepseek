@@ -6,7 +6,7 @@ import { calculateRiskRewardDynamic } from './utils/trade-validators';
 import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { multiAnalyzeWithSmartTradeBuy } from './analyzers/multi-smart-trade-analyzer-buy';
-import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
+import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/buy-trend-validator';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
 
 export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {

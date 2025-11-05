@@ -4,14 +4,21 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 const simulators = [
+  // PATTERN SIMULATORS
   { name: '123 Pattern Simulator', command: 'npm run simulate-123' },
   { name: 'EMA Pattern Simulator', command: 'npm run simulate-ema' },
   { name: 'Support/Resistance Simulator', command: 'npm run simulate-support' },
+  
+  // NEUTRAL SIMULATORS (BUY/SELL/HOLD)
   { name: 'Real Trading Bot Simulator', command: 'npm run real-trading-bot-simulator' },
-  { name: 'Smart Trading Bot Simulator BUY', command: 'npm run smart-trading-bot-simulator-buy' },
-  { name: 'Smart Trading Bot Simulator SELL', command: 'npm run smart-trading-bot-simulator-sell' },
-  { name: 'Multi-Smart Trading Bot Simulator BUY', command: 'npm run multi-smart-trading-bot-simulator-buy' },
-  { name: 'Multi-Smart Trading Bot Simulator SELL', command: 'npm run multi-smart-trading-bot-simulator-sell' }
+  
+  // BUY ONLY SIMULATORS (Long-Only)
+  { name: 'Smart Trading Bot BUY Simulator', command: 'npm run smart-trading-bot-buy-simulator' },
+  { name: 'Multi-Smart Trading Bot BUY Simulator', command: 'npm run multi-smart-trading-bot-buy-simulator' },
+  
+  // SELL ONLY SIMULATORS (Short-Only)
+  { name: 'Smart Trading Bot SELL Simulator', command: 'npm run smart-trading-bot-sell-simulator' },
+  { name: 'Multi-Smart Trading Bot SELL Simulator', command: 'npm run multi-smart-trading-bot-sell-simulator' }
 ];
 
 async function runAllSimulators() {
@@ -30,7 +37,7 @@ async function runAllSimulators() {
 
       // Detectar se executou trade
       const executedTrade = stdout.includes('EXECUTADA COM SUCESSO') || stdout.includes('Ordem executada') || stdout.includes('Trade simulado salvo');
-      const noTrade = stdout.includes('NÃO EXECUTOU TRADE') || stdout.includes('Nenhuma oportunidade encontrada') || stdout.includes('Total de trades: 0');
+      const noTrade = stdout.includes('NÃO EXECUTOU TRADE') || stdout.includes('Nenhuma oportunidade encontrada') || stdout.includes('Total de trades: 0') || stdout.includes('Nenhuma moeda válida encontrada');
 
       if (executedTrade) {
         console.log(`✅ ${simulator.name} concluído - 🟢 TRADE EXECUTADO`);
