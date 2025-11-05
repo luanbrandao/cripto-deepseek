@@ -98,6 +98,15 @@ export class TradeSimulator {
             close: parseFloat(k[4])
           }));
           marketData = { candles, currentPrice };
+        } else if (analyzerName === 'SupportResistanceAnalyzer') {
+          const candles = klines.map((k: any) => ({
+            open: parseFloat(k[1]),
+            high: parseFloat(k[2]),
+            low: parseFloat(k[3]),
+            close: parseFloat(k[4]),
+            timestamp: k[0]
+          }));
+          marketData = { candles, currentPrice };
         } else {
           marketData = { price24h: prices, currentPrice };
         }
@@ -168,6 +177,15 @@ export class TradeSimulator {
           high: parseFloat(k[2]),
           low: parseFloat(k[3]),
           close: parseFloat(k[4])
+        }));
+        marketData = { candles, currentPrice };
+      } else if (analyzerName === 'SupportResistanceAnalyzer') {
+        const candles = klines.map((k: any) => ({
+          open: parseFloat(k[1]),
+          high: parseFloat(k[2]),
+          low: parseFloat(k[3]),
+          close: parseFloat(k[4]),
+          timestamp: k[0]
         }));
         marketData = { candles, currentPrice };
       } else {

@@ -1,0 +1,97 @@
+import { TRADING_CONFIG } from '../../bots/config/trading-config';
+import SupportResistanceAnalyzer from '../../analyzers/supportResistanceAnalyzer';
+import { TradeSimulator } from '../../bots';
+import * as fs from 'fs';
+import * as path from 'path';
+
+interface SupportResistanceTrade {
+  id: string;
+  timestamp: string;
+  symbol: string;
+  action: 'BUY' | 'SELL' | 'HOLD';
+  confidence: number;
+  reason: string;
+  entryPrice: number;
+  targetPrice?: number;
+  stopPrice?: number;
+  potentialGain?: number;
+  potentialLoss?: number;
+  riskRewardRatio?: number;
+  status: 'pending' | 'completed';
+  result?: 'win' | 'loss';
+  levels: any[];
+}
+
+function saveTrade(trade: SupportResistanceTrade, tradesFile: string) {
+  let trades: SupportResistanceTrade[] = [];
+
+  if (fs.existsSync(tradesFile)) {
+    const data = fs.readFileSync(tradesFile, 'utf8');
+    trades = JSON.parse(data);
+  }
+
+  trades.push(trade);
+  fs.writeFileSync(tradesFile, JSON.stringify(trades, null, 2));
+  console.log(`💾 Trade salvo em: ${tradesFile}`);
+}
+
+async function runSupportResistanceSimulation() {
+  console.log('🚀 MULTI-SYMBOL SUPPORT/RESISTANCE SIMULATOR');
+  console.log('📊 Estratégia: Suporte e Resistência + Níveis Psicológicos + Múltiplas Moedas\n');
+
+  const supportConfig = {
+    tolerance: 0.008,
+    minTouches: 2,
+    lookbackPeriods: 25
+  };
+
+  const analyzer = new SupportResistanceAnalyzer(supportConfig);
+  const tradesFile = path.join(__dirname, '../../trades/supportResistanceTrades.json');
+  const simulator = new TradeSimulator(analyzer, 1000, TRADING_CONFIG.SYMBOLS, tradesFile);
+
+  await simulator.simulate(TRADING_CONFIG.SYMBOLS);
+
+  // Verificar se há trades recentes no arquivo
+  let executedTrade = false;
+  try {
+    if (fs.existsSync(tradesFile)) {
+      const data = fs.readFileSync(tradesFile, 'utf8');
+      const trades = JSON.parse(data);
+      const recentTrades = trades.filter((trade: any) => {
+        const tradeTime = new Date(trade.timestamp).getTime();
+        const now = Date.now();
+        return (now - tradeTime) < 60000;
+      });
+      executedTrade = recentTrades.length > 0;
+    }
+  } catch (error) {
+    // Ignorar erros
+  }
+
+  console.log('\n' + '='.repeat(60));
+  if (executedTrade) {
+    console.log('✅ SIMULAÇÃO CONCLUÍDA - 🟢 TRADE EXECUTADO');
+    console.log('📊 Estratégia: Suporte/Resistência identificou oportunidade');
+  } else {
+    console.log('✅ SIMULAÇÃO CONCLUÍDA - ⏸️ NENHUM TRADE EXECUTADO');
+    console.log('📊 Aguardando níveis de suporte/resistência serem testados');
+  }
+  console.log('='.repeat(60));
+
+  console.log('\n💡 SOBRE A ESTRATÉGIA:');
+  console.log('🎯 Identifica níveis de suporte e resistência baseado em:');
+  console.log('   • Número de toques (quanto mais, mais forte)');
+  console.log('   • Histórico de preços (níveis testados anteriormente)');
+  console.log('   • Níveis psicológicos (números redondos)');
+  console.log('   • Zonas de preços (áreas entre níveis próximos)');
+  console.log('   • Rompimentos (breakouts de níveis importantes)');
+  console.log('\n📈 Sinais de entrada:');
+  console.log('   • COMPRA: Preço próximo ao suporte ou rompimento de resistência');
+  console.log('   • VENDA: Preço próximo à resistência ou rompimento de suporte');
+  console.log('   • HOLD: Preço em área neutra sem níveis significativos');
+}
+
+// Só executa se for chamado diretamente (não importado)
+if (require.main === module) {
+  runSupportResistanceSimulation();
+}
