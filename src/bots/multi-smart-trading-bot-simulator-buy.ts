@@ -5,7 +5,7 @@ import { TRADING_CONFIG } from './config/trading-config';
 import { calculateRiskRewardDynamic } from './utils/trade-validators';
 import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
-import { multiAnalyzeWithSmartTrade } from './analyzers/multi-smart-trade-analyzer';
+import { multiAnalyzeWithSmartTradeBuy } from './analyzers/multi-smart-trade-analyzer-buy';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
 
@@ -48,7 +48,7 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   }
 
   private async analyzeSymbol(symbol: string, marketData: any) {
-    return await multiAnalyzeWithSmartTrade(this.deepseek!, symbol, marketData);
+    return await multiAnalyzeWithSmartTradeBuy(this.deepseek!, symbol, marketData);
   }
 
   private async filterSymbolsByStrength(symbols: string[]): Promise<string[]> {

@@ -14,6 +14,7 @@
     "_comment2": "=== SIMULATORS ===",
     "real-trading-bot-simulator": "ts-node src/bots/real-trading-bot-simulator.ts",
     "smart-trading-bot-simulator-buy": "ts-node src/bots/smart-trading-bot-simulator-buy.ts",
+    "smart-trading-bot-simulator-sell": "ts-node src/bots/smart-trading-bot-simulator-sell.ts",
     "multi-smart-trading-bot-buy": "ts-node src/bots/multi-smart-trading-bot-buy.ts",
     "multi-smart-trading-bot-simulator-buy": "ts-node src/bots/multi-smart-trading-bot-simulator-buy.ts",
     "simulate-123": "ts-node src/scripts/simulators/simulate-123.ts",

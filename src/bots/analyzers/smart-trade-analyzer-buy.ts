@@ -8,7 +8,7 @@ import { AnalysisParser } from '../services/analysis-parser';
  * - Ideal para: Bull markets, traders conservadores
  * - Win Rate esperado: 85-90%
  */
-export async function analyzeWithSmartTrade(deepseek: DeepSeekService, symbol: string, marketData: any) {
+export async function analyzeWithSmartTradeBuy(deepseek: DeepSeekService, symbol: string, marketData: any) {
   const analysis = await deepseek.analyzeMarket(
     marketData,
     `Analyze ${symbol} market data including 24h klines. Focus on BULLISH signals only. Provide a CLEAR BUY recommendation if conditions are favorable, otherwise HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators for upward momentum.`

@@ -10,7 +10,7 @@ import { AdvancedEmaAnalyzer } from '../services/advanced-ema-analyzer';
  * - Filosofia: Long-only com filtros adaptativos
  * - Win Rate esperado: 92-95%
  */
-export async function multiAnalyzeWithSmartTrade(deepseek: DeepSeekService, symbol: string, marketData: any) {
+export async function multiAnalyzeWithSmartTradeBuy(deepseek: DeepSeekService, symbol: string, marketData: any) {
   const analysis = await deepseek.analyzeMarket(
     marketData,
     `Analyze ${symbol} comprehensively using the following data:
@@ -30,19 +30,19 @@ export async function multiAnalyzeWithSmartTrade(deepseek: DeepSeekService, symb
 
   // Use advanced parser for better sentiment analysis
   const decision = await AdvancedAnalysisParser.parseWithAdvancedSentiment(
-    analysis, 
-    symbol, 
+    analysis,
+    symbol,
     parseFloat(marketData.price.price)
   );
 
   // Apply smart scoring system for final validation
   const scoringSystem = new SmartScoringSystem();
   const emaAnalyzer = new AdvancedEmaAnalyzer();
-  
+
   // Extract technical data
   const prices = marketData.klines ? marketData.klines.map((k: any) => parseFloat(k[4])) : [];
   const volumes = marketData.klines ? marketData.klines.map((k: any) => parseFloat(k[5])) : undefined;
-  
+
   if (prices.length > 0) {
     const technicalData = {
       prices,
@@ -58,11 +58,11 @@ export async function multiAnalyzeWithSmartTrade(deepseek: DeepSeekService, symb
     };
 
     const smartScore = scoringSystem.calculateSmartScore(technicalData, aiAnalysis);
-    
+
     // Update decision with smart score insights
     decision.confidence = smartScore.confidence;
     decision.reason = `${decision.reason} | Smart Score: ${smartScore.finalScore.toFixed(1)} (EMA:${smartScore.emaScore.toFixed(0)} AI:${smartScore.aiScore.toFixed(0)} Vol:${smartScore.volumeScore.toFixed(0)} Mom:${smartScore.momentumScore.toFixed(0)})`;
-    
+
     // Override action based on smart score recommendation
     if (smartScore.recommendation === 'STRONG_BUY' || smartScore.recommendation === 'BUY') {
       decision.action = 'BUY';
