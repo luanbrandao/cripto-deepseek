@@ -58,7 +58,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     return await multiAnalyzeWithSmartTradeSell(this.deepseek!, symbol, marketData);
   }
 
-  private async filterSymbolsByBearishStrength(symbols: string[]): Promise<string[]> {
+  private async filterSymbolsByStrength(symbols: string[]): Promise<string[]> {
     console.log(`🔍 Analisando ${symbols.length} moedas com filtro BEARISH adaptativo...`);
 
     const validSymbols = [];
@@ -78,16 +78,14 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
 
       const threshold = this.getThresholdSellMarketCondition(condition.type);
 
-      // Validação específica para vendas (oposto do BUY)
-      if (this.isSymbolValidForSell(analysis, threshold)) {
+      if (this.isSymbolValid(analysis, threshold)) {
         validSymbols.push(symbol);
-        console.log(`✅ ${symbol}: ${analysis.overallStrength.toFixed(1)} (${condition.type}) - BEARISH`);
+        console.log(`✅ ${symbol}: ${analysis.overallStrength.toFixed(1)} (${condition.type})`);
       } else {
-        console.log(`❌ ${symbol}: ${analysis.overallStrength.toFixed(1)} < ${threshold} - Não bearish`);
+        console.log(`❌ ${symbol}: ${analysis.overallStrength.toFixed(1)} < ${threshold}`);
       }
     }
 
-    console.log(`\n🎯 Símbolos aprovados no filtro BEARISH: [${validSymbols.join(', ')}]`);
     return validSymbols;
   }
 
@@ -99,7 +97,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     }
   }
 
-  private isSymbolValidForSell(analysis: any, threshold: number): boolean {
+  private isSymbolValid(analysis: any, threshold: number): boolean {
     // Validação específica para vendas - procura por tendências de baixa
     const isBearishTrend = this.isBearishByEma(analysis);
     
@@ -115,13 +113,8 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     return !isUptrend && analysis.overallStrength < 60; // Força baixa indica possível bearish
   }
 
-  private async validateMultiSmartSellDecision(decision: any, symbol?: string): Promise<boolean> {
+  private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
     if (!symbol) return false;
-    
-    console.log(`\n🔍 VALIDAÇÃO AVANÇADA PARA VENDA - ${symbol}:`);
-    console.log(`📊 Confiança inicial: ${decision.confidence}%`);
-    console.log(`🎯 Ação: ${decision.action}`);
-    
     // 1. Validar tendência EMA para baixa
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
     if (!validateAdvancedBearishTrend(trendAnalysis, true)) return false;
@@ -132,8 +125,8 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     // 3. Aplicar boost inteligente para vendas avançadas
     const boostedDecision = boostAdvancedSellConfidence(decision);
 
-    // 4. Validação final de Risk/Reward
-    console.log('🔍 Validação final de Risk/Reward 2:1 para simulação SELL...');
+    // 4. Validação completa (confiança + ação + risk/reward)
+    console.log('🔍 Validação final de Risk/Reward para simulação...');
 
     const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
       boostedDecision.price,
@@ -149,15 +142,12 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     );
 
     if (!riskRewardResult.isValid) {
-      console.log('❌ Validações falharam - Risk/Reward insuficiente para SELL');
+      console.log('❌ Validações falharam - Risk/Reward insuficiente');
       return false;
     }
 
     // Atualizar decisão com boost
     Object.assign(decision, boostedDecision);
-    
-    console.log('🎉 TODAS AS VALIDAÇÕES APROVADAS PARA VENDA!');
-    console.log(`🚀 Prosseguindo com simulação SELL ${symbol}`);
     return true;
   }
 
@@ -165,8 +155,8 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     this.logBotInfo();
     return await this.flowManager.executeStandardFlow(
       this.analyzeSymbol.bind(this),
-      this.filterSymbolsByBearishStrength.bind(this),
-      this.validateMultiSmartSellDecision.bind(this)
+      this.filterSymbolsByStrength.bind(this),
+      this.validateMultiSmartDecision.bind(this)
     );
   }
 }
