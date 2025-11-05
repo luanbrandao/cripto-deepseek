@@ -114,14 +114,14 @@ Esta pasta contém a documentação detalhada de cada bot de trading do sistema,
 ### **Execução Manual**
 ```bash
 npm run real-trading-bot        # Real Bot
-npm run smart-trading-bot       # Smart Bot  
+npm run smart-trading-bot-buy       # Smart Bot  
 npm run ema-trading-bot         # EMA Bot
 npm run multi-smart-trading-bot # Multi-Smart Bot
 ```
 
 ### **Execução Automática (Cron)**
 ```bash
-npm run smart-trading-bot-cron  # ⚠️ TRADES REAIS
+npm run smart-trading-bot-buy-cron  # ⚠️ TRADES REAIS
 ```
 
 ### **Simulações (Seguras)**

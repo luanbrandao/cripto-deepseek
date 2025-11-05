@@ -4,7 +4,7 @@ export { BaseTradingBot } from './base-trading-bot';
 // Trading bots
 export { RealTradingBot } from './real-trading-bot';
 export { EmaTradingBot } from './ema-trading-bot';
-export { SmartTradingBot } from './smart-trading-bot';
+export { SmartTradingBotBuy } from './smart-trading-bot-buy';
 
 // Simulation bots
 export { RealTradingBotSimulator } from './real-trading-bot-simulator';

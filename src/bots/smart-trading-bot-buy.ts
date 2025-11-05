@@ -13,7 +13,7 @@ import EmaAnalyzer from '../analyzers/emaAnalyzer';
 
 dotenv.config();
 
-export class SmartTradingBot extends BaseTradingBot {
+export class SmartTradingBotBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private trendAnalyzer: MarketTrendAnalyzer;
   private emaAnalyzer: EmaAnalyzer;
@@ -22,7 +22,7 @@ export class SmartTradingBot extends BaseTradingBot {
     super(apiKey, apiSecret, true);
     
     const config: BotConfig = {
-      name: 'Smart Trading Bot',
+      name: 'Smart Trading Bot BUY',
       isSimulation: false,
       tradesFile: TRADING_CONFIG.FILES.SMART_BOT,
       requiresFiltering: true,
@@ -38,7 +38,7 @@ export class SmartTradingBot extends BaseTradingBot {
   }
 
   protected logBotInfo() {
-    logBotHeader('MULTI-SYMBOL SMART TRADING BOT', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas');
+    logBotHeader('MULTI-SYMBOL SMART TRADING BOT BUY', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - APENAS COMPRAS');
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
@@ -124,12 +124,12 @@ if (require.main === module) {
     if (!keys) return;
 
     const { apiKey, apiSecret } = keys;
-    const smartBot = new SmartTradingBot(apiKey, apiSecret);
+    const smartBot = new SmartTradingBotBuy(apiKey, apiSecret);
     await smartBot.executeTrade();
   }
 
   logBotStartup(
-    'Smart Bot',
-    '🧠 Análise dupla: EMA + DeepSeek AI para máxima precisão'
+    'Smart Bot BUY',
+    '🧠 Análise dupla: EMA + DeepSeek AI - APENAS COMPRAS (Long-Only)'
   ).then(() => main());
 }

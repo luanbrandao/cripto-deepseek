@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { SmartTradingBot } from '../../bots/smart-trading-bot';
+import { SmartTradingBotBuy } from '../../bots/smart-trading-bot-buy';
 import * as dotenv from 'dotenv';
 import { validateBinanceKeys } from '../../bots/utils/env-validator';
 
@@ -17,10 +17,10 @@ const { apiKey, apiSecret } = keys;
 
 cron.schedule('*/5 * * * *', async () => {
   const timestamp = new Date().toLocaleString('pt-BR');
-  console.log(`\n⏰ [${timestamp}] Executando Smart Trading Bot...`);
+  console.log(`\n⏰ [${timestamp}] Executando Smart Trading Bot Buy...`);
 
   try {
-    const bot = new SmartTradingBot(apiKey, apiSecret);
+    const bot = new SmartTradingBotBuy(apiKey, apiSecret);
     const tradeResult = await bot.executeTrade();
 
     if (tradeResult) {
