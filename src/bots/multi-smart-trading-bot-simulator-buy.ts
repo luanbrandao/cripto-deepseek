@@ -6,7 +6,12 @@ import { calculateRiskRewardDynamic } from './utils/trade-validators';
 import { calculateTargetAndStopPrices } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { multiAnalyzeWithSmartTradeBuy } from './analyzers/multi-smart-trade-analyzer-buy';
-import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/buy-trend-validator';
+import { 
+  validateAdvancedBullishTrend, 
+  validateAdvancedBuyDecision, 
+  boostAdvancedBuyConfidence,
+  validateAdvancedBuyStrength
+} from './utils/advanced-buy-validator';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
 
 export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
@@ -69,7 +74,7 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
       const analysis = this.advancedEmaAnalyzer.analyzeAdvanced(prices, volumes);
       const condition = this.advancedEmaAnalyzer.getMarketCondition(analysis);
 
-      const threshold = this.getThresholdByMarketCondition(condition.type);
+      const threshold = this.getThresholdBuyMarketCondition(condition.type);
 
       if (this.isSymbolValid(analysis, threshold)) {
         validSymbols.push(symbol);
@@ -82,7 +87,7 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     return validSymbols;
   }
 
-  private getThresholdByMarketCondition(marketType: string): number {
+  private getThresholdBuyMarketCondition(marketType: string): number {
     switch (marketType) {
       case 'BULL_MARKET': return 65;
       case 'BEAR_MARKET': return 85;
@@ -91,22 +96,24 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   }
 
   private isSymbolValid(analysis: any, threshold: number): boolean {
-    return analysis.overallStrength > threshold &&
-      (this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
-        this.advancedEmaAnalyzer.isModerateUptrend(analysis));
+    // Validação específica para compras - procura por tendências de alta
+    const isBullishTrend = this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
+                          this.advancedEmaAnalyzer.isModerateUptrend(analysis);
+    
+    return validateAdvancedBuyStrength(analysis, threshold) && isBullishTrend;
   }
 
   private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
     if (!symbol) return false;
-    // 1. Validar tendência EMA
+    // 1. Validar tendência EMA para alta
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    if (!validateTrendAnalysis(trendAnalysis, true)) return false;
+    if (!validateAdvancedBullishTrend(trendAnalysis, true)) return false;
 
-    // 2. Validar decisão DeepSeek
-    if (!validateDeepSeekDecision(decision)) return false;
+    // 2. Validar decisão DeepSeek para BUY com critérios rigorosos
+    if (!validateAdvancedBuyDecision(decision)) return false;
 
-    // 3. Aplicar boost inteligente
-    const boostedDecision = boostConfidence(decision);
+    // 3. Aplicar boost inteligente para compras avançadas
+    const boostedDecision = boostAdvancedBuyConfidence(decision);
 
     // 4. Validação completa (confiança + ação + risk/reward)
     console.log('🔍 Validação final de Risk/Reward para simulação...');
