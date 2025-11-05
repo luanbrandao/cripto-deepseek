@@ -109,11 +109,17 @@ export class SmartTradingBotBuy extends BaseTradingBot {
 
   async executeTrade() {
     this.logBotInfo();
-    return await this.flowManager.executeStandardFlow(
-      this.analyzeWithSmartTradeLogic.bind(this),
-      this.filterSymbolsByEma.bind(this),
-      this.validateSmartDecision.bind(this)
-    );
+    try {
+      return await this.flowManager.executeStandardFlow(
+        this.analyzeWithSmartTradeLogic.bind(this),
+        this.filterSymbolsByEma.bind(this),
+        this.validateSmartDecision.bind(this)
+      );
+    } catch (error) {
+      console.error('❌ Erro no Smart Trading Bot BUY:', error);
+      console.log('🔄 Bot continuará funcionando no próximo ciclo...');
+      return null;
+    }
   }
 }
 

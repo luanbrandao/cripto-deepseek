@@ -29,7 +29,7 @@ export async function hasActiveTradeForSymbol(
 
 function hasActiveSimulationTradeForSymbol(symbol: string, simulationFile: string): boolean {
   try {
-    const tradesPath = path.join(__dirname, '../trades', simulationFile);
+    const tradesPath = path.join(__dirname, '../../trades', simulationFile);
     
     if (!fs.existsSync(tradesPath)) {
       return false;
