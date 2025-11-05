@@ -17,6 +17,7 @@
     "smart-trading-bot-simulator-sell": "ts-node src/bots/smart-trading-bot-simulator-sell.ts",
     "multi-smart-trading-bot-buy": "ts-node src/bots/multi-smart-trading-bot-buy.ts",
     "multi-smart-trading-bot-simulator-buy": "ts-node src/bots/multi-smart-trading-bot-simulator-buy.ts",
+    "multi-smart-trading-bot-simulator-sell": "ts-node src/bots/multi-smart-trading-bot-simulator-sell.ts",
     "simulate-123": "ts-node src/scripts/simulators/simulate-123.ts",
     "simulate-ema": "ts-node src/scripts/simulators/simulate-ema.ts",
     "simulate-support": "ts-node src/scripts/simulators/simulate-support.ts",
