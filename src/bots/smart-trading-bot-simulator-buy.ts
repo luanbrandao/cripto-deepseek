@@ -48,6 +48,7 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
     const validSymbols = [];
 
     for (const symbol of symbols) {
+      console.log(`\n📊 Analisando Tendência EMA: ${symbol}...`);
       const klines = await this.getBinancePublic().getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const currentPrice = prices[prices.length - 1];

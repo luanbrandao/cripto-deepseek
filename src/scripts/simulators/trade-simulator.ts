@@ -76,7 +76,8 @@ export class TradeSimulator {
     for (const symbol of symbols) {
       try {
         // Verificar se já existe trade ativo para este símbolo
-        if (await hasActiveTradeForSymbol(undefined, symbol, true, this.tradesFile)) {
+        const fileName = path.basename(this.tradesFile);
+        if (await hasActiveTradeForSymbol(undefined, symbol, true, fileName)) {
           console.log(`⏭️ Pulando ${symbol} - simulação já ativa`);
           continue;
         }
