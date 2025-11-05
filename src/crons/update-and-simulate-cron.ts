@@ -3,10 +3,12 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
+let cycleCount = 0;
 
 async function runUpdateAndSimulate() {
+  cycleCount++;
   const timestamp = new Date().toLocaleString('pt-BR');
-  console.log(`\n🕐 [${timestamp}] INICIANDO CICLO: Update + Simuladores`);
+  console.log(`\n🕐 [${timestamp}] CICLO #${cycleCount} - Update + Simuladores`);
   console.log('='.repeat(60));
 
   try {
@@ -23,10 +25,10 @@ async function runUpdateAndSimulate() {
     await execAsync('npm run run-all-simulators');
     console.log('✅ Simuladores executados com sucesso');
 
-    console.log(`\n🎉 [${timestamp}] CICLO CONCLUÍDO COM SUCESSO`);
+    console.log(`\n🎉 [${timestamp}] CICLO #${cycleCount} CONCLUÍDO COM SUCESSO`);
 
   } catch (error) {
-    console.error(`\n❌ [${timestamp}] ERRO NO CICLO:`, error);
+    console.error(`\n❌ [${timestamp}] ERRO NO CICLO #${cycleCount}:`, error);
   }
 
   console.log('='.repeat(60));

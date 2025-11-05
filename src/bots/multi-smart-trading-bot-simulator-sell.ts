@@ -78,11 +78,13 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
 
       const threshold = this.getThresholdSellMarketCondition(condition.type);
 
+      console.log(`📊 ${symbol}: Score ${analysis.overallStrength.toFixed(1)}, Mercado: ${condition.type}, Threshold: ${threshold}`);
+      
       if (this.isSymbolValid(analysis, threshold)) {
         validSymbols.push(symbol);
-        console.log(`✅ ${symbol}: ${analysis.overallStrength.toFixed(1)} (${condition.type})`);
+        console.log(`✅ ${symbol}: APROVADO`);
       } else {
-        console.log(`❌ ${symbol}: ${analysis.overallStrength.toFixed(1)} < ${threshold}`);
+        console.log(`❌ ${symbol}: REJEITADO`);
       }
     }
 
@@ -91,9 +93,9 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
 
   private getThresholdSellMarketCondition(marketType: string): number {
     switch (marketType) {
-      case 'BULL_MARKET': return 90;  // Mais rigoroso em mercado de alta
-      case 'BEAR_MARKET': return 70;  // Menos rigoroso em mercado de baixa
-      default: return 80;             // Padrão para mercado lateral
+      case 'BULL_MARKET': return 60;  // Mais rigoroso em mercado de alta
+      case 'BEAR_MARKET': return 25;  // Muito permissivo em mercado de baixa
+      default: return 35;             // Padrão para mercado lateral
     }
   }
 
@@ -105,12 +107,17 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   }
 
   private isBearishByEma(analysis: any): boolean {
-    // Lógica para detectar tendência bearish baseada em EMAs
-    // Se não houver métodos específicos, usar lógica inversa
-    const isUptrend = this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
-      this.advancedEmaAnalyzer.isModerateUptrend(analysis);
-
-    return !isUptrend && analysis.overallStrength < 60; // Força baixa indica possível bearish
+    // Detectar tendência bearish baseada em EMAs
+    const isBearish = (
+      analysis.shortTerm.trend === 'DOWN' ||
+      analysis.mediumTerm.trend === 'DOWN' ||
+      analysis.longTerm.trend === 'DOWN'
+    );
+    
+    const isNotUptrend = !this.advancedEmaAnalyzer.isStrongUptrend(analysis) &&
+                        !this.advancedEmaAnalyzer.isModerateUptrend(analysis);
+    
+    return isBearish || isNotUptrend;
   }
 
   private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {

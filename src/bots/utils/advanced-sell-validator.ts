@@ -107,23 +107,13 @@ export function getAdvancedSellThreshold(marketType: string): number {
 
 export function validateAdvancedSellStrength(analysis: any, threshold: number): boolean {
   const strength = analysis.overallStrength || 0;
-  const smartScore = analysis.smartScore || 0;
   
-  // Validação combinada de força e smart score
-  const combinedScore = (strength + smartScore) / 2;
-  
-  if (combinedScore < threshold) {
-    console.log(`❌ Score combinado ${combinedScore.toFixed(1)} < ${threshold} (threshold)`);
+  // Para vendas, usar apenas overallStrength (smartScore vem do DeepSeek, não do EMA)
+  if (strength < threshold) {
+    console.log(`❌ Score combinado ${strength.toFixed(1)} < ${threshold} (threshold)`);
     return false;
   }
   
-  // Validação adicional: deve ter sinais bearish suficientes
-  const bearishCount = analysis.bearishSignals?.length || 0;
-  if (bearishCount < 2) {
-    console.log(`❌ Sinais bearish insuficientes: ${bearishCount} < 2`);
-    return false;
-  }
-  
-  console.log(`✅ Validação avançada aprovada: Score ${combinedScore.toFixed(1)}, Sinais: ${bearishCount}`);
+  console.log(`✅ Validação avançada aprovada: Score ${strength.toFixed(1)}`);
   return true;
 }
