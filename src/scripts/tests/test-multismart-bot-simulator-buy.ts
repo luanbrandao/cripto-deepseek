@@ -1,4 +1,4 @@
-import { MultiSmartTradingBotSimulator } from '../../bots/multi-smart-trading-bot-simulator';
+import { MultiSmartTradingBotSimulatorBuy } from '../../bots/multi-smart-trading-bot-simulator-buy';
 import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import * as dotenv from 'dotenv';
 
@@ -39,10 +39,10 @@ async function testMultiSmartBotSimulator() {
     console.log('🚀 Iniciando teste do Enhanced Smart Bot Simulator...\n');
 
     const startTime = Date.now();
-    const multiSmartTradingBotSimulator = new MultiSmartTradingBotSimulator();
+    const multiSmartTradingBotSimulatorBuy = new MultiSmartTradingBotSimulatorBuy();
 
     // Executar teste
-    const result = await multiSmartTradingBotSimulator.executeTrade();
+    const result = await multiSmartTradingBotSimulatorBuy.executeTrade();
 
     const endTime = Date.now();
     const executionTime = ((endTime - startTime) / 1000).toFixed(2);

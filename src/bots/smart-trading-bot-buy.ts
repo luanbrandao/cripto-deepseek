@@ -20,15 +20,15 @@ export class SmartTradingBotBuy extends BaseTradingBot {
 
   constructor(apiKey: string, apiSecret: string) {
     super(apiKey, apiSecret, true);
-    
+
     const config: BotConfig = {
       name: 'Smart Trading Bot BUY',
       isSimulation: false,
-      tradesFile: TRADING_CONFIG.FILES.SMART_BOT,
+      tradesFile: TRADING_CONFIG.FILES.SMART_BOT_BUY,
       requiresFiltering: true,
       requiresValidation: true
     };
-    
+
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
     this.emaAnalyzer = new EmaAnalyzer({
@@ -47,18 +47,18 @@ export class SmartTradingBotBuy extends BaseTradingBot {
 
   private async filterSymbolsByEma(symbols: string[]): Promise<string[]> {
     const validSymbols = [];
-    
+
     for (const symbol of symbols) {
       const klines = await this.getBinancePublic().getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const currentPrice = prices[prices.length - 1];
       const emaAnalysis = this.emaAnalyzer.analyze({ price24h: prices, currentPrice });
-      
+
       if (emaAnalysis.action === 'BUY' && emaAnalysis.reason.includes('Tendência de alta confirmada')) {
         validSymbols.push(symbol);
       }
     }
-    
+
     return validSymbols;
   }
 
@@ -83,20 +83,20 @@ export class SmartTradingBotBuy extends BaseTradingBot {
 
     // 5. Validação de Risk/Reward
     console.log('🔍 Validação final de Risk/Reward antes da execução...');
-    
+
     const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
-      boostedDecision.price, 
-      boostedDecision.confidence, 
+      boostedDecision.price,
+      boostedDecision.confidence,
       boostedDecision.action
     );
-    
+
     const riskRewardResult = calculateRiskRewardDynamic(
-      boostedDecision.price, 
-      targetPrice, 
-      stopPrice, 
+      boostedDecision.price,
+      targetPrice,
+      stopPrice,
       boostedDecision.action
     );
-    
+
     if (!riskRewardResult.isValid) {
       console.log('❌ Trade cancelado - Risk/Reward insuficiente');
       return false;

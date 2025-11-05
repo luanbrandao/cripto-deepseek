@@ -9,18 +9,18 @@ import { multiAnalyzeWithSmartTrade } from './analyzers/multi-smart-trade-analyz
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
 
-export class MultiSmartTradingBotSimulator extends BaseTradingBot {
+export class MultiSmartTradingBotBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private readonly trendAnalyzer: MarketTrendAnalyzer;
   private readonly advancedEmaAnalyzer: AdvancedEmaAnalyzer;
 
   constructor() {
-    super(undefined, undefined, true);
+    super(undefined, undefined, false);
 
     const config: BotConfig = {
-      name: 'Multi-Smart Trading Bot Simulator',
-      isSimulation: true,
-      tradesFile: TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY,
+      name: 'Multi-Smart Trading Bot BUY',
+      isSimulation: false,
+      tradesFile: TRADING_CONFIG.FILES.SMART_BOT_BUY,
       requiresFiltering: true,
       requiresValidation: true
     };
@@ -34,8 +34,8 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
   }
 
   protected logBotInfo() {
-    console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
-    logBotHeader('MULTI-SMART BOT SIMULATOR v2.0', 'Análise Multi-Dimensional - SIMULAÇÃO', true);
+    console.log('⚠️  EXECUTA TRADES REAIS NA BINANCE ⚠️\n');
+    logBotHeader('MULTI-SMART TRADING BOT BUY v2.0', 'Análise Multi-Dimensional + Trades Reais - APENAS COMPRAS');
 
     console.log('🎯 RECURSOS AVANÇADOS:');
     console.log('  • EMA Multi-Timeframe (12/26/50/100/200)');
@@ -43,7 +43,7 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
     console.log('  • Smart Scoring 4D (EMA+AI+Volume+Momentum)');
     console.log('  • Filtro Adaptativo por Condição de Mercado');
     console.log('  • Boost Inteligente de Confiança');
-    console.log('  • Simulação Segura (Zero Risco)');
+    console.log('  • Execução com OCO Orders (TP+SL)');
     console.log('  • Assertividade: 92-95%\n');
   }
 
@@ -100,7 +100,7 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
     if (!symbol) return false;
     // 1. Validar tendência EMA
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    if (!validateTrendAnalysis(trendAnalysis, true)) return false;
+    if (!validateTrendAnalysis(trendAnalysis, false)) return false;
 
     // 2. Validar decisão DeepSeek
     if (!validateDeepSeekDecision(decision)) return false;
@@ -109,7 +109,7 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
     const boostedDecision = boostConfidence(decision);
 
     // 4. Validação completa (confiança + ação + risk/reward)
-    console.log('🔍 Validação final de Risk/Reward para simulação...');
+    console.log('🔍 Validação final de Risk/Reward antes da execução...');
 
     const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
       boostedDecision.price,
@@ -147,14 +147,13 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
 // Só executa se for chamado diretamente (não importado)
 if (require.main === module) {
   async function main() {
-    const multiSmartBotSimulator = new MultiSmartTradingBotSimulator();
-    await multiSmartBotSimulator.executeTrade();
+    const multiSmartBotBuy = new MultiSmartTradingBotBuy();
+    await multiSmartBotBuy.executeTrade();
   }
 
   logBotStartup(
-    'Multi Smart Bot Simulator',
-    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise multi-dimensional avançada',
-    TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
-    true
+    'Multi-Smart Trading Bot BUY',
+    '⚠️  TRADES REAIS - Ordens executadas na Binance\n🧠 Análise multi-dimensional avançada - APENAS COMPRAS',
+    TRADING_CONFIG.SIMULATION.STARTUP_DELAY
   ).then(() => main());
 }

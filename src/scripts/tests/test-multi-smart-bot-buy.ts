@@ -1,4 +1,4 @@
-import { MultiSmartTradingBot } from '../../bots/multi-smart-trading-bot';
+import { MultiSmartTradingBotBuy } from '../../bots/multi-smart-trading-bot-buy';
 import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import * as dotenv from 'dotenv';
 
@@ -55,13 +55,13 @@ async function testMultiSmartBot() {
 
   try {
     console.log('🚀 Iniciando teste do Enhanced Multi-Smart Trading Bot (REAL)...\n');
-    
+
     const startTime = Date.now();
-    const multiSmartBot = new MultiSmartTradingBot();
-    
+    const multiSmartBotBuy = new MultiSmartTradingBotBuy();
+
     // Executar teste
-    const result = await multiSmartBot.executeTrade();
-    
+    const result = await multiSmartBotBuy.executeTrade();
+
     const endTime = Date.now();
     const executionTime = ((endTime - startTime) / 1000).toFixed(2);
 
@@ -127,7 +127,7 @@ async function testMultiSmartBot() {
     console.error('═'.repeat(50));
     console.error(`Tipo: ${error.name || 'Error'}`);
     console.error(`Mensagem: ${error.message}`);
-    
+
     if (error.stack) {
       console.error('\n📍 Stack trace:');
       console.error(error.stack);
@@ -139,7 +139,7 @@ async function testMultiSmartBot() {
     console.error('  3. Verificar se as APIs estão funcionando');
     console.error('  4. Executar testes de conexão individuais');
     console.error('  5. Verificar se não há trades duplicados');
-    
+
     process.exit(1);
   }
 }
