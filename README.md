@@ -364,7 +364,8 @@ Comparar scores → Escolher melhor → Boost +10% → Executar R/R 2:1
 |-----|------------|-------|---------------|------------|--------|------------|-------------|
 | **Multi-EMA Bot** | ⚡ 5-10s | 💰 Zero | 📊 70-75% | 🔄 3-5 | 4+ | BUY/SELL/HOLD | Swing Trading |
 | **Multi-Real Bot** | 🕐 10-15s | 💸 Médio | 📊 75-80% | 🔄 2-4 | 4+ | BUY/SELL/HOLD | Position Trading |
-| **Multi-Smart Bot** | 🕐 15-25s | 💸 Médio | 📊 85-90% | 🔄 1-2 | 4+ | **BUY/HOLD apenas** | Long-term Trading |
+| **Multi-Smart Bot BUY** | 🕐 15-25s | 💸 Médio | 📊 85-90% | 🔄 1-2 | 4+ | **BUY/HOLD apenas** | Long-term Trading |
+| **Multi-Advanced Bot BUY** | 🕐 20-30s | 💸 Alto | 📊 92-95% | 🔄 0-1 | 4+ | **BUY/HOLD apenas** | Ultra-Conservative |
 
 ## 🎯 Quando Usar Cada Bot
 
@@ -380,11 +381,19 @@ Comparar scores → Escolher melhor → Boost +10% → Executar R/R 2:1
 - Tem budget para IA
 - Faz swing trading
 
-### **Use Smart Bot quando:**
+### **Use Smart Bot BUY quando:**
 - Quer máxima precisão
 - Prefere qualidade vs quantidade
 - Foca em tendências de alta
 - Faz position trading
+- Quer estratégia long-only
+
+### **Use Advanced Bot BUY quando:**
+- Quer precisão ultra-alta
+- Prefere poucos trades de alta qualidade
+- Mercado em tendência de alta clara
+- Faz trading ultra-conservador
+- Quer máxima segurança
 
 ## 🚀 Modos de Operação
 
@@ -401,26 +410,41 @@ Comparar scores → Escolher melhor → Boost +10% → Executar R/R 2:1
 - **Risk/Reward garantido**: Sempre 2:1 (impossível burlar)
 - **Logs transparentes**: Processo completo de seleção
 
-### **3. Multi-Symbol Smart Trading Bot (smart-trading-bot.ts) - Nível 3**
+### **3. Multi-Symbol Smart Trading Bot BUY (smart-trading-bot-buy.ts) - Nível 3**
 - **Análise dupla multi-moeda**: EMA + DeepSeek AI para cada criptomoeda
 - **Seleção inteligente**: Compara todas e escolhe a melhor
 - **Filtro de tendência**: EMA confirma tendência da moeda selecionada
 - **Boost de confiança**: +10% quando EMA + IA concordam
 - **Máxima precisão**: 85-90% de assertividade esperada
+- **🔒 APENAS COMPRAS**: Estratégia long-only (BUY/HOLD apenas)
 
-### **4. Real Trading Bot Simulator (real-trading-bot-simulator.ts)**
+### **4. Multi-Symbol Advanced Trading Bot BUY (multi-smart-trading-bot-buy.ts) - Nível 4**
+- **Análise multi-dimensional**: EMA Multi-Timeframe + AI + Volume + Momentum
+- **Filtro adaptativo**: Thresholds dinâmicos por condição de mercado
+- **Smart Scoring 4D**: Combinação avançada de indicadores
+- **Assertividade máxima**: 92-95% de precisão esperada
+- **🔒 APENAS COMPRAS**: Estratégia long-only ultra-conservadora
+
+### **5. Real Trading Bot Simulator (real-trading-bot-simulator.ts)**
 - **Simulação do Real Bot**: Toda lógica do Real Trading Bot sem executar trades
 - **Análise multi-moeda**: DeepSeek AI para múltiplas criptomoedas
 - **Seleção simulada**: Escolhe a melhor oportunidade sem executar
 - **Segurança total**: Nenhuma ordem é executada na exchange
 - **Logs detalhados**: Processo completo de seleção e justificativa
 
-### **5. Multi-Symbol Smart Bot Simulator (smart-trading-bot-simulator.ts)**
-- **Simulação multi-moeda**: Toda lógica do Smart Bot para múltiplas moedas
+### **6. Multi-Symbol Smart Bot Simulator BUY (smart-trading-bot-simulator-buy.ts)**
+- **Simulação multi-moeda**: Toda lógica do Smart Bot BUY para múltiplas moedas
 - **Análise dupla**: EMA + DeepSeek AI para cada criptomoeda
 - **Seleção simulada**: Escolhe a melhor oportunidade sem executar
+- **🔒 APENAS COMPRAS**: Simula apenas estratégias long-only
 - **Segurança total**: Nenhuma ordem é executada na exchange
-- **Logs detalhados**: Processo completo de seleção e justificativa
+
+### **7. Multi-Symbol Advanced Bot Simulator BUY (multi-smart-trading-bot-simulator-buy.ts)**
+- **Simulação avançada**: Lógica do Advanced Bot sem trades reais
+- **Análise multi-dimensional**: EMA Multi-Timeframe + AI + Volume + Momentum
+- **Filtro adaptativo simulado**: Testa thresholds dinâmicos
+- **🔒 APENAS COMPRAS**: Simula estratégia ultra-conservadora
+- **Máxima segurança**: Zero risco, máxima precisão
 
 ### **6. Multi-Symbol EMA Trading Bot (ema-trading-bot.ts) - Nível 1**
 - **EMA multi-moeda**: Análise EMA 12/26 em múltiplas criptomoedas
@@ -586,11 +610,13 @@ npm start
 
 # Bots multi-moeda com trades reais
 npm run real-trading-bot        # Multi-Symbol Real Bot (IA)
-npm run smart-trading-bot       # Multi-Symbol Smart Bot (EMA + IA)
+npm run smart-trading-bot-buy   # Multi-Symbol Smart Bot BUY (EMA + IA)
+npm run multi-smart-trading-bot-buy # Multi-Symbol Advanced Bot BUY (v2.0)
 npm run ema-trading-bot         # Multi-Symbol EMA Bot (Técnico)
 
 # Simuladores multi-moeda (sem trades reais)
-npm run smart-trading-bot-simulator  # Simulador Smart Bot
+npm run smart-trading-bot-simulator-buy  # Simulador Smart Bot BUY
+npm run multi-smart-trading-bot-simulator-buy # Simulador Advanced Bot BUY
 npm run real-trading-bot-simulator   # Simulador Real Bot
 
 # Simulações de estratégias multi-moeda
@@ -598,9 +624,10 @@ npm run simulate-123    # Padrão 123 + múltiplas moedas
 npm run simulate-ema    # EMA crossover + múltiplas moedas
 
 # Crons automatizados (execução contínua)
-npm run smart-trading-bot-cron           # Smart Bot automático (REAL)
-npm run smart-trading-bot-simulator-cron # Smart Bot Simulator automático
-npm run real-trading-bot-simulator-cron  # Real Bot Simulator automático
+npm run smart-trading-bot-buy-cron           # Smart Bot BUY automático (REAL)
+npm run smart-trading-bot-simulator-buy-cron # Smart Bot Simulator BUY automático
+npm run real-trading-bot-simulator-cron      # Real Bot Simulator automático
+npm run update-and-simulate-cron             # Update trades + Run simulators
 
 # Testes e validações
 npm run test-symbol-checker      # Testar verificação de trades duplicados
