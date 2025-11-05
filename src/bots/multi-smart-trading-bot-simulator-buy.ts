@@ -3,7 +3,7 @@ import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { calculateRiskRewardDynamic } from './utils/trade-validators';
-import { calculateTargetAndStopPrices } from './utils/price-calculator';
+import { calculateTargetAndStopPricesRealMarket } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { multiAnalyzeWithSmartTradeBuy } from './analyzers/multi-smart-trade-analyzer-buy';
 import {
@@ -13,6 +13,7 @@ import {
   validateAdvancedBuyStrength
 } from './utils/advanced-buy-validator';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
+import { calculateSymbolVolatility } from './utils/volatility-calculator';
 
 export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
@@ -115,13 +116,23 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     // 3. Aplicar boost inteligente para compras avançadas
     const boostedDecision = boostAdvancedBuyConfidence(decision);
 
-    // 4. Validação completa (confiança + ação + risk/reward)
-    console.log('🔍 Validação final de Risk/Reward para simulação...');
+    // 4. Calcular volatilidade do mercado
+    const volatility = await calculateSymbolVolatility(
+      this.getBinancePublic(),
+      symbol,
+      TRADING_CONFIG.CHART.TIMEFRAME,
+      TRADING_CONFIG.CHART.PERIODS
+    );
 
-    const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
+    // 5. Validação completa com volatilidade real
+    console.log('🔍 Validação final de Risk/Reward com volatilidade real...');
+    console.log(`📊 Volatilidade ${symbol}: ${volatility.toFixed(2)}%`);
+
+    const { targetPrice, stopPrice } = calculateTargetAndStopPricesRealMarket(
       boostedDecision.price,
       boostedDecision.confidence,
-      boostedDecision.action
+      boostedDecision.action,
+      volatility
     );
 
     const riskRewardResult = calculateRiskRewardDynamic(
@@ -140,6 +151,8 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     Object.assign(decision, boostedDecision);
     return true;
   }
+
+
 
   async executeTrade() {
     this.logBotInfo();
