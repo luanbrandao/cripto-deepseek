@@ -8,7 +8,7 @@ export { SmartTradingBot } from './smart-trading-bot';
 
 // Simulation bots
 export { RealTradingBotSimulator } from './real-trading-bot-simulator';
-export { SmartTradingBotSimulator } from './smart-trading-bot-simulator';
+export { SmartTradingBotSimulatorBuy } from './smart-trading-bot-simulator-buy';
 
 // Simulator
 export { TradeSimulator } from '../scripts/simulators/trade-simulator';

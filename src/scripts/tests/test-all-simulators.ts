@@ -1,12 +1,12 @@
-import { hasActiveTradeForSymbol } from './bots/utils/symbol-trade-checker';
-import { TRADING_CONFIG } from './bots/config/trading-config';
+import { hasActiveTradeForSymbol } from '../../bots/utils/symbol-trade-checker';
+import { TRADING_CONFIG } from '../../bots/config/trading-config';
 
 async function testAllSimulators() {
   console.log('🧪 Testando validação de todos os simuladores...\n');
   
   const simulators = [
     { name: 'Real Bot Simulator', file: TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR },
-    { name: 'Smart Bot Simulator', file: TRADING_CONFIG.FILES.SMART_SIMULATOR },
+    { name: 'Smart Bot Simulator BUY', file: TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY },
     { name: 'EMA Simulator', file: 'ema12-26Trades.json' },
     { name: '123 Pattern Simulator', file: '123analyzerTrades.json' }
   ];

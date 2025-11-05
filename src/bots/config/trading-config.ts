@@ -62,7 +62,7 @@ export const TRADING_CONFIG = {
     SMART_BOT: 'smartTradingBot.json',
     EMA_BOT: 'emaTradingBot.json',
     EMA_SIMULATOR: 'emaTradingBotSimulator.json',
-    SMART_SIMULATOR: 'smartTradingBotSimulator.json'
+    SMART_SIMULATOR_BUY: 'smartTradingBotSimulatorBuy.json'
   },
 
   // FUNÇÕES AUXILIARES

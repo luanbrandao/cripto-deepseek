@@ -261,7 +261,7 @@ src/
 │   │   ├── realTradingBot.json
 │   │   ├── realTradingBotSimulator.json
 │   │   ├── smartTradingBot.json
-│   │   ├── smartTradingBotSimulator.json
+│   │   ├── smartTradingBotSimulatorBuy.json
 │   │   └── emaTradingBot.json
 │   ├── base-trading-bot.ts         # Classe base dos bots
 │   ├── real-trading-bot.ts         # Multi-symbol + IA
@@ -705,7 +705,7 @@ Para cada símbolo:
 | **Smart Trading Bot** | ✅ | ✅ `smartTradingBot.json` | ✅ |
 | **EMA Trading Bot** | ✅ | ✅ `emaTradingBot.json` | ✅ |
 | **Real Bot Simulator** | ❌ | ✅ `realTradingBotSimulator.json` | ✅ |
-| **Smart Bot Simulator** | ❌ | ✅ `smartTradingBotSimulator.json` | ✅ |
+| **Smart Bot Simulator** | ❌ | ✅ `smartTradingBotSimulatorBuy.json` | ✅ |
 | **EMA Simulator** | ❌ | ✅ `ema12-26Trades.json` | ✅ |
 | **123 Pattern Simulator** | ❌ | ✅ `123analyzerTrades.json` | ✅ |
 

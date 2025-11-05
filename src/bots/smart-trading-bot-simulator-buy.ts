@@ -9,22 +9,22 @@ import { analyzeWithSmartTrade } from './analyzers/smart-trade-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from './utils/trend-validator';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
 
-export class SmartTradingBotSimulator extends BaseTradingBot {
+export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private trendAnalyzer: MarketTrendAnalyzer;
   private emaAnalyzer: EmaAnalyzer;
 
   constructor() {
     super(undefined, undefined, true);
-    
+
     const config: BotConfig = {
       name: 'Smart Trading Bot Simulator',
       isSimulation: true,
-      tradesFile: TRADING_CONFIG.FILES.SMART_SIMULATOR,
+      tradesFile: TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY,
       requiresFiltering: true,
       requiresValidation: true
     };
-    
+
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
     this.emaAnalyzer = new EmaAnalyzer({
@@ -35,7 +35,7 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
 
   protected logBotInfo() {
     console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
-    console.log('🚀 MULTI-SYMBOL SMART TRADING BOT SIMULATOR');
+    console.log('🚀 MULTI-SYMBOL SMART TRADING BOT SIMULATOR BUY');
     console.log('✅ MODO SIMULAÇÃO - Nenhuma ordem real será executada');
     logBotHeader('SIMULADOR MULTI-SYMBOL SMART BOT', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - SIMULAÇÃO', true);
   }
@@ -46,7 +46,7 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
 
   private async filterSymbolsByEma(symbols: string[]): Promise<string[]> {
     const validSymbols = [];
-    
+
     for (const symbol of symbols) {
       const klines = await this.getBinancePublic().getKlines(symbol, TRADING_CONFIG.CHART.TIMEFRAME, TRADING_CONFIG.CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4]));
@@ -57,7 +57,7 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
         validSymbols.push(symbol);
       }
     }
-    
+
     return validSymbols;
   }
 
@@ -82,17 +82,17 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
 
     // 5. Validação de Risk/Reward
     console.log('🔍 Validação final de Risk/Reward 2:1 para simulação...');
-    
+
     const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
-      boostedDecision.price, 
-      boostedDecision.confidence, 
+      boostedDecision.price,
+      boostedDecision.confidence,
       boostedDecision.action
     );
 
     const riskRewardResult = calculateRiskRewardDynamic(
-      boostedDecision.price, 
-      targetPrice, 
-      stopPrice, 
+      boostedDecision.price,
+      targetPrice,
+      stopPrice,
       boostedDecision.action
     );
 
@@ -119,12 +119,12 @@ export class SmartTradingBotSimulator extends BaseTradingBot {
 // Só executa se for chamado diretamente (não importado)
 if (require.main === module) {
   async function main() {
-    const smartBotSimulator = new SmartTradingBotSimulator();
-    await smartBotSimulator.executeTrade();
+    const smartBotSimulatorBuy = new SmartTradingBotSimulatorBuy();
+    await smartBotSimulatorBuy.executeTrade();
   }
 
   logBotStartup(
-    'Smart Bot Simulator',
+    'Smart Bot Simulator Buy',
     '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise dupla: EMA + DeepSeek AI',
     TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
     true

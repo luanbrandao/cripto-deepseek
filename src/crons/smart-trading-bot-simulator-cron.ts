@@ -1,19 +1,19 @@
 import cron from 'node-cron';
-import { SmartTradingBotSimulator } from '../bots/smart-trading-bot-simulator';
+import { SmartTradingBotSimulatorBuy } from '../bots/smart-trading-bot-simulator-buy';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-console.log('🤖 Smart Trading Bot Simulator Cron iniciado - Execução a cada 5 minutos');
+console.log('🤖 Smart Trading Bot Simulator BUY Cron iniciado - Execução a cada 5 minutos');
 
 
 
 cron.schedule('*/5 * * * *', async () => {
   const timestamp = new Date().toLocaleString('pt-BR');
-  console.log(`\n⏰ [${timestamp}] Executando Smart Trading Bot Simulator...`);
+  console.log(`\n⏰ [${timestamp}] Executando Smart Trading Bot Simulator BUY...`);
 
   try {
-    const bot = new SmartTradingBotSimulator();
+    const bot = new SmartTradingBotSimulatorBuy();
     const tradeResult = await bot.executeTrade();
 
     if (tradeResult) {
@@ -30,7 +30,7 @@ cron.schedule('*/5 * * * *', async () => {
 });
 
 process.on('SIGINT', () => {
-  console.log('\n🛑 Encerrando Smart Trading Bot Simulator Cron...');
+  console.log('\n🛑 Encerrando Smart Trading Bot Simulator BUY Cron...');
   process.exit(0);
 });
 

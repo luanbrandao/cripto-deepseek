@@ -9,7 +9,7 @@ async function testAllBotsValidation() {
     { name: 'Smart Trading Bot', file: TRADING_CONFIG.FILES.SMART_BOT },
     { name: 'EMA Trading Bot', file: TRADING_CONFIG.FILES.EMA_BOT },
     { name: 'Real Bot Simulator', file: TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR },
-    { name: 'Smart Bot Simulator', file: TRADING_CONFIG.FILES.SMART_SIMULATOR }
+    { name: 'Smart Bot Simulator Buy', file: TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY }
   ];
 
   for (const bot of botFiles) {

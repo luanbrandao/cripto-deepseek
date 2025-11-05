@@ -16,15 +16,15 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
 
   constructor() {
     super(undefined, undefined, true);
-    
+
     const config: BotConfig = {
       name: 'Multi-Smart Trading Bot Simulator',
       isSimulation: true,
-      tradesFile: TRADING_CONFIG.FILES.SMART_SIMULATOR,
+      tradesFile: TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY,
       requiresFiltering: true,
       requiresValidation: true
     };
-    
+
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
     this.advancedEmaAnalyzer = new AdvancedEmaAnalyzer({
@@ -36,7 +36,7 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
   protected logBotInfo() {
     console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
     logBotHeader('MULTI-SMART BOT SIMULATOR v2.0', 'Análise Multi-Dimensional - SIMULAÇÃO', true);
-    
+
     console.log('🎯 RECURSOS AVANÇADOS:');
     console.log('  • EMA Multi-Timeframe (12/26/50/100/200)');
     console.log('  • AI Parser com Análise de Sentimento');
@@ -53,24 +53,24 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
 
   private async filterSymbolsByStrength(symbols: string[]): Promise<string[]> {
     console.log(`🔍 Analisando ${symbols.length} moedas com filtro adaptativo...`);
-    
+
     const validSymbols = [];
-    
+
     for (const symbol of symbols) {
       const klines = await this.getBinancePublic().getKlines(
-        symbol, 
-        TRADING_CONFIG.CHART.TIMEFRAME, 
+        symbol,
+        TRADING_CONFIG.CHART.TIMEFRAME,
         TRADING_CONFIG.CHART.PERIODS
       );
-      
+
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const volumes = klines.map((k: any) => parseFloat(k[5]));
-      
+
       const analysis = this.advancedEmaAnalyzer.analyzeAdvanced(prices, volumes);
       const condition = this.advancedEmaAnalyzer.getMarketCondition(analysis);
-      
+
       const threshold = this.getThresholdByMarketCondition(condition.type);
-      
+
       if (this.isSymbolValid(analysis, threshold)) {
         validSymbols.push(symbol);
         console.log(`✅ ${symbol}: ${analysis.overallStrength.toFixed(1)} (${condition.type})`);
@@ -78,7 +78,7 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
         console.log(`❌ ${symbol}: ${analysis.overallStrength.toFixed(1)} < ${threshold}`);
       }
     }
-    
+
     return validSymbols;
   }
 
@@ -92,8 +92,8 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
 
   private isSymbolValid(analysis: any, threshold: number): boolean {
     return analysis.overallStrength > threshold &&
-           (this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
-            this.advancedEmaAnalyzer.isModerateUptrend(analysis));
+      (this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
+        this.advancedEmaAnalyzer.isModerateUptrend(analysis));
   }
 
   private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
@@ -110,20 +110,20 @@ export class MultiSmartTradingBotSimulator extends BaseTradingBot {
 
     // 4. Validação completa (confiança + ação + risk/reward)
     console.log('🔍 Validação final de Risk/Reward para simulação...');
-    
+
     const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
       boostedDecision.price,
       boostedDecision.confidence,
       boostedDecision.action
     );
-    
+
     const riskRewardResult = calculateRiskRewardDynamic(
-      boostedDecision.price, 
-      targetPrice, 
-      stopPrice, 
+      boostedDecision.price,
+      targetPrice,
+      stopPrice,
       boostedDecision.action
     );
-    
+
     if (!riskRewardResult.isValid) {
       console.log('❌ Validações falharam - Risk/Reward insuficiente');
       return false;

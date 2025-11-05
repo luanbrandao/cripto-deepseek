@@ -84,7 +84,7 @@ async function testMultiSmartBotSimulator() {
 
     console.log('');
     console.log('📈 PRÓXIMOS PASSOS:');
-    console.log('  1. Verificar arquivo de trades: smartTradingBotSimulator.json');
+    console.log('  1. Verificar arquivo de trades: smartTradingBotSimulatorBuy.json');
     console.log('  2. Analisar logs detalhados acima');
     console.log('  3. Ajustar configurações se necessário');
     console.log('  4. Executar novamente em diferentes condições de mercado');
