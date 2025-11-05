@@ -17,8 +17,23 @@ export class TradeMonitor {
         return;
       }
 
-      const data = fs.readFileSync(filePath, 'utf8');
-      const trades: Trade[] = JSON.parse(data);
+      const data = fs.readFileSync(filePath, 'utf8').trim();
+      
+      // Handle empty or malformed JSON files
+      let trades: Trade[] = [];
+      if (data && data !== '[]' && data.length > 0) {
+        try {
+          trades = JSON.parse(data);
+          if (!Array.isArray(trades)) {
+            trades = [];
+          }
+        } catch (parseError) {
+          console.log('⚠️ Arquivo JSON malformado, criando array vazio');
+          trades = [];
+          // Fix the file
+          fs.writeFileSync(filePath, JSON.stringify([], null, 2));
+        }
+      }
       const pendingTrades = trades.filter(trade => trade.status === 'pending');
 
       if (pendingTrades.length === 0) {

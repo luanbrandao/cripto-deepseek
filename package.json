@@ -36,6 +36,7 @@
     "test-multi-smart-bot": "ts-node src/scripts/tests/test-multi-smart-bot.ts",
     "_comment5": "=== UTILITIES ===",
     "check-trades": "ts-node src/scripts/check-trades.ts",
+    "update-all-trades": "ts-node src/scripts/update-all-trades.ts",
     "diagnose-400": "ts-node src/scripts/diagnostics/diagnose-400-error.ts"
   },
   "dependencies": {
