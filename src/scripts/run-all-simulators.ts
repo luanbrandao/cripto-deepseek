@@ -6,7 +6,6 @@ const execAsync = promisify(exec);
 const simulators = [
   { name: '123 Pattern Simulator', command: 'npm run simulate-123' },
   { name: 'EMA Pattern Simulator', command: 'npm run simulate-ema' },
-  { name: 'EMA Trading Bot Simulator', command: 'npm run ema-trading-bot-simulator' },
   { name: 'Real Trading Bot Simulator', command: 'npm run real-trading-bot-simulator' },
   { name: 'Smart Trading Bot Simulator', command: 'npm run smart-trading-bot-simulator' },
   { name: 'Multi-Smart Trading Bot Simulator', command: 'npm run multismart-trading-bot-simulator' }
