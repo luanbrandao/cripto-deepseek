@@ -20,7 +20,7 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Smart Trading Bot Simulator SELL',
       isSimulation: true,
-      tradesFile: 'smartTradingBotSimulatorSell.json',
+      tradesFile: TRADING_CONFIG.FILES.SMART_SIMULATOR_SELL,
       requiresFiltering: true,
       requiresValidation: true
     };
@@ -41,7 +41,7 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
     logBotHeader('SIMULADOR MULTI-SYMBOL SMART BOT SELL', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - APENAS VENDAS', true);
   }
 
-  private async analyzeWithSmartSellLogic(symbol: string, marketData: any) {
+  private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
     return await analyzeWithSmartSell(this.deepseek!, symbol, marketData);
   }
 
@@ -57,9 +57,6 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
       // Filtro para tendência de baixa (oposto do BUY)
       if (emaAnalysis.action === 'SELL' && emaAnalysis.reason.includes('Tendência de baixa confirmada')) {
         validSymbols.push(symbol);
-        console.log(`✅ ${symbol} aprovado no filtro EMA BEARISH`);
-      } else {
-        console.log(`❌ ${symbol} rejeitado no filtro EMA BEARISH`);
       }
     }
 
@@ -68,7 +65,7 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
 
 
 
-  private async validateSmartSellDecision(decision: any, symbol?: string): Promise<boolean> {
+  private async validateSmartDecision(decision: any, symbol?: string): Promise<boolean> {
     if (!symbol) return false;
     
     // 1. Validar tendência EMA para baixa
@@ -117,9 +114,9 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
   async executeTrade() {
     this.logBotInfo();
     return await this.flowManager.executeStandardFlow(
-      this.analyzeWithSmartSellLogic.bind(this),
+      this.analyzeWithSmartTradeLogic.bind(this),
       this.filterSymbolsByEma.bind(this),
-      this.validateSmartSellDecision.bind(this)
+      this.validateSmartDecision.bind(this)
     );
   }
 }

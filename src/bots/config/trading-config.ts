@@ -60,6 +60,7 @@ export const TRADING_CONFIG = {
     REAL_BOT: 'realTradingBot.json',
     REAL_BOT_SIMULATOR: 'realTradingBotSimulator.json',
     SMART_BOT_BUY: 'smartTradingBotBuy.json',
+    SMART_BOT_SELL: 'smartTradingBotSell.json',
     EMA_BOT: 'emaTradingBot.json',
     EMA_SIMULATOR: 'emaTradingBotSimulator.json',
     SMART_SIMULATOR_BUY: 'smartTradingBotSimulatorBuy.json',
