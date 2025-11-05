@@ -3,7 +3,7 @@ import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 import { TRADING_CONFIG } from './config/trading-config';
 import { calculateRiskRewardDynamic } from './utils/trade-validators';
-import { calculateTargetAndStopPricesRealMarket } from './utils/price-calculator';
+import { calculateTargetAndStopPricesWithLevels } from './utils/price-calculator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
 import { multiAnalyzeWithSmartTradeSell } from './analyzers/multi-smart-trade-analyzer-sell';
 import {
@@ -52,6 +52,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     console.log('  • Boost Inteligente para Vendas (até +15%)');
     console.log('  • Validação Ultra-Rigorosa (85%+ confiança)');
     console.log('  • Simulação Segura (Zero Risco)');
+    console.log('  • Targets Baseados em Suporte/Resistência');
     console.log('  • Assertividade: 90-95% (Short-Only)\n');
   }
 
@@ -133,7 +134,14 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     // 3. Aplicar boost inteligente para vendas avançadas
     const boostedDecision = boostAdvancedSellConfidence(decision);
 
-    // 4. Calcular volatilidade do mercado
+    // 4. Buscar dados históricos para análise técnica
+    const klines = await this.getBinancePublic().getKlines(
+      symbol,
+      TRADING_CONFIG.CHART.TIMEFRAME,
+      TRADING_CONFIG.CHART.PERIODS
+    );
+
+    // 5. Calcular volatilidade do mercado
     const volatility = await calculateSymbolVolatility(
       this.getBinancePublic(),
       symbol,
@@ -141,16 +149,22 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
       TRADING_CONFIG.CHART.PERIODS
     );
 
-    // 5. Validação completa com volatilidade real
-    console.log('🔍 Validação final de Risk/Reward com volatilidade real...');
+    // 6. Validação completa com níveis técnicos
+    console.log('🔍 Validação final com Suporte/Resistência + Volatilidade...');
     console.log(`📊 Volatilidade ${symbol}: ${volatility.toFixed(2)}%`);
 
-    const { targetPrice, stopPrice } = calculateTargetAndStopPricesRealMarket(
+    const priceResult = calculateTargetAndStopPricesWithLevels(
       boostedDecision.price,
       boostedDecision.confidence,
       boostedDecision.action,
-      volatility
+      volatility,
+      klines
     );
+
+    console.log(`🎯 Target: ${priceResult.targetPrice.toFixed(2)} (Nível: ${priceResult.levels.support.toFixed(2)})`);
+    console.log(`🛑 Stop: ${priceResult.stopPrice.toFixed(2)} (Resistência: ${priceResult.levels.resistance.toFixed(2)})`);
+
+    const { targetPrice, stopPrice } = priceResult;
 
     const riskRewardResult = calculateRiskRewardDynamic(
       boostedDecision.price,
