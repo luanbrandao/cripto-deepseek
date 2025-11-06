@@ -3,6 +3,7 @@ import { checkActiveSimulationTradesLimit } from '../validation/simulation-limit
 import { UnifiedMultiSymbolAnalyzer } from '../../../shared/utils/unified-multi-symbol-analyzer';
 import { executeAndSaveTradeWithValidation, handleBotError } from './bot-executor';
 import { createTradeRecord, saveTradeHistory } from './trade-history-saver';
+import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 import * as path from 'path';
 import { BaseTradingBot } from '../../core/base-trading-bot';
 
@@ -67,7 +68,7 @@ export class BotFlowManager {
 
   private async performInitialValidations(): Promise<boolean> {
     if (this.config.isSimulation) {
-      const tradesFile = path.join(__dirname, `../../trades/${this.config.tradesFile}`);
+      const tradesFile = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${this.config.tradesFile}`;
       return checkActiveSimulationTradesLimit(tradesFile);
     } else {
       return await validateTradingConditions(this.bot.getBinancePrivate());

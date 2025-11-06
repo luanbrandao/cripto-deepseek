@@ -1,4 +1,4 @@
-import { TRADING_CONFIG } from '../../bots/config/trading-config';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 import SupportResistanceAnalyzer from '../../analyzers/supportResistanceAnalyzer';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -46,10 +46,11 @@ async function runSupportResistanceSimulation() {
   };
 
   const analyzer = new SupportResistanceAnalyzer(supportConfig);
-  const tradesFile = path.join(__dirname, '../../trades/supportResistanceTrades.json');
-  const simulator = new TradeSimulator(analyzer, 1000, TRADING_CONFIG.SYMBOLS, tradesFile);
+  const tradesFile = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/supportResistanceTrades.json`;
 
-  await simulator.simulate(TRADING_CONFIG.SYMBOLS);
+  const simulator = new TradeSimulator(analyzer, 1000, UNIFIED_TRADING_CONFIG.SYMBOLS, tradesFile);
+
+  await simulator.simulate(UNIFIED_TRADING_CONFIG.SYMBOLS);
 
   // Verificar se há trades recentes no arquivo
   let executedTrade = false;

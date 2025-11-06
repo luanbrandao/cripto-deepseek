@@ -2,6 +2,7 @@
 import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import EmaAnalyzer from '../../analyzers/emaAnalyzer';
 import { TradeSimulator } from './trade-simulator';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 async function runEmaSimulation() {
   console.log('🚀 MULTI-SYMBOL EMA CROSSOVER SIMULATOR');
@@ -14,7 +15,7 @@ async function runEmaSimulation() {
   };
   const analyzer = new EmaAnalyzer(emaConfig);
 
-  const tradesFile = `./src/trades/ema${emaConfig.fastPeriod}-${emaConfig.slowPeriod}Trades.json`;
+  const tradesFile = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/ema${emaConfig.fastPeriod}-${emaConfig.slowPeriod}Trades.json`;
   const simulator = new TradeSimulator(analyzer, 1000, TRADING_CONFIG.SYMBOLS, tradesFile);
   await simulator.simulate(TRADING_CONFIG.SYMBOLS);
 }

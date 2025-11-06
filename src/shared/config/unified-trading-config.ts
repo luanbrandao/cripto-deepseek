@@ -42,6 +42,11 @@ export const UNIFIED_TRADING_CONFIG = {
     MAX_TRADES_PER_SYMBOL: 1
   },
 
+  // CONFIGURAÇÕES DE CAMINHOS
+  PATHS: {
+    TRADES_DIR: './src/storage/trades'
+  },
+
   // CONFIGURAÇÕES DE ARQUIVOS
   FILES: {
     REAL_BOT: 'realTradingBot.json',
