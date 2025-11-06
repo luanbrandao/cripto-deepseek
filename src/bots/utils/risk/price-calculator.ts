@@ -1,6 +1,7 @@
 import { calculateRiskReward } from './trade-validators';
 import { calculateVolatility } from './volatility-calculator';
 import { RiskManager } from '../../services/risk-manager';
+import { findSupportResistanceLevels } from '../analysis/support-resistance-calculator';
 
 // ============================================================================
 // CORE FUNCTIONS - Cálculo de Preços (usando utils existentes)
@@ -101,38 +102,8 @@ export function calculateTargetAndStopPricesWithLevels(
 }
 
 // ============================================================================
-// SUPPORT/RESISTANCE ANALYSIS (versão simplificada)
-// Para análise completa, use supportResistanceAnalyzer.ts
+// SUPPORT/RESISTANCE ANALYSIS - Usa calculadora centralizada
 // ============================================================================
-
-function findSupportResistanceLevels(klines: any[], currentPrice: number) {
-  const highs = klines.map(k => parseFloat(k[2]));
-  const lows = klines.map(k => parseFloat(k[3]));
-  
-  const resistances = findLocalExtrema(highs, 'max').filter(r => r > currentPrice);
-  const supports = findLocalExtrema(lows, 'min').filter(s => s < currentPrice);
-  
-  return {
-    resistance: resistances.length > 0 ? Math.min(...resistances) : currentPrice * 1.05,
-    support: supports.length > 0 ? Math.max(...supports) : currentPrice * 0.95,
-    allResistances: resistances.slice(0, 3),
-    allSupports: supports.slice(-3)
-  };
-}
-
-function findLocalExtrema(prices: number[], type: 'max' | 'min'): number[] {
-  const extrema = [];
-  const compareFn = type === 'max' ? (a: number, b: number) => a > b : (a: number, b: number) => a < b;
-  
-  for (let i = 2; i < prices.length - 2; i++) {
-    if (compareFn(prices[i], prices[i-1]) && compareFn(prices[i], prices[i-2]) && 
-        compareFn(prices[i], prices[i+1]) && compareFn(prices[i], prices[i+2])) {
-      extrema.push(prices[i]);
-    }
-  }
-  
-  return type === 'max' ? extrema.sort((a, b) => b - a) : extrema.sort((a, b) => a - b);
-}
 
 // ============================================================================
 // LEVEL ADJUSTMENT FUNCTIONS

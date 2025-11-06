@@ -1,3 +1,5 @@
+import { findPivotPoints } from '../bots/utils/analysis/support-resistance-calculator';
+
 interface Candle {
   open: number;
   high: number;
@@ -107,7 +109,7 @@ export default class SupportResistanceAnalyzer {
     const recentCandles = candles.slice(-actualLookback);
     
     // Identificar máximas e mínimas locais
-    const pivots = this.findPivotPoints(recentCandles);
+    const pivots = findPivotPoints(recentCandles);
     
     // Agrupar preços similares
     const priceGroups = this.groupSimilarPrices(pivots);
@@ -149,43 +151,7 @@ export default class SupportResistanceAnalyzer {
     return levels.sort((a, b) => b.strength - a.strength);
   }
 
-  private findPivotPoints(candles: Candle[]): Array<{price: number, type: 'high' | 'low', timestamp: number}> {
-    const pivots: Array<{price: number, type: 'high' | 'low', timestamp: number}> = [];
-    const period = 3; // Período para identificar pivôs
-    
-    for (let i = period; i < candles.length - period; i++) {
-      const current = candles[i];
-      
-      // Verificar se é uma máxima local
-      let isHigh = true;
-      let isLow = true;
-      
-      for (let j = i - period; j <= i + period; j++) {
-        if (j !== i) {
-          if (candles[j].high >= current.high) isHigh = false;
-          if (candles[j].low <= current.low) isLow = false;
-        }
-      }
-      
-      if (isHigh) {
-        pivots.push({
-          price: current.high,
-          type: 'high',
-          timestamp: current.timestamp
-        });
-      }
-      
-      if (isLow) {
-        pivots.push({
-          price: current.low,
-          type: 'low',
-          timestamp: current.timestamp
-        });
-      }
-    }
-    
-    return pivots;
-  }
+
 
   private groupSimilarPrices(pivots: Array<{price: number, type: 'high' | 'low', timestamp: number}>): Array<{prices: Array<{price: number, type: 'high' | 'low', timestamp: number}>}> {
     const groups: Array<{prices: Array<{price: number, type: 'high' | 'low', timestamp: number}>}> = [];
