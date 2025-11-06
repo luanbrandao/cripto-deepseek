@@ -1,13 +1,10 @@
-// ============================================================================
-// CORE FUNCTIONS - Cálculo de Preços
-// ============================================================================
+import { calculateRiskReward } from './trade-validators';
+import { calculateVolatility } from './volatility-calculator';
+import { RiskManager } from '../../services/risk-manager';
 
-/**
- * Calcula percentual de risco baseado na confiança
- */
-function calculateRiskPercent(confidence: number): number {
-  return confidence >= 80 ? 0.5 : confidence >= 75 ? 1.0 : 1.5;
-}
+// ============================================================================
+// CORE FUNCTIONS - Cálculo de Preços (usando utils existentes)
+// ============================================================================
 
 /**
  * Calcula preços de target e stop para uma ação específica
@@ -15,34 +12,36 @@ function calculateRiskPercent(confidence: number): number {
 function calculatePricesForAction(
   price: number, 
   riskPercent: number, 
-  rewardRatio: number, 
+  rewardPercent: number, 
   action: 'BUY' | 'SELL'
 ) {
   if (action === 'BUY') {
     return {
-      targetPrice: price * (1 + (riskPercent * rewardRatio) / 100),
-      stopPrice: price * (1 - riskPercent / 100)
+      targetPrice: price * (1 + rewardPercent),
+      stopPrice: price * (1 - riskPercent)
     };
   }
   
   return {
-    targetPrice: price * (1 - (riskPercent * rewardRatio) / 100),
-    stopPrice: price * (1 + riskPercent / 100)
+    targetPrice: price * (1 - rewardPercent),
+    stopPrice: price * (1 + riskPercent)
   };
 }
 
 /**
  * Calcula target e stop prices baseados na confiança (Ratio 2:1 fixo)
+ * Usa RiskManager existente para cálculos
  */
 export function calculateTargetAndStopPrices(price: number, confidence: number, action: 'BUY' | 'SELL') {
-  const riskPercent = calculateRiskPercent(confidence);
-  const { targetPrice, stopPrice } = calculatePricesForAction(price, riskPercent, 2.0, action);
+  const { riskPercent, rewardPercent } = calculateRiskReward(confidence);
+  const { targetPrice, stopPrice } = calculatePricesForAction(price, riskPercent, rewardPercent, action);
   
-  return { targetPrice, stopPrice, riskPercent };
+  return { targetPrice, stopPrice, riskPercent: riskPercent * 100 };
 }
 
 /**
  * Calcula preços com volatilidade do mercado (Ratio dinâmico)
+ * Usa RiskManager e volatility-calculator existentes
  */
 export function calculateTargetAndStopPricesRealMarket(
   price: number,
@@ -50,25 +49,29 @@ export function calculateTargetAndStopPricesRealMarket(
   action: 'BUY' | 'SELL',
   volatility: number
 ) {
-  const baseRisk = calculateRiskPercent(confidence);
-  const adjustedRisk = baseRisk * (1 + volatility / 2);
-  const rewardRatio = confidence >= 85 ? 2.5 : 2.0;
+  const { riskPercent, rewardPercent } = RiskManager.calculateDynamicRiskReward(price, confidence);
   
-  const { targetPrice, stopPrice } = calculatePricesForAction(price, adjustedRisk, rewardRatio, action);
+  // Ajustar com volatilidade
+  const adjustedRisk = riskPercent * (1 + volatility / 2);
+  const adjustedReward = rewardPercent * (1 + volatility / 2);
   
-  return { targetPrice, stopPrice, riskPercent: adjustedRisk };
+  const { targetPrice, stopPrice } = calculatePricesForAction(price, adjustedRisk, adjustedReward, action);
+  
+  return { targetPrice, stopPrice, riskPercent: adjustedRisk * 100 };
 }
 
 /**
  * Calcula preços com níveis de suporte/resistência
+ * Usa volatility-calculator existente
  */
 export function calculateTargetAndStopPricesWithLevels(
   price: number,
   confidence: number,
   action: 'BUY' | 'SELL',
-  volatility: number,
   klines: any[]
 ) {
+  // Usar volatility-calculator existente
+  const volatility = calculateVolatility(klines);
   const levels = findSupportResistanceLevels(klines, price);
   const baseResult = calculateTargetAndStopPricesRealMarket(price, confidence, action, volatility);
   
@@ -92,12 +95,14 @@ export function calculateTargetAndStopPricesWithLevels(
     riskPercent: baseResult.riskPercent,
     levels,
     originalTarget: baseResult.targetPrice,
-    originalStop: baseResult.stopPrice
+    originalStop: baseResult.stopPrice,
+    volatility
   };
 }
 
 // ============================================================================
-// SUPPORT/RESISTANCE ANALYSIS
+// SUPPORT/RESISTANCE ANALYSIS (versão simplificada)
+// Para análise completa, use supportResistanceAnalyzer.ts
 // ============================================================================
 
 function findSupportResistanceLevels(klines: any[], currentPrice: number) {

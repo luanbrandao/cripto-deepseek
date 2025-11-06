@@ -154,7 +154,6 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
       boostedDecision.price,
       boostedDecision.confidence,
       boostedDecision.action,
-      volatility,
       klines
     );
 
