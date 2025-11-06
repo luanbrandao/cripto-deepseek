@@ -2,7 +2,7 @@ import cron from 'node-cron';
 // Import direto da classe sem executar o main
 import { RealTradingBotSimulator } from '../bots/real-trading-bot-simulator';
 import * as dotenv from 'dotenv';
-import { validateBinanceKeys } from '../bots/utils/env-validator';
+import { validateBinanceKeys } from '../bots/utils/validation/env-validator';
 
 dotenv.config();
 

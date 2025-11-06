@@ -1,11 +1,11 @@
 // 🔄 ARQUIVO DE COMPATIBILIDADE - Redireciona para módulos unificados
 // Este arquivo mantém compatibilidade com imports antigos
 
-import { TradeDecision } from './trade-validators';
-import { getMarketData } from './market-data-fetcher';
-import { hasActiveTradeForSymbol } from './symbol-trade-checker';
-import { BinancePrivateClient } from '../../clients/binance-private-client';
-import { UnifiedMultiSymbolAnalyzer, SymbolAnalysis } from '../../shared/utils/unified-multi-symbol-analyzer';
+import { TradeDecision } from '../risk/trade-validators';
+import { getMarketData } from '../data/market-data-fetcher';
+import { hasActiveTradeForSymbol } from '../validation/symbol-trade-checker';
+import { BinancePrivateClient } from '../../../clients/binance-private-client';
+import { UnifiedMultiSymbolAnalyzer, SymbolAnalysis } from '../../../shared/utils/unified-multi-symbol-analyzer';
 
 /**
  * @deprecated Use UnifiedMultiSymbolAnalyzer.analyzeMultipleSymbols() instead

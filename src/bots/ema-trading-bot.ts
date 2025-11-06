@@ -1,9 +1,9 @@
 import { BaseTradingBot } from './base-trading-bot';
-import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
-import { TradeDecision, validateTrade, calculateRiskReward } from './utils/trade-validators';
-import { logBotHeader, logBotStartup } from './utils/bot-logger';
-import { logMarketInfo } from './utils/market-data-logger';
-import { validateBinanceKeys } from './utils/env-validator';
+import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
+import { TradeDecision, validateTrade, calculateRiskReward } from './utils/risk/trade-validators';
+import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
+import { logMarketInfo } from './utils/logging/market-data-logger';
+import { validateBinanceKeys } from './utils/validation/env-validator';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
 import * as dotenv from 'dotenv';
 

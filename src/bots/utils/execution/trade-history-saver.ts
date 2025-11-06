@@ -1,6 +1,6 @@
-import { TradeStorage, Trade } from '../../storage/trade-storage';
-import { RiskManager } from '../services/risk-manager';
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { TradeStorage, Trade } from '../../../storage/trade-storage';
+import { RiskManager } from '../../services/risk-manager';
+import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 import * as path from 'path';
 
 export function createTradeRecord(decision: any, orderResult: any, fileName: string): Trade {

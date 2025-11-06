@@ -1,7 +1,7 @@
 import { BaseTradingBot } from './base-trading-bot';
-import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
-import { logBotHeader, logBotStartup } from './utils/bot-logger';
-import { validateBinanceKeys } from './utils/env-validator';
+import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
+import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
+import { validateBinanceKeys } from './utils/validation/env-validator';
 import * as dotenv from 'dotenv';
 
 // 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada

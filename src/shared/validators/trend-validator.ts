@@ -1,4 +1,4 @@
-import { validateRiskReward, calculateRiskReward } from '../../bots/utils/trade-validators';
+import { validateRiskReward, calculateRiskReward } from '../../bots/utils/risk/trade-validators';
 
 export interface TrendValidationOptions {
   direction: 'UP' | 'DOWN';

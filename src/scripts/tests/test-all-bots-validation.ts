@@ -1,5 +1,5 @@
 import { TRADING_CONFIG } from "../../bots";
-import { hasActiveTradeForSymbol } from "../../bots/utils/symbol-trade-checker";
+import { hasActiveTradeForSymbol } from "../../bots/utils/validation/symbol-trade-checker";
 
 async function testAllBotsValidation() {
   console.log('🧪 Testando validação de todos os bots...\n');

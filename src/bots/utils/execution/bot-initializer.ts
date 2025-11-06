@@ -1,8 +1,8 @@
-import { BinancePublicClient } from '../../clients/binance-public-client';
-import { BinancePrivateClient } from '../../clients/binance-private-client';
-import { DeepSeekService } from '../../clients/deepseek-client';
-import { validateBinanceKeys } from './env-validator';
-import { checkActiveTradesLimit } from './trade-limit-checker';
+import { BinancePublicClient } from '../../../clients/binance-public-client';
+import { BinancePrivateClient } from '../../../clients/binance-private-client';
+import { DeepSeekService } from '../../../clients/deepseek-client';
+import { validateBinanceKeys } from '../validation/env-validator';
+import { checkActiveTradesLimit } from '../validation/trade-limit-checker';
 
 export interface BotClients {
   binancePublic: BinancePublicClient;

@@ -1,4 +1,4 @@
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 
 export function logBotHeader(botName: string, strategy: string, isSimulation: boolean = false) {
   console.log(`🚀 ${botName}`);

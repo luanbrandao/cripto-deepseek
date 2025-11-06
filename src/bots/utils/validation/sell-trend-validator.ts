@@ -5,7 +5,7 @@ import {
   validateTrendAnalysis as unifiedValidateTrendAnalysis,
   validateDeepSeekDecision as unifiedValidateDeepSeekDecision,
   boostConfidence as unifiedBoostConfidence
-} from '../../shared/validators/trend-validator';
+} from '../../../shared/validators/trend-validator';
 
 /**
  * @deprecated Use validateTrendAnalysis from shared/validators/trend-validator instead

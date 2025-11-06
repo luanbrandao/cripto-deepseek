@@ -1,6 +1,6 @@
 import { RiskRewardCalculation } from '../types/trading';
 import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
-import { validateRiskReward as centralValidateRiskReward } from '../utils/trade-validators';
+import { validateRiskReward as centralValidateRiskReward } from '../utils/risk/trade-validators';
 
 export class RiskManager {
   static calculateDynamicRiskReward(avgPrice: number, confidence: number): RiskRewardCalculation {

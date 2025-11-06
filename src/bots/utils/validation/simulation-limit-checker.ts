@@ -1,5 +1,5 @@
-import { Trade } from '../../storage/trade-storage';
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { Trade } from '../../../storage/trade-storage';
+import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 import * as fs from 'fs';
 
 export function checkActiveSimulationTradesLimit(tradesFile: string): boolean {

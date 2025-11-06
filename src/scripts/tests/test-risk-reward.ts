@@ -1,4 +1,4 @@
-import { calculateRiskRewardDynamic, validateRiskReward, calculateRiskReward } from '../../bots/utils/trade-validators';
+import { calculateRiskRewardDynamic, validateRiskReward, calculateRiskReward } from '../../bots/utils/risk/trade-validators';
 import { UNIFIED_TRADING_CONFIG as TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 function testRiskRewardValidation() {

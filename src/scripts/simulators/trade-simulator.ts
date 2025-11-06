@@ -1,7 +1,7 @@
 import { BinancePublicClient } from '../../clients/binance-public-client';
 import { TradeStorage, Trade } from '../../storage/trade-storage';
-import { checkActiveSimulationTradesLimit } from '../../bots/utils/simulation-limit-checker';
-import { hasActiveTradeForSymbol } from '../../bots/utils/symbol-trade-checker';
+import { checkActiveSimulationTradesLimit } from '../../bots/utils/validation/simulation-limit-checker';
+import { hasActiveTradeForSymbol } from '../../bots/utils/validation/symbol-trade-checker';
 import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import * as path from 'path';
 

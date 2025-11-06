@@ -1,6 +1,6 @@
-import { hasActiveTradeForSymbol } from '../../bots/utils/symbol-trade-checker';
+import { hasActiveTradeForSymbol } from '../../bots/utils/validation/symbol-trade-checker';
 import { BinancePrivateClient } from '../../clients/binance-private-client';
-import { validateBinanceKeys } from '../../bots/utils/env-validator';
+import { validateBinanceKeys } from '../../bots/utils/validation/env-validator';
 import { UNIFIED_TRADING_CONFIG as TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 import * as dotenv from 'dotenv';
 

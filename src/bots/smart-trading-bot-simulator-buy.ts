@@ -1,9 +1,9 @@
 import { BaseTradingBot } from './base-trading-bot';
-import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
+import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
-import { calculateRiskRewardDynamic, validateConfidence } from './utils/trade-validators';
-import { calculateTargetAndStopPrices } from './utils/price-calculator';
-import { logBotHeader, logBotStartup } from './utils/bot-logger';
+import { calculateRiskRewardDynamic, validateConfidence } from './utils/risk/trade-validators';
+import { calculateTargetAndStopPrices } from './utils/risk/price-calculator';
+import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
 import EmaAnalyzer from '../analyzers/emaAnalyzer';
 
 // 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada

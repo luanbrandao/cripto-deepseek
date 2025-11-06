@@ -1,12 +1,12 @@
 import { BaseTradingBot } from './base-trading-bot';
-import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
+import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
-import { calculateRiskRewardDynamic } from './utils/trade-validators';
-import { calculateTargetAndStopPricesWithLevels } from './utils/price-calculator';
-import { logBotHeader, logBotStartup } from './utils/bot-logger';
-import { validateAdvancedSellStrength } from './utils/advanced-sell-validator';
+import { calculateRiskRewardDynamic } from './utils/risk/trade-validators';
+import { calculateTargetAndStopPricesWithLevels } from './utils/risk/price-calculator';
+import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
+import { validateAdvancedSellStrength } from './utils/validation/advanced-sell-validator';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
-import { calculateSymbolVolatility } from './utils/volatility-calculator';
+import { calculateSymbolVolatility } from './utils/risk/volatility-calculator';
 
 // 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
 import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';

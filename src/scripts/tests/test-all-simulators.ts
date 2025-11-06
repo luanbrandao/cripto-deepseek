@@ -1,4 +1,4 @@
-import { hasActiveTradeForSymbol } from '../../bots/utils/symbol-trade-checker';
+import { hasActiveTradeForSymbol } from '../../bots/utils/validation/symbol-trade-checker';
 import { TRADING_CONFIG } from '../../bots/config/trading-config';
 
 async function testAllSimulators() {

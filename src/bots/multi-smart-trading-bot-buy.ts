@@ -1,10 +1,10 @@
 import { BaseTradingBot } from './base-trading-bot';
 import { BinancePrivateClient } from '../clients/binance-private-client';
-import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
+import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
 import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
-import { calculateRiskRewardDynamic } from './utils/trade-validators';
-import { calculateTargetAndStopPrices } from './utils/price-calculator';
-import { logBotHeader, logBotStartup } from './utils/bot-logger';
+import { calculateRiskRewardDynamic } from './utils/risk/trade-validators';
+import { calculateTargetAndStopPrices } from './utils/risk/price-calculator';
+import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
 import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
 
 // 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
@@ -30,7 +30,7 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
     super(undefined, undefined, true);
     
     // Inicializar BinancePrivateClient para trades reais
-    const { validateBinanceKeys } = require('./utils/env-validator');
+    const { validateBinanceKeys } = require('./utils/validation/env-validator');
     const keys = validateBinanceKeys();
     if (keys) {
       this.binancePrivate = new BinancePrivateClient(keys.apiKey, keys.apiSecret);

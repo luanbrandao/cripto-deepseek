@@ -1,4 +1,4 @@
-import { hasActiveTradeForSymbol } from '../../bots/utils/symbol-trade-checker';
+import { hasActiveTradeForSymbol } from '../../bots/utils/validation/symbol-trade-checker';
 import { UNIFIED_TRADING_CONFIG as TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 async function testRealBotValidation() {

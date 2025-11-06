@@ -1,6 +1,6 @@
-import { BinancePrivateClient } from '../../clients/binance-private-client';
+import { BinancePrivateClient } from '../../../clients/binance-private-client';
 
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 
 export async function checkActiveTradesLimit(binancePrivate: BinancePrivateClient): Promise<boolean> {
   const activeTradesCount = await binancePrivate.getActiveTradesCount();

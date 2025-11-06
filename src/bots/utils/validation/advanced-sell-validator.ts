@@ -1,4 +1,4 @@
-import { validateRiskReward, calculateRiskReward } from './trade-validators';
+import { validateRiskReward, calculateRiskReward } from '../risk/trade-validators';
 
 export function validateAdvancedBearishTrend(trendAnalysis: any, isSimulation = false): boolean {
   if (trendAnalysis.isUptrend) {
