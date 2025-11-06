@@ -1,14 +1,13 @@
-import { BaseTradingBot } from './base-trading-bot';
-import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
-import { TradeDecision, validateTrade, calculateRiskReward } from './utils/risk/trade-validators';
-import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
-import { logMarketInfo } from './utils/logging/market-data-logger';
-import { validateBinanceKeys } from './utils/validation/env-validator';
-import EmaAnalyzer from '../analyzers/emaAnalyzer';
 import * as dotenv from 'dotenv';
+import { BaseTradingBot } from '../base-trading-bot';
+import { BotFlowManager, BotConfig } from '../utils/execution/bot-flow-manager';
+import { TradeDecision, validateTrade, calculateRiskReward } from '../utils/risk/trade-validators';
+import { logBotHeader, logBotStartup } from '../utils/logging/bot-logger';
+import { logMarketInfo } from '../utils/logging/market-data-logger';
+import { validateBinanceKeys } from '../utils/validation/env-validator';
+import EmaAnalyzer from '../../analyzers/emaAnalyzer';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
-// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
 
 dotenv.config();
 
@@ -17,26 +16,20 @@ interface MarketData {
   currentPrice: number;
 }
 
-/**
- * 🚀 EMA TRADING BOT v3.0 - REFATORADO
- * 
- * ✅ MIGRADO PARA MÓDULOS UNIFICADOS:
- * - UNIFIED_TRADING_CONFIG (substitui TRADING_CONFIG)
- */
 export class EmaTradingBot extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private emaAnalyzer: EmaAnalyzer;
 
   constructor(apiKey: string, apiSecret: string) {
     super(apiKey, apiSecret, false);
-    
+
     const config: BotConfig = {
       name: 'Multi-Symbol EMA Trading Bot',
       isSimulation: false,
       tradesFile: UNIFIED_TRADING_CONFIG.FILES.EMA_BOT,
       requiresValidation: true
     };
-    
+
     this.flowManager = new BotFlowManager(this, config);
     this.emaAnalyzer = new EmaAnalyzer({
       fastPeriod: UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD,

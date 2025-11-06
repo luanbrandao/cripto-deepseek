@@ -1,4 +1,4 @@
-import { BinancePrivateClient } from '../../../clients/binance-private-client';
+import { BinancePrivateClient } from '../../../core/clients/binance-private-client';
 
 import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 

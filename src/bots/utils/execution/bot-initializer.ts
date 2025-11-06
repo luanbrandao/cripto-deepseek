@@ -1,6 +1,6 @@
-import { BinancePublicClient } from '../../../clients/binance-public-client';
-import { BinancePrivateClient } from '../../../clients/binance-private-client';
-import { DeepSeekService } from '../../../clients/deepseek-client';
+import { BinancePublicClient } from '../../../core/clients/binance-public-client';
+import { BinancePrivateClient } from '../../../core/clients/binance-private-client';
+import { DeepSeekService } from '../../../core/clients/deepseek-client';
 import { validateBinanceKeys } from '../validation/env-validator';
 import { checkActiveTradesLimit } from '../validation/trade-limit-checker';
 

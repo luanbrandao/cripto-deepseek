@@ -4,7 +4,7 @@
 import { TradeDecision } from '../risk/trade-validators';
 import { getMarketData } from '../data/market-data-fetcher';
 import { hasActiveTradeForSymbol } from '../validation/symbol-trade-checker';
-import { BinancePrivateClient } from '../../../clients/binance-private-client';
+import { BinancePrivateClient } from '../../../core/clients/binance-private-client';
 import { UnifiedMultiSymbolAnalyzer, SymbolAnalysis } from '../../../shared/utils/unified-multi-symbol-analyzer';
 
 /**

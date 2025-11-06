@@ -1,25 +1,15 @@
-import { BaseTradingBot } from './base-trading-bot';
-import { BinancePrivateClient } from '../clients/binance-private-client';
-import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
-import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
-import { calculateRiskRewardDynamic } from './utils/risk/trade-validators';
-import { calculateTargetAndStopPrices } from './utils/risk/price-calculator';
-import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
-import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
+import { BaseTradingBot } from '../base-trading-bot';
+import { BinancePrivateClient } from '../../core/clients/binance-private-client';
+import { BotFlowManager, BotConfig } from '../utils/execution/bot-flow-manager';
+import { MarketTrendAnalyzer } from '../services/market-trend-analyzer';
+import { calculateRiskRewardDynamic } from '../utils/risk/trade-validators';
+import { calculateTargetAndStopPrices } from '../utils/risk/price-calculator';
+import { logBotHeader, logBotStartup } from '../utils/logging/bot-logger';
+import { AdvancedEmaAnalyzer } from '../services/advanced-ema-analyzer';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { UnifiedDeepSeekAnalyzer } from '../../shared/analyzers/unified-deepseek-analyzer';
+import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../../shared/validators/trend-validator';
 
-// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
-import { UnifiedDeepSeekAnalyzer } from '../shared/analyzers/unified-deepseek-analyzer';
-import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../shared/validators/trend-validator';
-
-/**
- * 🚀 MULTI-SMART TRADING BOT BUY v3.0 - REFATORADO
- * 
- * ✅ MIGRADO PARA MÓDULOS UNIFICADOS:
- * - UnifiedDeepSeekAnalyzer (substitui multiAnalyzeWithSmartTradeBuy)
- * - validateTrendAnalysis (substitui buy-trend-validator)
- * - UNIFIED_TRADING_CONFIG (substitui TRADING_CONFIG)
- */
 export class MultiSmartTradingBotBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private readonly trendAnalyzer: MarketTrendAnalyzer;
@@ -28,7 +18,7 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
   constructor() {
     // Inicializar com DeepSeek para análise AI
     super(undefined, undefined, true);
-    
+
     // Inicializar BinancePrivateClient para trades reais
     const { validateBinanceKeys } = require('./utils/validation/env-validator');
     const keys = validateBinanceKeys();

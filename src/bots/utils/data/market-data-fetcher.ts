@@ -1,4 +1,4 @@
-import { BinancePublicClient } from '../../../clients/binance-public-client';
+import { BinancePublicClient } from '../../../core/clients/binance-public-client';
 import { logMarketInfo } from '../logging/market-data-logger';
 import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 

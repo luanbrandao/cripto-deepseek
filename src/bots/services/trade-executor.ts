@@ -1,4 +1,4 @@
-import { BinancePrivateClient } from '../../clients/binance-private-client';
+import { BinancePrivateClient } from '../../core/clients/binance-private-client';
 import { TradeDecision } from '../types/trading';
 import { UNIFIED_TRADING_CONFIG, UnifiedTradingState } from '../../shared/config/unified-trading-config';
 import { RiskManager } from './risk-manager';

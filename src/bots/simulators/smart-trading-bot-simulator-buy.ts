@@ -1,40 +1,26 @@
-import { BaseTradingBot } from './base-trading-bot';
-import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
-import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
-import { calculateRiskRewardDynamic, validateConfidence } from './utils/risk/trade-validators';
-import { calculateTargetAndStopPrices } from './utils/risk/price-calculator';
-import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
-import * as dotenv from 'dotenv';
-import { validateBinanceKeys } from './utils/validation/env-validator';
-import EmaAnalyzer from '../analyzers/emaAnalyzer';
+import { BaseTradingBot } from '../base-trading-bot';
+import { BotFlowManager, BotConfig } from '../utils/execution/bot-flow-manager';
+import { MarketTrendAnalyzer } from '../services/market-trend-analyzer';
+import { calculateRiskRewardDynamic, validateConfidence } from '../utils/risk/trade-validators';
+import { calculateTargetAndStopPrices } from '../utils/risk/price-calculator';
+import { logBotHeader, logBotStartup } from '../utils/logging/bot-logger';
+import EmaAnalyzer from '../../analyzers/emaAnalyzer';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../shared/validators/trend-validator';
+import { UnifiedDeepSeekAnalyzer } from '../../shared/analyzers/unified-deepseek-analyzer';
 
-// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
-import { UnifiedDeepSeekAnalyzer } from '../shared/analyzers/unified-deepseek-analyzer';
-import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../shared/validators/trend-validator';
-
-dotenv.config();
-
-/**
- * 🚀 SMART TRADING BOT BUY v3.0 - REFATORADO
- * 
- * ✅ MIGRADO PARA MÓDULOS UNIFICADOS:
- * - UnifiedDeepSeekAnalyzer (substitui analyzeWithSmartTradeBuy)
- * - validateTrendAnalysis (substitui buy-trend-validator)
- * - UNIFIED_TRADING_CONFIG (substitui TRADING_CONFIG)
- */
-export class SmartTradingBotBuy extends BaseTradingBot {
+export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private trendAnalyzer: MarketTrendAnalyzer;
   private emaAnalyzer: EmaAnalyzer;
 
-  constructor(apiKey: string, apiSecret: string) {
-    super(apiKey, apiSecret, true);
+  constructor() {
+    super(undefined, undefined, true);
 
     const config: BotConfig = {
-      name: 'Smart Trading Bot BUY',
-      isSimulation: false,
-      tradesFile: UNIFIED_TRADING_CONFIG.FILES.SMART_BOT_BUY,
+      name: 'Smart Trading Bot Simulator BUY',
+      isSimulation: true,
+      tradesFile: UNIFIED_TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY,
       requiresFiltering: true,
       requiresValidation: true
     };
@@ -48,7 +34,10 @@ export class SmartTradingBotBuy extends BaseTradingBot {
   }
 
   protected logBotInfo() {
-    logBotHeader('MULTI-SYMBOL SMART TRADING BOT BUY v3.0 - REFATORADO', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - APENAS COMPRAS');
+    console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
+    console.log('🚀 MULTI-SYMBOL SMART TRADING BOT SIMULATOR BUY');
+    console.log('✅ MODO SIMULAÇÃO - Nenhuma ordem real será executada');
+    logBotHeader('SIMULADOR MULTI-SYMBOL SMART BOT', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - SIMULAÇÃO', true);
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
@@ -59,6 +48,7 @@ export class SmartTradingBotBuy extends BaseTradingBot {
     const validSymbols = [];
 
     for (const symbol of symbols) {
+      console.log(`\n📊 Analisando Tendência EMA: ${symbol}...`);
       const klines = await this.getBinancePublic().getKlines(symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, UNIFIED_TRADING_CONFIG.CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const currentPrice = prices[prices.length - 1];
@@ -76,7 +66,7 @@ export class SmartTradingBotBuy extends BaseTradingBot {
     if (!symbol) return false;
     // 1. Validar tendência EMA
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: false })) return false;
+    if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: true })) return false;
 
     // 2. Validar decisão DeepSeek
     if (!validateDeepSeekDecision(decision, 'BUY')) return false;
@@ -84,15 +74,15 @@ export class SmartTradingBotBuy extends BaseTradingBot {
     // 3. Aplicar boost inteligente
     const boostedDecision = boostConfidence(decision, { baseBoost: 5, maxBoost: 15, trendType: 'BUY' });
 
-    // 4. Validação de confiança mínima (OBRIGATÓRIA)
+    // 4. Validação de confiança mínima
     console.log('🔍 Validação de confiança mínima...');
     if (!validateConfidence(boostedDecision)) {
-      console.log('❌ Trade cancelado - Confiança insuficiente');
+      console.log('❌ Simulação cancelada - Confiança insuficiente');
       return false;
     }
 
     // 5. Validação de Risk/Reward
-    console.log('🔍 Validação final de Risk/Reward antes da execução...');
+    console.log('🔍 Validação final de Risk/Reward 2:1 para simulação...');
 
     const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
       boostedDecision.price,
@@ -108,7 +98,7 @@ export class SmartTradingBotBuy extends BaseTradingBot {
     );
 
     if (!riskRewardResult.isValid) {
-      console.log('❌ Trade cancelado - Risk/Reward insuficiente');
+      console.log('❌ Simulação cancelada - Risk/Reward insuficiente');
       return false;
     }
 
@@ -119,33 +109,25 @@ export class SmartTradingBotBuy extends BaseTradingBot {
 
   async executeTrade() {
     this.logBotInfo();
-    try {
-      return await this.flowManager.executeStandardFlow(
-        this.analyzeWithSmartTradeLogic.bind(this),
-        this.filterSymbolsByEma.bind(this),
-        this.validateSmartDecision.bind(this)
-      );
-    } catch (error) {
-      console.error('❌ Erro no Smart Trading Bot BUY:', error);
-      console.log('🔄 Bot continuará funcionando no próximo ciclo...');
-      return null;
-    }
+    return await this.flowManager.executeStandardFlow(
+      this.analyzeWithSmartTradeLogic.bind(this),
+      this.filterSymbolsByEma.bind(this),
+      this.validateSmartDecision.bind(this)
+    );
   }
 }
 
 // Só executa se for chamado diretamente (não importado)
 if (require.main === module) {
   const main = async () => {
-    const keys = validateBinanceKeys();
-    if (!keys) return;
-
-    const { apiKey, apiSecret } = keys;
-    const smartBot = new SmartTradingBotBuy(apiKey, apiSecret);
-    await smartBot.executeTrade();
+    const smartBotSimulatorBuy = new SmartTradingBotSimulatorBuy();
+    await smartBotSimulatorBuy.executeTrade();
   }
 
   logBotStartup(
-    'Smart Bot BUY',
-    '🧠 Análise dupla: EMA + DeepSeek AI - APENAS COMPRAS (Long-Only)'
+    'Smart Bot Simulator Buy',
+    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise dupla: EMA + DeepSeek AI',
+    UNIFIED_TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
+    true
   ).then(() => main());
 }

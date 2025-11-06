@@ -1,7 +1,7 @@
 import { TradeDecision } from '../../bots/utils/risk/trade-validators';
 import { getMarketData } from '../../bots/utils/data/market-data-fetcher';
 import { hasActiveTradeForSymbol } from '../../bots/utils/validation/symbol-trade-checker';
-import { BinancePrivateClient } from '../../clients/binance-private-client';
+import { BinancePrivateClient } from '../../core/clients/binance-private-client';
 
 export interface SymbolAnalysis {
   symbol: string;

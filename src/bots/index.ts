@@ -2,13 +2,13 @@
 export { BaseTradingBot } from './base-trading-bot';
 
 // Trading bots
-export { RealTradingBot } from './real-trading-bot';
-export { EmaTradingBot } from './ema-trading-bot';
-export { SmartTradingBotBuy } from './smart-trading-bot-buy';
+export { RealTradingBot } from './real/real-trading-bot';
+export { EmaTradingBot } from './real/ema-trading-bot';
+export { SmartTradingBotBuy } from './smart/smart-trading-bot-buy';
 
 // Simulation bots
-export { RealTradingBotSimulator } from './real-trading-bot-simulator';
-export { SmartTradingBotSimulatorBuy } from './smart-trading-bot-simulator-buy';
+export { RealTradingBotSimulator } from './simulators/real-trading-bot-simulator';
+export { SmartTradingBotSimulatorBuy } from './simulators/smart-trading-bot-simulator-buy';
 
 // Simulator
 export { TradeSimulator } from '../scripts/simulators/trade-simulator';

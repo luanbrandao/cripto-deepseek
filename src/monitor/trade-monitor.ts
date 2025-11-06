@@ -1,6 +1,6 @@
-import { BinancePublicClient } from '../clients/binance-public-client';
-import { Trade } from '../storage/trade-storage';
+import { BinancePublicClient } from '../core/clients/binance-public-client';
 import * as fs from 'fs';
+import { Trade } from '../core/utils/trade-storage';
 
 export class TradeMonitor {
   private binance: BinancePublicClient;
@@ -17,23 +17,8 @@ export class TradeMonitor {
         return;
       }
 
-      const data = fs.readFileSync(filePath, 'utf8').trim();
-      
-      // Handle empty or malformed JSON files
-      let trades: Trade[] = [];
-      if (data && data !== '[]' && data.length > 0) {
-        try {
-          trades = JSON.parse(data);
-          if (!Array.isArray(trades)) {
-            trades = [];
-          }
-        } catch (parseError) {
-          console.log('⚠️ Arquivo JSON malformado, criando array vazio');
-          trades = [];
-          // Fix the file
-          fs.writeFileSync(filePath, JSON.stringify([], null, 2));
-        }
-      }
+      const data = fs.readFileSync(filePath, 'utf8');
+      const trades: Trade[] = JSON.parse(data);
       const pendingTrades = trades.filter(trade => trade.status === 'pending');
 
       if (pendingTrades.length === 0) {
@@ -69,7 +54,7 @@ export class TradeMonitor {
     return parseFloat(priceData.price);
   }
 
-  private async getCandleHistory(symbol: string): Promise<{high: number, low: number, timestamp: number}[]> {
+  private async getCandleHistory(symbol: string): Promise<{ high: number, low: number, timestamp: number }[]> {
     // Buscar últimos 30 minutos de dados (1m interval)
     const klines = await this.binance.getKlines(symbol, '1m', 30);
     return klines.map((k: any) => ({
@@ -82,18 +67,18 @@ export class TradeMonitor {
   private async evaluateTradeWithHistory(trade: Trade): Promise<{ outcome: 'win' | 'loss', actualReturn: number, exitPrice: number } | null> {
     try {
       const candleHistory = await this.getCandleHistory(trade.symbol);
-      
+
       console.log(`\n🔍 Avaliando ${trade.symbol} ${trade.action}:`);
       console.log(`📊 Target: ${trade.targetPrice} | Stop: ${trade.stopPrice}`);
-      
+
       const allHighs = candleHistory.map(c => c.high);
       const allLows = candleHistory.map(c => c.low);
       console.log(`📈 Mínimo absoluto: ${Math.min(...allLows)} | Máximo absoluto: ${Math.max(...allHighs)}`);
-      
+
       // Verificar cada candle no histórico para ver qual condição foi atingida primeiro
       for (let i = 0; i < candleHistory.length; i++) {
         const candle = candleHistory[i];
-        
+
         if (trade.action === 'BUY') {
           // Para BUY: verificar se HIGH atingiu target ou LOW atingiu stop
           if (candle.high >= trade.targetPrice) {
@@ -130,7 +115,7 @@ export class TradeMonitor {
           }
         }
       }
-      
+
       console.log(`⏳ Trade ainda pendente - nenhuma condição atingida`);
       return null; // Trade ainda pendente
     } catch (error) {

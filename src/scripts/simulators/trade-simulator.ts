@@ -1,9 +1,9 @@
-import { BinancePublicClient } from '../../clients/binance-public-client';
-import { TradeStorage, Trade } from '../../storage/trade-storage';
+import { BinancePublicClient } from '../../core/clients/binance-public-client';
 import { checkActiveSimulationTradesLimit } from '../../bots/utils/validation/simulation-limit-checker';
 import { hasActiveTradeForSymbol } from '../../bots/utils/validation/symbol-trade-checker';
 import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import * as path from 'path';
+import { Trade, TradeStorage } from '../../core/utils/trade-storage';
 
 interface SymbolAnalysis {
   symbol: string;
@@ -242,10 +242,10 @@ export class TradeSimulator {
 
     // Usar sistema de Risk/Reward 2:1 baseado na confiança
     const riskPercent = analysis.confidence >= 80 ? 0.5 : analysis.confidence >= 75 ? 1.0 : 1.5;
-    
+
     let targetPrice: number;
     let stopPrice: number;
-    
+
     if (analysis.action === 'BUY') {
       targetPrice = currentPrice * (1 + (riskPercent * 2) / 100);  // Reward = 2x Risk
       stopPrice = currentPrice * (1 - riskPercent / 100);

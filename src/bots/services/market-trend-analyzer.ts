@@ -1,4 +1,4 @@
-import { BinancePublicClient } from '../../clients/binance-public-client';
+import { BinancePublicClient } from '../../core/clients/binance-public-client';
 import EmaAnalyzer from '../../analyzers/emaAnalyzer';
 
 interface MarketData {

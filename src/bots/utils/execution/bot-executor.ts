@@ -1,5 +1,5 @@
 import { TradeExecutor } from '../../services/trade-executor';
-import { BinancePrivateClient } from '../../../clients/binance-private-client';
+import { BinancePrivateClient } from '../../../core/clients/binance-private-client';
 import { TradeDecision, calculateRiskReward } from '../risk/trade-validators';
 import { createTradeRecord, saveTradeHistory } from './trade-history-saver';
 import { logTradeSuccess, logRiskReward } from '../logging/bot-logger';

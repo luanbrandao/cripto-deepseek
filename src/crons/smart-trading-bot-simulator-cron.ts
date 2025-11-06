@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { SmartTradingBotSimulatorBuy } from '../../bots/smart-trading-bot-simulator-buy';
+import { SmartTradingBotSimulatorBuy } from '../bots';
 import * as dotenv from 'dotenv';
 
 dotenv.config();

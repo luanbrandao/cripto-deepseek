@@ -1,4 +1,4 @@
-import { DeepSeekService } from '../../clients/deepseek-client';
+import { DeepSeekService } from '../../core/clients/deepseek-client';
 import { UnifiedAnalysisParser } from '../parsers/unified-analysis-parser';
 import { UNIFIED_TRADING_CONFIG } from '../config/unified-trading-config';
 import { SmartScoringSystem } from '../../bots/services/smart-scoring-system';

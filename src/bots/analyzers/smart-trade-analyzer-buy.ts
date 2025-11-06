@@ -1,7 +1,7 @@
 // 🔄 ARQUIVO DE COMPATIBILIDADE - Redireciona para módulos unificados
 // Este arquivo mantém compatibilidade com imports antigos
 
-import { DeepSeekService } from '../../clients/deepseek-client';
+import { DeepSeekService } from '../../core/clients/deepseek-client';
 import { UnifiedDeepSeekAnalyzer } from '../../shared/analyzers/unified-deepseek-analyzer';
 
 /**

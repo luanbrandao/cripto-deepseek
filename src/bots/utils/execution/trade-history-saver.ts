@@ -1,4 +1,4 @@
-import { TradeStorage, Trade } from '../../../storage/trade-storage';
+import { TradeStorage, Trade } from '../../../core/utils/trade-storage';
 import { RiskManager } from '../../services/risk-manager';
 import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 import * as path from 'path';

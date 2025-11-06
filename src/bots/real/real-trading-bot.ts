@@ -1,34 +1,25 @@
-import { BaseTradingBot } from './base-trading-bot';
-import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
-import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
-import { validateBinanceKeys } from './utils/validation/env-validator';
 import * as dotenv from 'dotenv';
-
-// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
-import { UnifiedDeepSeekAnalyzer } from '../shared/analyzers/unified-deepseek-analyzer';
+import { BaseTradingBot } from '../base-trading-bot';
+import { BotFlowManager, BotConfig } from '../utils/execution/bot-flow-manager';
+import { logBotHeader, logBotStartup } from '../utils/logging/bot-logger';
+import { validateBinanceKeys } from '../utils/validation/env-validator';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { UnifiedDeepSeekAnalyzer } from '../../shared/analyzers/unified-deepseek-analyzer';
 
 dotenv.config();
 
-/**
- * 🚀 REAL TRADING BOT v3.0 - REFATORADO
- * 
- * ✅ MIGRADO PARA MÓDULOS UNIFICADOS:
- * - UnifiedDeepSeekAnalyzer (substitui analyzeWithRealTrade)
- * - UNIFIED_TRADING_CONFIG (substitui TRADING_CONFIG)
- */
 export class RealTradingBot extends BaseTradingBot {
   private flowManager: BotFlowManager;
 
   constructor(apiKey: string, apiSecret: string) {
     super(apiKey, apiSecret, true);
-    
+
     const config: BotConfig = {
       name: 'Real Trading Bot',
       isSimulation: false,
       tradesFile: UNIFIED_TRADING_CONFIG.FILES.REAL_BOT
     };
-    
+
     this.flowManager = new BotFlowManager(this, config);
   }
 

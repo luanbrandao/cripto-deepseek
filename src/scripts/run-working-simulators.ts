@@ -3,33 +3,23 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-const simulators = [
-  // PATTERN SIMULATORS
+const workingSimulators = [
+  // PATTERN SIMULATORS (funcionam independentemente)
   { name: '123 Pattern Simulator', command: 'yarn simulate-123' },
   { name: 'EMA Pattern Simulator', command: 'yarn simulate-ema' },
   { name: 'Support/Resistance Simulator', command: 'yarn simulate-support' },
   
-  // NEUTRAL SIMULATORS (BUY/SELL/HOLD)
-  { name: 'Real Trading Bot Simulator', command: 'yarn real-trading-bot-simulator' },
-  
-  // BUY ONLY SIMULATORS (Long-Only)
-  { name: 'Smart Trading Bot BUY Simulator', command: 'yarn smart-trading-bot-buy-simulator' },
-  { name: 'Multi-Smart Trading Bot BUY Simulator', command: 'yarn multi-smart-trading-bot-buy-simulator' },
-  
-  // SELL ONLY SIMULATORS (Short-Only)
-  { name: 'Smart Trading Bot SELL Simulator', command: 'yarn smart-trading-bot-sell-simulator' },
-  { name: 'Multi-Smart Trading Bot SELL Simulator', command: 'yarn multi-smart-trading-bot-sell-simulator' }
+  // NEUTRAL SIMULATORS (testando)
+  { name: 'Real Trading Bot Simulator', command: 'yarn real-trading-bot-simulator' }
 ];
 
-async function runAllSimulators() {
-  console.log('🚀 EXECUTANDO TODOS OS SIMULADORES EM SEQUÊNCIA\n');
-  console.log('⚠️ PROBLEMA IDENTIFICADO: Erros de compilação TypeScript');
-  console.log('🔧 SOLUÇÃO: Use "yarn simple-run-simulators" para ver status\n');
+async function runWorkingSimulators() {
+  console.log('🚀 EXECUTANDO SIMULADORES FUNCIONAIS\n');
 
-  for (let i = 0; i < simulators.length; i++) {
-    const simulator = simulators[i];
+  for (let i = 0; i < workingSimulators.length; i++) {
+    const simulator = workingSimulators[i];
     console.log(`\n${'='.repeat(60)}`);
-    console.log(`📊 [${i + 1}/${simulators.length}] ${simulator.name}`);
+    console.log(`📊 [${i + 1}/${workingSimulators.length}] ${simulator.name}`);
     console.log(`${'='.repeat(60)}\n`);
 
     try {
@@ -50,23 +40,19 @@ async function runAllSimulators() {
       }
     } catch (error: any) {
       console.error(`❌ Erro no ${simulator.name}:`, error.message);
-      if (error.message.includes('TSError')) {
-        console.log('🔧 Erro de compilação TypeScript - imports incorretos');
-      }
     }
 
-    if (i < simulators.length - 1) {
+    if (i < workingSimulators.length - 1) {
       console.log('\n⏳ Aguardando 2 segundos antes do próximo simulador...');
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
 
   console.log(`\n${'='.repeat(60)}`);
-  console.log('🎉 TODOS OS SIMULADORES EXECUTADOS!');
-  console.log('🔧 Para corrigir: yarn simple-run-simulators');
+  console.log('🎉 SIMULADORES FUNCIONAIS EXECUTADOS!');
   console.log(`${'='.repeat(60)}`);
 }
 
 if (require.main === module) {
-  runAllSimulators();
+  runWorkingSimulators();
 }

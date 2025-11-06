@@ -1,33 +1,17 @@
-import { BaseTradingBot } from './base-trading-bot';
-import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
-import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
-import { calculateRiskRewardDynamic } from './utils/risk/trade-validators';
-import { calculateTargetAndStopPricesWithLevels } from './utils/risk/price-calculator';
-import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
-import { validateAdvancedBuyStrength } from './utils/validation/advanced-buy-validator';
-import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
-import { calculateSymbolVolatility } from './utils/risk/volatility-calculator';
+import { BaseTradingBot } from '../base-trading-bot';
+import { BotFlowManager, BotConfig } from '../utils/execution/bot-flow-manager';
+import { MarketTrendAnalyzer } from '../services/market-trend-analyzer';
+import { calculateRiskRewardDynamic } from '../utils/risk/trade-validators';
+import { calculateTargetAndStopPricesWithLevels } from '../utils/risk/price-calculator';
+import { logBotHeader, logBotStartup } from '../utils/logging/bot-logger';
+import { validateAdvancedBuyStrength } from '../utils/validation/advanced-buy-validator';
+import { AdvancedEmaAnalyzer } from '../services/advanced-ema-analyzer';
+import { calculateSymbolVolatility } from '../utils/risk/volatility-calculator';
 
-// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
-import { UnifiedDeepSeekAnalyzer } from '../shared/analyzers/unified-deepseek-analyzer';
-import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../shared/validators/trend-validator';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { UnifiedDeepSeekAnalyzer } from '../../shared/analyzers/unified-deepseek-analyzer';
+import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../shared/validators/trend-validator';
 
-/**
- * 🚀 MULTI-SMART BOT SIMULATOR BUY v3.0 - REFATORADO
- * 
- * ✅ MIGRADO PARA MÓDULOS UNIFICADOS:
- * - UnifiedDeepSeekAnalyzer (substitui multiAnalyzeWithSmartTradeBuy)
- * - validateTrendAnalysis (substitui validateAdvancedBullishTrend)
- * - validateDeepSeekDecision (substitui validateAdvancedBuyDecision)
- * - boostConfidence (substitui boostAdvancedBuyConfidence)
- * - UNIFIED_TRADING_CONFIG (substitui TRADING_CONFIG)
- * 
- * 📊 BENEFÍCIOS:
- * - 60% menos código duplicado
- * - Manutenção centralizada
- * - Compatibilidade 100% mantida
- */
 export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private readonly trendAnalyzer: MarketTrendAnalyzer;

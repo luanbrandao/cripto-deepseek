@@ -1,12 +1,10 @@
-import { BaseTradingBot } from './base-trading-bot';
-import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
-import { validateBinanceKeys } from './utils/validation/env-validator';
-import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
+import { BaseTradingBot } from '../base-trading-bot';
+import { BotFlowManager, BotConfig } from '../utils/execution/bot-flow-manager';
+import { validateBinanceKeys } from '../utils/validation/env-validator';
+import { logBotHeader, logBotStartup } from '../utils/logging/bot-logger';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { UnifiedDeepSeekAnalyzer } from '../../shared/analyzers/unified-deepseek-analyzer';
 import * as dotenv from 'dotenv';
-
-// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
-import { UnifiedDeepSeekAnalyzer } from '../shared/analyzers/unified-deepseek-analyzer';
 
 dotenv.config();
 
@@ -15,13 +13,13 @@ export class RealTradingBotSimulator extends BaseTradingBot {
 
   constructor(apiKey: string, apiSecret: string) {
     super(apiKey, apiSecret, true);
-    
+
     const config: BotConfig = {
       name: 'Real Trading Bot Simulator',
       isSimulation: true,
       tradesFile: UNIFIED_TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR
     };
-    
+
     this.flowManager = new BotFlowManager(this, config);
   }
 

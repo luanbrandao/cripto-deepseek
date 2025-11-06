@@ -1,28 +1,16 @@
-import { BaseTradingBot } from './base-trading-bot';
-import { BotFlowManager, BotConfig } from './utils/execution/bot-flow-manager';
-import { MarketTrendAnalyzer } from './services/market-trend-analyzer';
-import { calculateRiskRewardDynamic } from './utils/risk/trade-validators';
-import { calculateTargetAndStopPricesWithLevels } from './utils/risk/price-calculator';
-import { logBotHeader, logBotStartup } from './utils/logging/bot-logger';
-import { validateAdvancedSellStrength } from './utils/validation/advanced-sell-validator';
-import { AdvancedEmaAnalyzer } from './services/advanced-ema-analyzer';
-import { calculateSymbolVolatility } from './utils/risk/volatility-calculator';
+import { BaseTradingBot } from '../base-trading-bot';
+import { BotFlowManager, BotConfig } from '../utils/execution/bot-flow-manager';
+import { MarketTrendAnalyzer } from '../services/market-trend-analyzer';
+import { calculateRiskRewardDynamic } from '../utils/risk/trade-validators';
+import { calculateTargetAndStopPricesWithLevels } from '../utils/risk/price-calculator';
+import { logBotHeader, logBotStartup } from '../utils/logging/bot-logger';
+import { validateAdvancedSellStrength } from '../utils/validation/advanced-sell-validator';
+import { AdvancedEmaAnalyzer } from '../services/advanced-ema-analyzer';
+import { calculateSymbolVolatility } from '../utils/risk/volatility-calculator';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { UnifiedDeepSeekAnalyzer } from '../../shared/analyzers/unified-deepseek-analyzer';
+import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../shared/validators/trend-validator';
 
-// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
-import { UnifiedDeepSeekAnalyzer } from '../shared/analyzers/unified-deepseek-analyzer';
-import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../shared/validators/trend-validator';
-
-/**
- * 🚀 MULTI-SMART BOT SIMULATOR SELL v3.0 - REFATORADO
- * 
- * ✅ MIGRADO PARA MÓDULOS UNIFICADOS:
- * - UnifiedDeepSeekAnalyzer (substitui multiAnalyzeWithSmartTradeSell)
- * - validateTrendAnalysis (substitui validateAdvancedBearishTrend)
- * - validateDeepSeekDecision (substitui validateAdvancedSellDecision)
- * - boostConfidence (substitui boostAdvancedSellConfidence)
- * - UNIFIED_TRADING_CONFIG (substitui TRADING_CONFIG)
- */
 export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private readonly trendAnalyzer: MarketTrendAnalyzer;
@@ -90,7 +78,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
       const threshold = this.getThresholdSellMarketCondition(condition.type);
 
       console.log(`📊 ${symbol}: Score ${analysis.overallStrength.toFixed(1)}, Mercado: ${condition.type}, Threshold: ${threshold}`);
-      
+
       if (this.isSymbolValid(analysis, threshold)) {
         validSymbols.push(symbol);
         console.log(`✅ ${symbol}: APROVADO`);
@@ -124,10 +112,10 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
       analysis.mediumTerm.trend === 'DOWN' ||
       analysis.longTerm.trend === 'DOWN'
     );
-    
+
     const isNotUptrend = !this.advancedEmaAnalyzer.isStrongUptrend(analysis) &&
-                        !this.advancedEmaAnalyzer.isModerateUptrend(analysis);
-    
+      !this.advancedEmaAnalyzer.isModerateUptrend(analysis);
+
     return isBearish || isNotUptrend;
   }
 
