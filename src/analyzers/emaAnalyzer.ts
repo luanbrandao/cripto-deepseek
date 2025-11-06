@@ -1,3 +1,5 @@
+import { calculateEMA } from '../bots/utils/analysis/ema-calculator';
+
 interface MarketData {
   price24h: number[];
   currentPrice: number;
@@ -31,8 +33,8 @@ class EmaAnalyzer {
       };
     }
 
-    const emaFast = this.calculateEMA(prices, this.fastPeriod);
-    const emaSlow = this.calculateEMA(prices, this.slowPeriod);
+    const emaFast = calculateEMA(prices, this.fastPeriod);
+    const emaSlow = calculateEMA(prices, this.slowPeriod);
     const priceChange = ((currentPrice - prices[0]) / prices[0]) * 100;
 
     let action = "HOLD";
@@ -66,18 +68,7 @@ class EmaAnalyzer {
     };
   }
 
-  private calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1];
 
-    const multiplier = 2 / (period + 1);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b) / period;
-
-    for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-
-    return ema;
-  }
 }
 
 export default EmaAnalyzer;

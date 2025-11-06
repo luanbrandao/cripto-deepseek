@@ -1,3 +1,5 @@
+import { calculateEMA } from '../utils/analysis/ema-calculator';
+
 interface AdvancedEmaAnalysis {
   shortTerm: { ema12: number; ema26: number; trend: string; strength: number };
   mediumTerm: { ema50: number; ema100: number; trend: string; strength: number };
@@ -26,11 +28,11 @@ export class AdvancedEmaAnalyzer {
     const currentPrice = prices[prices.length - 1];
     
     // Calculate multiple EMAs
-    const ema12 = this.calculateEMA(prices, 12);
-    const ema26 = this.calculateEMA(prices, 26);
-    const ema50 = this.calculateEMA(prices, 50);
-    const ema100 = this.calculateEMA(prices, 100);
-    const ema200 = this.calculateEMA(prices, 200);
+    const ema12 = calculateEMA(prices, 12);
+    const ema26 = calculateEMA(prices, 26);
+    const ema50 = calculateEMA(prices, 50);
+    const ema100 = calculateEMA(prices, 100);
+    const ema200 = calculateEMA(prices, 200);
 
     // Short-term analysis
     const shortTerm = {
@@ -115,18 +117,7 @@ export class AdvancedEmaAnalyzer {
     return { type: 'SIDEWAYS', confidence: 60 };
   }
 
-  private calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1];
 
-    const multiplier = 2 / (period + 1);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b) / period;
-
-    for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-
-    return ema;
-  }
 
   private determineTrend(current: number, fast: number, slow: number): string {
     if (current > fast && fast > slow) return 'UP';
