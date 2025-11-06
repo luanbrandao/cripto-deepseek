@@ -1,67 +1,77 @@
+// ============================================================================
+// CORE FUNCTIONS - Cálculo de Preços
+// ============================================================================
+
 /**
- * Calcula target e stop prices baseados na confiança da decisão
+ * Calcula percentual de risco baseado na confiança
+ */
+function calculateRiskPercent(confidence: number): number {
+  return confidence >= 80 ? 0.5 : confidence >= 75 ? 1.0 : 1.5;
+}
+
+/**
+ * Calcula preços de target e stop para uma ação específica
+ */
+function calculatePricesForAction(
+  price: number, 
+  riskPercent: number, 
+  rewardRatio: number, 
+  action: 'BUY' | 'SELL'
+) {
+  if (action === 'BUY') {
+    return {
+      targetPrice: price * (1 + (riskPercent * rewardRatio) / 100),
+      stopPrice: price * (1 - riskPercent / 100)
+    };
+  }
+  
+  return {
+    targetPrice: price * (1 - (riskPercent * rewardRatio) / 100),
+    stopPrice: price * (1 + riskPercent / 100)
+  };
+}
+
+/**
+ * Calcula target e stop prices baseados na confiança (Ratio 2:1 fixo)
  */
 export function calculateTargetAndStopPrices(price: number, confidence: number, action: 'BUY' | 'SELL') {
-  // Calcular percentual de risco baseado na confiança
-  const riskPercent = confidence >= 80 ? 0.5 :
-    confidence >= 75 ? 1.0 : 1.5;
-
-  // Calcular preços para BUY
-  if (action === 'BUY') {
-    const targetPrice = price * (1 + (riskPercent * 2) / 100);  // Reward = 2x Risk
-    const stopPrice = price * (1 - riskPercent / 100);
-    return { targetPrice, stopPrice, riskPercent };
-  }
-
-  // Calcular preços para SELL
-  const targetPrice = price * (1 - (riskPercent * 2) / 100);  // Reward = 2x Risk
-  const stopPrice = price * (1 + riskPercent / 100);
+  const riskPercent = calculateRiskPercent(confidence);
+  const { targetPrice, stopPrice } = calculatePricesForAction(price, riskPercent, 2.0, action);
+  
   return { targetPrice, stopPrice, riskPercent };
 }
 
-// Adicionar volatilidade real do mercado
+/**
+ * Calcula preços com volatilidade do mercado (Ratio dinâmico)
+ */
 export function calculateTargetAndStopPricesRealMarket(
   price: number,
   confidence: number,
   action: 'BUY' | 'SELL',
-  volatility: number // em %, ex: 1.2 significa 1.2% de variação média
+  volatility: number
 ) {
-  const baseRisk = confidence >= 80 ? 0.5 : confidence >= 75 ? 1.0 : 1.5;
-  const adjustedRisk = baseRisk * (1 + volatility / 2); // stop maior em mercados mais voláteis
-
+  const baseRisk = calculateRiskPercent(confidence);
+  const adjustedRisk = baseRisk * (1 + volatility / 2);
   const rewardRatio = confidence >= 85 ? 2.5 : 2.0;
-
-  if (action === 'BUY') {
-    return {
-      targetPrice: price * (1 + (adjustedRisk * rewardRatio) / 100),
-      stopPrice: price * (1 - adjustedRisk / 100),
-      riskPercent: adjustedRisk
-    };
-  }
-
-  return {
-    targetPrice: price * (1 - (adjustedRisk * rewardRatio) / 100),
-    stopPrice: price * (1 + adjustedRisk / 100),
-    riskPercent: adjustedRisk
-  };
-
+  
+  const { targetPrice, stopPrice } = calculatePricesForAction(price, adjustedRisk, rewardRatio, action);
+  
+  return { targetPrice, stopPrice, riskPercent: adjustedRisk };
 }
 
-// Targets dinâmicos baseados em suporte/resistência
+/**
+ * Calcula preços com níveis de suporte/resistência
+ */
 export function calculateTargetAndStopPricesWithLevels(
   price: number,
   confidence: number,
   action: 'BUY' | 'SELL',
   volatility: number,
-  klines: any[] // dados históricos para calcular níveis
+  klines: any[]
 ) {
-  // 1. Calcular níveis técnicos
   const levels = findSupportResistanceLevels(klines, price);
-  
-  // 2. Cálculo base com volatilidade
   const baseResult = calculateTargetAndStopPricesRealMarket(price, confidence, action, volatility);
   
-  // 3. Ajustar target para próximo nível técnico
   const optimizedTarget = adjustTargetToNearestLevel(
     baseResult.targetPrice, 
     action === 'BUY' ? levels.resistance : levels.support,
@@ -69,7 +79,6 @@ export function calculateTargetAndStopPricesWithLevels(
     action
   );
   
-  // 4. Ajustar stop para nível de proteção
   const optimizedStop = adjustStopToProtectionLevel(
     baseResult.stopPrice,
     action === 'BUY' ? levels.support : levels.resistance,
@@ -81,58 +90,49 @@ export function calculateTargetAndStopPricesWithLevels(
     targetPrice: optimizedTarget,
     stopPrice: optimizedStop,
     riskPercent: baseResult.riskPercent,
-    levels: levels,
+    levels,
     originalTarget: baseResult.targetPrice,
     originalStop: baseResult.stopPrice
   };
 }
 
-// Encontrar níveis de suporte e resistência
+// ============================================================================
+// SUPPORT/RESISTANCE ANALYSIS
+// ============================================================================
+
 function findSupportResistanceLevels(klines: any[], currentPrice: number) {
-  const highs = klines.map(k => parseFloat(k[2])); // high prices
-  const lows = klines.map(k => parseFloat(k[3]));  // low prices
+  const highs = klines.map(k => parseFloat(k[2]));
+  const lows = klines.map(k => parseFloat(k[3]));
   
-  // Encontrar resistências (máximas locais)
-  const resistances = findLocalMaxima(highs).filter(r => r > currentPrice);
-  const nearestResistance = resistances.length > 0 ? Math.min(...resistances) : currentPrice * 1.05;
-  
-  // Encontrar suportes (mínimas locais)
-  const supports = findLocalMinima(lows).filter(s => s < currentPrice);
-  const nearestSupport = supports.length > 0 ? Math.max(...supports) : currentPrice * 0.95;
+  const resistances = findLocalExtrema(highs, 'max').filter(r => r > currentPrice);
+  const supports = findLocalExtrema(lows, 'min').filter(s => s < currentPrice);
   
   return {
-    resistance: nearestResistance,
-    support: nearestSupport,
-    allResistances: resistances.slice(0, 3), // top 3
-    allSupports: supports.slice(-3) // últimos 3
+    resistance: resistances.length > 0 ? Math.min(...resistances) : currentPrice * 1.05,
+    support: supports.length > 0 ? Math.max(...supports) : currentPrice * 0.95,
+    allResistances: resistances.slice(0, 3),
+    allSupports: supports.slice(-3)
   };
 }
 
-// Encontrar máximas locais
-function findLocalMaxima(prices: number[]): number[] {
-  const maxima = [];
+function findLocalExtrema(prices: number[], type: 'max' | 'min'): number[] {
+  const extrema = [];
+  const compareFn = type === 'max' ? (a: number, b: number) => a > b : (a: number, b: number) => a < b;
+  
   for (let i = 2; i < prices.length - 2; i++) {
-    if (prices[i] > prices[i-1] && prices[i] > prices[i-2] && 
-        prices[i] > prices[i+1] && prices[i] > prices[i+2]) {
-      maxima.push(prices[i]);
+    if (compareFn(prices[i], prices[i-1]) && compareFn(prices[i], prices[i-2]) && 
+        compareFn(prices[i], prices[i+1]) && compareFn(prices[i], prices[i+2])) {
+      extrema.push(prices[i]);
     }
   }
-  return maxima.sort((a, b) => b - a); // maior para menor
+  
+  return type === 'max' ? extrema.sort((a, b) => b - a) : extrema.sort((a, b) => a - b);
 }
 
-// Encontrar mínimas locais
-function findLocalMinima(prices: number[]): number[] {
-  const minima = [];
-  for (let i = 2; i < prices.length - 2; i++) {
-    if (prices[i] < prices[i-1] && prices[i] < prices[i-2] && 
-        prices[i] < prices[i+1] && prices[i] < prices[i+2]) {
-      minima.push(prices[i]);
-    }
-  }
-  return minima.sort((a, b) => a - b); // menor para maior
-}
+// ============================================================================
+// LEVEL ADJUSTMENT FUNCTIONS
+// ============================================================================
 
-// Ajustar target para nível técnico próximo
 function adjustTargetToNearestLevel(
   calculatedTarget: number,
   nearestLevel: number,
@@ -142,36 +142,27 @@ function adjustTargetToNearestLevel(
   const distanceToLevel = Math.abs(nearestLevel - currentPrice) / currentPrice;
   const distanceToTarget = Math.abs(calculatedTarget - currentPrice) / currentPrice;
   
-  // Se o nível técnico está próximo do target calculado (±20%), usar o nível
-  if (Math.abs(distanceToLevel - distanceToTarget) < 0.002) { // 0.2%
-    // Ajustar ligeiramente antes do nível para melhor execução
-    const buffer = currentPrice * 0.001; // 0.1% buffer
+  if (Math.abs(distanceToLevel - distanceToTarget) < 0.002) {
+    const buffer = currentPrice * 0.001;
     return action === 'BUY' ? nearestLevel - buffer : nearestLevel + buffer;
   }
   
-  // Se o nível está muito longe, usar target calculado
   return calculatedTarget;
 }
 
-// Ajustar stop para nível de proteção
 function adjustStopToProtectionLevel(
   calculatedStop: number,
   protectionLevel: number,
   currentPrice: number,
   action: 'BUY' | 'SELL'
 ): number {
-  // Para BUY: stop não pode estar acima do suporte
-  // Para SELL: stop não pode estar abaixo da resistência
+  const buffer = currentPrice * 0.002;
   
   if (action === 'BUY') {
-    // Stop deve estar abaixo do suporte para proteção
-    const buffer = currentPrice * 0.002; // 0.2% buffer
     const protectedStop = protectionLevel - buffer;
     return Math.min(calculatedStop, protectedStop);
-  } else {
-    // Stop deve estar acima da resistência para proteção
-    const buffer = currentPrice * 0.002; // 0.2% buffer
-    const protectedStop = protectionLevel + buffer;
-    return Math.max(calculatedStop, protectedStop);
   }
+  
+  const protectedStop = protectionLevel + buffer;
+  return Math.max(calculatedStop, protectedStop);
 }
