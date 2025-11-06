@@ -1,6 +1,6 @@
 import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import * as dotenv from 'dotenv';
-import { MultiSmartTradingBotSimulatorBuy } from '../../bots/simulators/multi-smart-trading-bot-simulator-buy';
+import { MultiSmartTradingBotSimulatorBuy } from '../../bots/execution/simulators/multi-smart-trading-bot-simulator-buy';
 
 dotenv.config();
 

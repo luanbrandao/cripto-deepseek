@@ -1,7 +1,7 @@
 
 import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import EmaAnalyzer from '../../analyzers/emaAnalyzer';
-import { TradeSimulator } from '../../bots';
+import { TradeSimulator } from './trade-simulator';
 
 async function runEmaSimulation() {
   console.log('🚀 MULTI-SYMBOL EMA CROSSOVER SIMULATOR');

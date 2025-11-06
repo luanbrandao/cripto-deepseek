@@ -1,20 +1,28 @@
-// Base class
-export { BaseTradingBot } from './base-trading-bot';
+// === CORE ===
+export { BaseTradingBot } from './core/base-trading-bot';
+export * from './core/types';
 
-// Trading bots
-export { RealTradingBot } from './real/real-trading-bot';
-export { EmaTradingBot } from './real/ema-trading-bot';
-export { SmartTradingBotBuy } from './smart/smart-trading-bot-buy';
+// === EXECUTION BOTS (Real Trading) ===
+export { RealTradingBot } from './execution/real/real-trading-bot';
+export { EmaTradingBot } from './execution/real/ema-trading-bot';
+export { SmartTradingBotBuy } from './execution/real/smart-trading-bot-buy';
+export { MultiSmartTradingBotBuy } from './execution/real/multi-smart-trading-bot-buy';
 
-// Simulation bots
-export { RealTradingBotSimulator } from './simulators/real-trading-bot-simulator';
-export { SmartTradingBotSimulatorBuy } from './simulators/smart-trading-bot-simulator-buy';
+// === SIMULATION BOTS ===
+export { RealTradingBotSimulator } from './execution/simulators/real-trading-bot-simulator';
+export { SmartTradingBotSimulatorBuy } from './execution/simulators/smart-trading-bot-simulator-buy';
 
-// Simulator
-export { TradeSimulator } from '../scripts/simulators/trade-simulator';
+// === SERVICES ===
+export { AnalysisParser } from './services/analysis-parser';
+export { RiskManager } from './services/risk-manager';
+export { TradeExecutor } from './services/trade-executor';
+export { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 
-// Configuration
+// === UTILS (Consolidated) ===
+export * from './utils/market-analyzer';
+export * from './utils/trade-validator';
+export * from './utils/bot-logger';
+export * from './utils/flow-manager';
+
+// === CONFIGURATION ===
 export { TRADING_CONFIG } from './config/trading-config';
-
-// Types
-export * from './types/trading';

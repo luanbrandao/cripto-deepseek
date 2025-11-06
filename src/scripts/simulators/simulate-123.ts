@@ -1,5 +1,6 @@
 import Analyzer123 from "../../analyzers/123Analyzer";
-import { TradeSimulator, TRADING_CONFIG } from "../../bots";
+import { TRADING_CONFIG } from "../../bots";
+import { TradeSimulator } from "./trade-simulator";
 
 async function runSimulation123() {
   console.log('🚀 MULTI-SYMBOL 123 PATTERN SIMULATOR');

@@ -1,8 +1,8 @@
 import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import SupportResistanceAnalyzer from '../../analyzers/supportResistanceAnalyzer';
-import { TradeSimulator } from '../../bots';
 import * as fs from 'fs';
 import * as path from 'path';
+import { TradeSimulator } from './trade-simulator';
 
 interface SupportResistanceTrade {
   id: string;

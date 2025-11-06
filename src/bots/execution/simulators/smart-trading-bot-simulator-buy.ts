@@ -1,15 +1,15 @@
-import { BaseTradingBot } from '../base-trading-bot';
-import { BotFlowManager, BotConfig } from '../utils/execution/bot-flow-manager';
-import { MarketTrendAnalyzer } from '../services/market-trend-analyzer';
-import { calculateRiskRewardDynamic, validateConfidence } from '../utils/risk/trade-validators';
-import { calculateTargetAndStopPrices } from '../utils/risk/price-calculator';
-import { logBotHeader, logBotStartup } from '../utils/logging/bot-logger';
-import EmaAnalyzer from '../../analyzers/emaAnalyzer';
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
-import { UnifiedDeepSeekAnalyzer } from '../../shared/analyzers/unified-deepseek-analyzer';
-import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../shared/validators/trend-validator';
+import { BaseTradingBot } from '../../core/base-trading-bot';
+import { BotFlowManager, BotConfig } from '../../utils/execution/bot-flow-manager';
+import { MarketTrendAnalyzer } from '../../services/market-trend-analyzer';
+import { calculateRiskRewardDynamic, validateConfidence } from '../../utils/risk/trade-validators';
+import { calculateTargetAndStopPrices } from '../../utils/risk/price-calculator';
+import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
+import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
+import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../../shared/validators/trend-validator';
+import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 
-export class SmartTradingBotSimulatorSell extends BaseTradingBot {
+export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private trendAnalyzer: MarketTrendAnalyzer;
   private emaAnalyzer: EmaAnalyzer;
@@ -18,9 +18,9 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
     super(undefined, undefined, true);
 
     const config: BotConfig = {
-      name: 'Smart Trading Bot Simulator SELL',
+      name: 'Smart Trading Bot Simulator BUY',
       isSimulation: true,
-      tradesFile: UNIFIED_TRADING_CONFIG.FILES.SMART_SIMULATOR_SELL,
+      tradesFile: UNIFIED_TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY,
       requiresFiltering: true,
       requiresValidation: true
     };
@@ -35,27 +35,26 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
 
   protected logBotInfo() {
     console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
-    console.log('🚀 MULTI-SYMBOL SMART TRADING BOT SIMULATOR SELL');
+    console.log('🚀 MULTI-SYMBOL SMART TRADING BOT SIMULATOR BUY');
     console.log('✅ MODO SIMULAÇÃO - Nenhuma ordem real será executada');
-    console.log('🔴 FOCO EM VENDAS - Estratégia Short-Only (SELL/HOLD apenas)');
-    logBotHeader('SIMULADOR MULTI-SYMBOL SMART BOT SELL', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - APENAS VENDAS', true);
+    logBotHeader('SIMULADOR MULTI-SYMBOL SMART BOT', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - SIMULAÇÃO', true);
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
-    return await UnifiedDeepSeekAnalyzer.analyzeSmartTradeSell(this.deepseek!, symbol, marketData);
+    return await UnifiedDeepSeekAnalyzer.analyzeSmartTrade(this.deepseek!, symbol, marketData);
   }
 
   private async filterSymbolsByEma(symbols: string[]): Promise<string[]> {
     const validSymbols = [];
 
     for (const symbol of symbols) {
+      console.log(`\n📊 Analisando Tendência EMA: ${symbol}...`);
       const klines = await this.getBinancePublic().getKlines(symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, UNIFIED_TRADING_CONFIG.CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const currentPrice = prices[prices.length - 1];
       const emaAnalysis = this.emaAnalyzer.analyze({ price24h: prices, currentPrice });
 
-      // Filtro para tendência de baixa (oposto do BUY)
-      if (emaAnalysis.action === 'SELL' && emaAnalysis.reason.includes('Tendência de baixa confirmada')) {
+      if (emaAnalysis.action === 'BUY' && emaAnalysis.reason.includes('Tendência de alta confirmada')) {
         validSymbols.push(symbol);
       }
     }
@@ -63,20 +62,17 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
     return validSymbols;
   }
 
-
-
   private async validateSmartDecision(decision: any, symbol?: string): Promise<boolean> {
     if (!symbol) return false;
-
-    // 1. Validar tendência EMA para baixa
+    // 1. Validar tendência EMA
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    if (!validateTrendAnalysis(trendAnalysis, { direction: 'DOWN', isSimulation: true })) return false;
+    if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: true })) return false;
 
-    // 2. Validar decisão DeepSeek para SELL
-    if (!validateDeepSeekDecision(decision, 'SELL')) return false;
+    // 2. Validar decisão DeepSeek
+    if (!validateDeepSeekDecision(decision, 'BUY')) return false;
 
-    // 3. Aplicar boost inteligente para vendas
-    const boostedDecision = boostConfidence(decision, { baseBoost: 5, maxBoost: 15, trendType: 'SELL' });
+    // 3. Aplicar boost inteligente
+    const boostedDecision = boostConfidence(decision, { baseBoost: 5, maxBoost: 15, trendType: 'BUY' });
 
     // 4. Validação de confiança mínima
     console.log('🔍 Validação de confiança mínima...');
@@ -124,13 +120,13 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
 // Só executa se for chamado diretamente (não importado)
 if (require.main === module) {
   const main = async () => {
-    const smartBotSimulatorSell = new SmartTradingBotSimulatorSell();
-    await smartBotSimulatorSell.executeTrade();
+    const smartBotSimulatorBuy = new SmartTradingBotSimulatorBuy();
+    await smartBotSimulatorBuy.executeTrade();
   }
 
   logBotStartup(
-    'Smart Bot Simulator SELL',
-    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🔴 Análise dupla: EMA + DeepSeek AI - APENAS VENDAS',
+    'Smart Bot Simulator Buy',
+    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise dupla: EMA + DeepSeek AI',
     UNIFIED_TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
     true
   ).then(() => main());

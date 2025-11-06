@@ -1,10 +1,10 @@
-import { BaseTradingBot } from '../../base-trading-bot';
 import { validateTradingConditions } from './bot-initializer';
 import { checkActiveSimulationTradesLimit } from '../validation/simulation-limit-checker';
 import { UnifiedMultiSymbolAnalyzer } from '../../../shared/utils/unified-multi-symbol-analyzer';
 import { executeAndSaveTradeWithValidation, handleBotError } from './bot-executor';
 import { createTradeRecord, saveTradeHistory } from './trade-history-saver';
 import * as path from 'path';
+import { BaseTradingBot } from '../../core/base-trading-bot';
 
 export interface BotConfig {
   name: string;

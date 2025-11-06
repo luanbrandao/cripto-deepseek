@@ -8,14 +8,14 @@ const simulators = [
   { name: '123 Pattern Simulator', command: 'yarn simulate-123' },
   { name: 'EMA Pattern Simulator', command: 'yarn simulate-ema' },
   { name: 'Support/Resistance Simulator', command: 'yarn simulate-support' },
-  
+
   // NEUTRAL SIMULATORS (BUY/SELL/HOLD)
   { name: 'Real Trading Bot Simulator', command: 'yarn real-trading-bot-simulator' },
-  
+
   // BUY ONLY SIMULATORS (Long-Only)
   { name: 'Smart Trading Bot BUY Simulator', command: 'yarn smart-trading-bot-buy-simulator' },
   { name: 'Multi-Smart Trading Bot BUY Simulator', command: 'yarn multi-smart-trading-bot-buy-simulator' },
-  
+
   // SELL ONLY SIMULATORS (Short-Only)
   { name: 'Smart Trading Bot SELL Simulator', command: 'yarn smart-trading-bot-sell-simulator' },
   { name: 'Multi-Smart Trading Bot SELL Simulator', command: 'yarn multi-smart-trading-bot-sell-simulator' }
@@ -23,8 +23,6 @@ const simulators = [
 
 async function runAllSimulators() {
   console.log('🚀 EXECUTANDO TODOS OS SIMULADORES EM SEQUÊNCIA\n');
-  console.log('⚠️ PROBLEMA IDENTIFICADO: Erros de compilação TypeScript');
-  console.log('🔧 SOLUÇÃO: Use "yarn simple-run-simulators" para ver status\n');
 
   for (let i = 0; i < simulators.length; i++) {
     const simulator = simulators[i];
@@ -63,7 +61,6 @@ async function runAllSimulators() {
 
   console.log(`\n${'='.repeat(60)}`);
   console.log('🎉 TODOS OS SIMULADORES EXECUTADOS!');
-  console.log('🔧 Para corrigir: yarn simple-run-simulators');
   console.log(`${'='.repeat(60)}`);
 }
 

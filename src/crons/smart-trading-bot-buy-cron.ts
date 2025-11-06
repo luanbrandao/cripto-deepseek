@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { SmartTradingBotBuy } from '../bots/smart-trading-bot-buy';
+import { SmartTradingBotBuy } from '../bots/execution/real/smart-trading-bot-buy';
 import * as dotenv from 'dotenv';
 import { validateBinanceKeys } from '../bots/utils/validation/env-validator';
 

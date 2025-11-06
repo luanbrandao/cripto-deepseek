@@ -1,14 +1,15 @@
-import { BaseTradingBot } from '../base-trading-bot';
-import { BinancePrivateClient } from '../../core/clients/binance-private-client';
-import { BotFlowManager, BotConfig } from '../utils/execution/bot-flow-manager';
-import { MarketTrendAnalyzer } from '../services/market-trend-analyzer';
-import { calculateRiskRewardDynamic } from '../utils/risk/trade-validators';
-import { calculateTargetAndStopPrices } from '../utils/risk/price-calculator';
-import { logBotHeader, logBotStartup } from '../utils/logging/bot-logger';
-import { AdvancedEmaAnalyzer } from '../services/advanced-ema-analyzer';
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
-import { UnifiedDeepSeekAnalyzer } from '../../shared/analyzers/unified-deepseek-analyzer';
-import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../../shared/validators/trend-validator';
+import { BaseTradingBot } from '../../core/base-trading-bot';
+import { BinancePrivateClient } from '../../../core/clients/binance-private-client';
+import { BotFlowManager } from '../../utils/execution/bot-flow-manager';
+import { BotConfig } from '../../core/types';
+import { MarketTrendAnalyzer } from '../../services/market-trend-analyzer';
+import { calculateRiskRewardDynamic } from '../../utils/risk/trade-validators';
+import { calculateTargetAndStopPrices } from '../../utils/risk/price-calculator';
+import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
+import { AdvancedEmaAnalyzer } from '../../services/advanced-ema-analyzer';
+import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
+import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../../../shared/validators/trend-validator';
 
 export class MultiSmartTradingBotBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
@@ -20,7 +21,7 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
     super(undefined, undefined, true);
 
     // Inicializar BinancePrivateClient para trades reais
-    const { validateBinanceKeys } = require('./utils/validation/env-validator');
+    const { validateBinanceKeys } = require('../../utils/validation/env-validator');
     const keys = validateBinanceKeys();
     if (keys) {
       this.binancePrivate = new BinancePrivateClient(keys.apiKey, keys.apiSecret);
@@ -29,9 +30,7 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Multi-Smart Trading Bot BUY',
       isSimulation: false,
-      tradesFile: UNIFIED_TRADING_CONFIG.FILES.MULTI_SMART_BUY,
-      requiresFiltering: true,
-      requiresValidation: true
+      tradesFile: UNIFIED_TRADING_CONFIG.FILES.MULTI_SMART_BUY
     };
 
     this.flowManager = new BotFlowManager(this, config);

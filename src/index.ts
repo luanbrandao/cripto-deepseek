@@ -1,9 +1,9 @@
-import { BinancePublicClient } from './clients/binance-public-client';
-import { DeepSeekService } from './clients/deepseek-client';
-import { TradeStorage, Trade } from './storage/trade-storage';
 import { AnalysisParser } from './bots/services/analysis-parser';
 import { RiskManager } from './bots/services/risk-manager';
 import * as path from 'path';
+import { Trade, TradeStorage } from './core/utils/trade-storage';
+import { BinancePublicClient } from './core/clients/binance-public-client';
+import { DeepSeekService } from './core/clients/deepseek-client';
 
 async function main() {
   const binancePublic = new BinancePublicClient();

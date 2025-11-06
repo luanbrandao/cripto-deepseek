@@ -1,10 +1,11 @@
 import * as dotenv from 'dotenv';
-import { BaseTradingBot } from '../base-trading-bot';
-import { BotFlowManager, BotConfig } from '../utils/execution/bot-flow-manager';
-import { logBotHeader, logBotStartup } from '../utils/logging/bot-logger';
-import { validateBinanceKeys } from '../utils/validation/env-validator';
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
-import { UnifiedDeepSeekAnalyzer } from '../../shared/analyzers/unified-deepseek-analyzer';
+import { BaseTradingBot } from '../../core/base-trading-bot';
+import { BotFlowManager } from '../../utils/execution/bot-flow-manager';
+import { BotConfig } from '../../core/types';
+import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
+import { validateBinanceKeys } from '../../utils/validation/env-validator';
+import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 
 dotenv.config();
 
