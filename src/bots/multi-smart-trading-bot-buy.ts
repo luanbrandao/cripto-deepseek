@@ -122,7 +122,7 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
     if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: false })) return false;
 
     // 2. Validar decisão DeepSeek
-    if (!validateDeepSeekDecision(decision)) return false;
+    if (!validateDeepSeekDecision(decision, 'BUY')) return false;
 
     // 3. Aplicar boost inteligente
     const boostedDecision = boostConfidence(decision, { baseBoost: 8, maxBoost: 15, trendType: 'BUY' });

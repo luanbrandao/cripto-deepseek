@@ -217,7 +217,11 @@ export class TradeSimulator {
       this.portfolio.totalTrades++;
       tradeAmount = amount;
       console.log(`🟢 COMPRA: $${amount} (${cryptoAmount.toFixed(6)} crypto)`);
-      console.log(`🎯 Alvo: $${(currentPrice * 1.05).toFixed(2)} | 🛑 Stop: $${(currentPrice * 0.97).toFixed(2)}`);
+      // Calcular preços com Risk/Reward 2:1
+      const riskPercent = analysis.confidence >= 80 ? 0.5 : analysis.confidence >= 75 ? 1.0 : 1.5;
+      const targetPrice = currentPrice * (1 + (riskPercent * 2) / 100);
+      const stopPrice = currentPrice * (1 - riskPercent / 100);
+      console.log(`🎯 Alvo: $${targetPrice.toFixed(2)} | 🛑 Stop: $${stopPrice.toFixed(2)}`);
     } else if (analysis.action === 'SELL' && this.portfolio.crypto > 0) {
       const sellValue = this.portfolio.crypto * currentPrice;
       this.portfolio.balance += sellValue;
@@ -225,15 +229,30 @@ export class TradeSimulator {
       this.portfolio.crypto = 0;
       this.portfolio.totalTrades++;
       console.log(`🔴 VENDA: $${sellValue.toFixed(2)}`);
-      console.log(`🎯 Alvo: $${(currentPrice * 0.95).toFixed(2)} | 🛑 Stop: $${(currentPrice * 1.03).toFixed(2)}`);
+      // Calcular preços com Risk/Reward 2:1
+      const riskPercent = analysis.confidence >= 80 ? 0.5 : analysis.confidence >= 75 ? 1.0 : 1.5;
+      const targetPrice = currentPrice * (1 - (riskPercent * 2) / 100);
+      const stopPrice = currentPrice * (1 + riskPercent / 100);
+      console.log(`🎯 Alvo: $${targetPrice.toFixed(2)} | 🛑 Stop: $${stopPrice.toFixed(2)}`);
     } else {
       console.log(`⏸️ HOLD: Mantendo posição`);
       console.log(`📊 Preço atual: $${currentPrice.toFixed(2)}`);
       return; // Não salva trades HOLD
     }
 
-    const targetPrice = analysis.action === 'BUY' ? currentPrice * 1.05 : currentPrice * 0.95;
-    const stopPrice = analysis.action === 'BUY' ? currentPrice * 0.97 : currentPrice * 1.03;
+    // Usar sistema de Risk/Reward 2:1 baseado na confiança
+    const riskPercent = analysis.confidence >= 80 ? 0.5 : analysis.confidence >= 75 ? 1.0 : 1.5;
+    
+    let targetPrice: number;
+    let stopPrice: number;
+    
+    if (analysis.action === 'BUY') {
+      targetPrice = currentPrice * (1 + (riskPercent * 2) / 100);  // Reward = 2x Risk
+      stopPrice = currentPrice * (1 - riskPercent / 100);
+    } else {
+      targetPrice = currentPrice * (1 - (riskPercent * 2) / 100);  // Reward = 2x Risk
+      stopPrice = currentPrice * (1 + riskPercent / 100);
+    }
 
     const potentialGain = Math.abs(targetPrice - currentPrice);
     const potentialLoss = Math.abs(stopPrice - currentPrice);

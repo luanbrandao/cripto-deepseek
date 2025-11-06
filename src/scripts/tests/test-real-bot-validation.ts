@@ -1,5 +1,5 @@
-import { hasActiveTradeForSymbol } from './utils/symbol-trade-checker';
-import { TRADING_CONFIG } from './config/trading-config';
+import { hasActiveTradeForSymbol } from '../../bots/utils/symbol-trade-checker';
+import { UNIFIED_TRADING_CONFIG as TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 async function testRealBotValidation() {
   console.log('🧪 Testando validação do Real Trading Bot...\n');

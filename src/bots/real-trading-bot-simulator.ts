@@ -2,9 +2,11 @@ import { BaseTradingBot } from './base-trading-bot';
 import { BotFlowManager, BotConfig } from './utils/bot-flow-manager';
 import { validateBinanceKeys } from './utils/env-validator';
 import { logBotHeader, logBotStartup } from './utils/bot-logger';
-import { analyzeWithRealTrade } from './analyzers/real-trade-analyzer';
-import { TRADING_CONFIG } from './config/trading-config';
 import * as dotenv from 'dotenv';
+
+// 🚀 MÓDULOS UNIFICADOS - Nova arquitetura centralizada
+import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
+import { UnifiedDeepSeekAnalyzer } from '../shared/analyzers/unified-deepseek-analyzer';
 
 dotenv.config();
 
@@ -17,7 +19,7 @@ export class RealTradingBotSimulator extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Real Trading Bot Simulator',
       isSimulation: true,
-      tradesFile: TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR
+      tradesFile: UNIFIED_TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR
     };
     
     this.flowManager = new BotFlowManager(this, config);
@@ -29,7 +31,7 @@ export class RealTradingBotSimulator extends BaseTradingBot {
   }
 
   private async analyzeWithRealTradeLogic(symbol: string, marketData: any) {
-    return await analyzeWithRealTrade(this.deepseek!, symbol, marketData);
+    return await UnifiedDeepSeekAnalyzer.analyzeRealTrade(this.deepseek!, symbol, marketData);
   }
 
   async executeTrade() {

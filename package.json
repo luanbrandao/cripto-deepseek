@@ -29,7 +29,7 @@
     "run-all-simulators": "ts-node src/scripts/run-all-simulators.ts",
     "_comment3": "=== AUTOMATED CRON JOBS ===",
     "smart-trading-bot-buy-cron": "ts-node src/crons/smart-trading-bot-buy-cron.ts",
-    "smart-trading-bot-buy-simulator-cron": "ts-node src/crons/smart-trading-bot-buy-simulator-cron.ts",
+    "smart-trading-bot-simulator-buy-cron": "ts-node src/crons/smart-trading-bot-simulator-buy-cron.ts",
     "real-trading-bot-simulator-cron": "ts-node src/crons/real-trading-bot-simulator-cron.ts",
     "update-and-simulate-cron": "ts-node src/crons/update-and-simulate-cron.ts",
     "_comment4": "=== TESTS & VALIDATION ===",

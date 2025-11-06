@@ -1,35 +1,35 @@
-import { RiskManager } from './bots/services/risk-manager';
-import { TRADING_CONFIG } from './bots/config/trading-config';
+import { calculateRiskRewardDynamic, validateRiskReward, calculateRiskReward } from '../../bots/utils/trade-validators';
+import { UNIFIED_TRADING_CONFIG as TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 function testRiskRewardValidation() {
   console.log('🧪 TESTANDO VALIDAÇÃO RISK/REWARD 2:1\n');
   
   // Teste 1: Confiança alta (85%)
   console.log('1️⃣ Teste com confiança alta (85%):');
-  const highConfidence = RiskManager.calculateDynamicRiskReward(50000, 85);
+  const highConfidence = calculateRiskReward(85);
   const highRatio = highConfidence.rewardPercent / highConfidence.riskPercent;
-  console.log(`   Risk: ${(highConfidence.riskPercent * 100).toFixed(2)}%`);
-  console.log(`   Reward: ${(highConfidence.rewardPercent * 100).toFixed(2)}%`);
+  console.log(`   Risk: ${highConfidence.riskPercent.toFixed(2)}%`);
+  console.log(`   Reward: ${highConfidence.rewardPercent.toFixed(2)}%`);
   console.log(`   Ratio: ${highRatio.toFixed(2)}:1`);
-  console.log(`   Válido: ${RiskManager.validateRiskReward(highConfidence.riskPercent, highConfidence.rewardPercent) ? '✅' : '❌'}\n`);
+  console.log(`   Válido: ${validateRiskReward(highConfidence.riskPercent, highConfidence.rewardPercent) ? '✅' : '❌'}\n`);
   
   // Teste 2: Confiança média (75%)
   console.log('2️⃣ Teste com confiança média (75%):');
-  const mediumConfidence = RiskManager.calculateDynamicRiskReward(50000, 75);
+  const mediumConfidence = calculateRiskReward(75);
   const mediumRatio = mediumConfidence.rewardPercent / mediumConfidence.riskPercent;
-  console.log(`   Risk: ${(mediumConfidence.riskPercent * 100).toFixed(2)}%`);
-  console.log(`   Reward: ${(mediumConfidence.rewardPercent * 100).toFixed(2)}%`);
+  console.log(`   Risk: ${mediumConfidence.riskPercent.toFixed(2)}%`);
+  console.log(`   Reward: ${mediumConfidence.rewardPercent.toFixed(2)}%`);
   console.log(`   Ratio: ${mediumRatio.toFixed(2)}:1`);
-  console.log(`   Válido: ${RiskManager.validateRiskReward(mediumConfidence.riskPercent, mediumConfidence.rewardPercent) ? '✅' : '❌'}\n`);
+  console.log(`   Válido: ${validateRiskReward(mediumConfidence.riskPercent, mediumConfidence.rewardPercent) ? '✅' : '❌'}\n`);
   
   // Teste 3: Confiança baixa (70%)
   console.log('3️⃣ Teste com confiança baixa (70%):');
-  const lowConfidence = RiskManager.calculateDynamicRiskReward(50000, 70);
+  const lowConfidence = calculateRiskReward(70);
   const lowRatio = lowConfidence.rewardPercent / lowConfidence.riskPercent;
-  console.log(`   Risk: ${(lowConfidence.riskPercent * 100).toFixed(2)}%`);
-  console.log(`   Reward: ${(lowConfidence.rewardPercent * 100).toFixed(2)}%`);
+  console.log(`   Risk: ${lowConfidence.riskPercent.toFixed(2)}%`);
+  console.log(`   Reward: ${lowConfidence.rewardPercent.toFixed(2)}%`);
   console.log(`   Ratio: ${lowRatio.toFixed(2)}:1`);
-  console.log(`   Válido: ${RiskManager.validateRiskReward(lowConfidence.riskPercent, lowConfidence.rewardPercent) ? '✅' : '❌'}\n`);
+  console.log(`   Válido: ${validateRiskReward(lowConfidence.riskPercent, lowConfidence.rewardPercent) ? '✅' : '❌'}\n`);
   
   // Teste 4: Configuração atual
   console.log('4️⃣ Configuração atual:');
