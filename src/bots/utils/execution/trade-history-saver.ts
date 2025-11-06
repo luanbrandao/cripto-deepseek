@@ -12,11 +12,11 @@ export function createTradeRecord(decision: any, orderResult: any, fileName: str
     action: decision.action,
     price: decision.price,
     entryPrice: decision.price,
-    targetPrice: decision.action === 'BUY' 
-      ? decision.price * (1 + rewardPercent) 
+    targetPrice: decision.action === 'BUY'
+      ? decision.price * (1 + rewardPercent)
       : decision.price * (1 - rewardPercent),
-    stopPrice: decision.action === 'BUY' 
-      ? decision.price * (1 - riskPercent) 
+    stopPrice: decision.action === 'BUY'
+      ? decision.price * (1 - riskPercent)
       : decision.price * (1 + riskPercent),
     amount: orderResult ? UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD : 0,
     balance: 0,
@@ -41,7 +41,8 @@ export function createTradeRecord(decision: any, orderResult: any, fileName: str
 }
 
 export function saveTradeHistory(trade: Trade, fileName: string) {
-  const tradesFile = path.join(__dirname, `../../trades/${fileName}`);
+  const tradesFile = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${fileName}`;
+
   TradeStorage.saveTrades([trade], tradesFile);
   console.log(`\n💾 Trade salvo no histórico: ${fileName}`);
 }

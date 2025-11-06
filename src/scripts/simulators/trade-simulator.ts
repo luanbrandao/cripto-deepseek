@@ -4,6 +4,7 @@ import { hasActiveTradeForSymbol } from '../../bots/utils/validation/symbol-trad
 import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import * as path from 'path';
 import { Trade, TradeStorage } from '../../core/utils/trade-storage';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 interface SymbolAnalysis {
   symbol: string;
@@ -37,7 +38,7 @@ export class TradeSimulator {
     this.binance = new BinancePublicClient();
     this.symbol = symbols ? symbols[0] : TRADING_CONFIG.DEFAULT_SYMBOL;
     const analyzerName = analyzer.name || analyzer.constructor.name;
-    this.tradesFile = tradesFile || path.join(__dirname, `../../trades/${analyzerName.toLowerCase()}Trades.json`);
+    this.tradesFile = tradesFile || `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${analyzerName.toLowerCase()}Trades.json`;
   }
 
   async simulate(symbols: string[] = TRADING_CONFIG.SYMBOLS) {

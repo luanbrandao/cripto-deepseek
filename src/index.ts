@@ -4,6 +4,7 @@ import * as path from 'path';
 import { Trade, TradeStorage } from './core/utils/trade-storage';
 import { BinancePublicClient } from './core/clients/binance-public-client';
 import { DeepSeekService } from './core/clients/deepseek-client';
+import { UNIFIED_TRADING_CONFIG } from './shared/config/unified-trading-config';
 
 async function main() {
   const binancePublic = new BinancePublicClient();
@@ -62,7 +63,7 @@ async function main() {
       actualReturn: 0
     };
 
-    const tradesFile = path.join(__dirname, 'trades/deepseekAnalysis.json');
+    const tradesFile = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/deepseekAnalysis.json`;
     TradeStorage.saveTrades([trade], tradesFile);
     console.log('\n💾 Análise salva no histórico: deepseekAnalysis.json');
 

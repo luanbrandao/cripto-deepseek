@@ -1,9 +1,10 @@
 import { BinancePrivateClient } from '../../../core/clients/binance-private-client';
 import * as fs from 'fs';
 import * as path from 'path';
+import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 
 export async function hasActiveTradeForSymbol(
-  binancePrivate: BinancePrivateClient | undefined, 
+  binancePrivate: BinancePrivateClient | undefined,
   symbol: string,
   isSimulation: boolean = false,
   simulationFile?: string
@@ -11,9 +12,9 @@ export async function hasActiveTradeForSymbol(
   if (isSimulation && simulationFile) {
     return hasActiveSimulationTradeForSymbol(symbol, simulationFile);
   }
-  
+
   if (!binancePrivate) return false;
-  
+
   try {
     const openOrders = await binancePrivate.getOpenOrders(symbol);
     if (openOrders.length > 0) {
@@ -29,26 +30,25 @@ export async function hasActiveTradeForSymbol(
 
 function hasActiveSimulationTradeForSymbol(symbol: string, simulationFile: string): boolean {
   try {
-    const tradesPath = path.join(__dirname, '../../trades', simulationFile);
-    
+    const tradesPath = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${simulationFile}`;
     if (!fs.existsSync(tradesPath)) {
       return false;
     }
-    
+
     const tradesData = fs.readFileSync(tradesPath, 'utf8');
     const trades = JSON.parse(tradesData);
-    
+
     // Verifica se há trades pendentes para o símbolo
-    const activeSimulationTrade = trades.some((trade: any) => 
-      trade.symbol === symbol && 
+    const activeSimulationTrade = trades.some((trade: any) =>
+      trade.symbol === symbol &&
       trade.status === 'pending'
     );
-    
+
     if (activeSimulationTrade) {
       console.log(`⚠️ Trade ativo encontrado para ${symbol} - Pulando para evitar duplicação`);
       return true;
     }
-    
+
     return false;
   } catch (error) {
     return false;

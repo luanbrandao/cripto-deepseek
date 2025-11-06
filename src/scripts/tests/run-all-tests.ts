@@ -4,6 +4,7 @@
 
 import { spawn } from 'child_process';
 import * as path from 'path';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 console.log('🚀 EXECUTANDO TODOS OS TESTES DO SISTEMA\n');
 
@@ -37,7 +38,7 @@ const tests = [
 
 let completedTests = 0;
 let passedTests = 0;
-const results: Array<{name: string, passed: boolean, output?: string}> = [];
+const results: Array<{ name: string, passed: boolean, output?: string }> = [];
 
 function runTest(test: typeof tests[0]): Promise<boolean> {
   return new Promise((resolve) => {
@@ -46,7 +47,7 @@ function runTest(test: typeof tests[0]): Promise<boolean> {
     console.log(`📝 ${test.description}`);
     console.log(`${'='.repeat(60)}`);
 
-    const scriptPath = path.join(__dirname, test.script);
+    const scriptPath = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${test.script}`;
     const child = spawn('ts-node', [scriptPath], {
       stdio: 'pipe',
       shell: true
@@ -119,7 +120,7 @@ async function runAllTests() {
 
   console.log('\n' + '='.repeat(80));
   console.log(`🎯 RESULTADO GERAL: ${passedTests}/${completedTests} testes passaram`);
-  
+
   const successRate = (passedTests / completedTests) * 100;
   console.log(`📈 Taxa de sucesso: ${successRate.toFixed(1)}%`);
 
@@ -128,7 +129,7 @@ async function runAllTests() {
     process.exit(0);
   } else {
     console.log('\n⚠️  ALGUNS TESTES FALHARAM! Verifique os erros acima.');
-    
+
     // Mostrar testes que falharam
     const failedTests = results.filter(r => !r.passed);
     if (failedTests.length > 0) {
@@ -137,7 +138,7 @@ async function runAllTests() {
         console.log(`   • ${test.name}`);
       });
     }
-    
+
     process.exit(1);
   }
 }
