@@ -20,6 +20,7 @@ export interface Trade {
     potentialLoss: number;
     riskRewardRatio: number;
   };
+  riskCalculationMethod?: string;
   result?: 'win' | 'loss';
   exitPrice?: number;
   actualReturn?: number;

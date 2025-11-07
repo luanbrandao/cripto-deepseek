@@ -5,6 +5,25 @@ import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import * as path from 'path';
 import { Trade, TradeStorage } from '../../core/utils/trade-storage';
 import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { calculateTargetAndStopPrices } from '../../bots/utils/risk/price-calculator';
+
+// Função específica para manter consistência histórica do TradeSimulator
+function calculateTradeSimulatorPrices(currentPrice: number, confidence: number, action: 'BUY' | 'SELL') {
+  const riskPercent = confidence >= CONFIDENCE_LEVELS.HIGH ? 0.5 : confidence >= CONFIDENCE_LEVELS.MEDIUM ? 1.0 : 1.5;
+
+  let targetPrice: number;
+  let stopPrice: number;
+
+  if (action === 'BUY') {
+    targetPrice = currentPrice * (1 + (riskPercent * 2) / 100);
+    stopPrice = currentPrice * (1 - riskPercent / 100);
+  } else {
+    targetPrice = currentPrice * (1 - (riskPercent * 2) / 100);
+    stopPrice = currentPrice * (1 + riskPercent / 100);
+  }
+
+  return { targetPrice, stopPrice, riskPercent };
+}
 
 // Níveis de confiança para cálculo de risco
 const CONFIDENCE_LEVELS = {
@@ -224,11 +243,6 @@ export class TradeSimulator {
       this.portfolio.totalTrades++;
       tradeAmount = amount;
       console.log(`🟢 COMPRA: $${amount} (${cryptoAmount.toFixed(6)} crypto)`);
-      // Calcular preços com Risk/Reward 2:1
-      const riskPercent = analysis.confidence >= CONFIDENCE_LEVELS.HIGH ? 0.5 : analysis.confidence >= CONFIDENCE_LEVELS.MEDIUM ? 1.0 : 1.5;
-      const targetPrice = currentPrice * (1 + (riskPercent * 2) / 100);
-      const stopPrice = currentPrice * (1 - riskPercent / 100);
-      console.log(`🎯 Alvo: $${targetPrice.toFixed(2)} | 🛑 Stop: $${stopPrice.toFixed(2)}`);
     } else if (analysis.action === 'SELL' && this.portfolio.crypto > 0) {
       const sellValue = this.portfolio.crypto * currentPrice;
       this.portfolio.balance += sellValue;
@@ -236,30 +250,20 @@ export class TradeSimulator {
       this.portfolio.crypto = 0;
       this.portfolio.totalTrades++;
       console.log(`🔴 VENDA: $${sellValue.toFixed(2)}`);
-      // Calcular preços com Risk/Reward 2:1
-      const riskPercent = analysis.confidence >= CONFIDENCE_LEVELS.HIGH ? 0.5 : analysis.confidence >= CONFIDENCE_LEVELS.MEDIUM ? 1.0 : 1.5;
-      const targetPrice = currentPrice * (1 - (riskPercent * 2) / 100);
-      const stopPrice = currentPrice * (1 + riskPercent / 100);
-      console.log(`🎯 Alvo: $${targetPrice.toFixed(2)} | 🛑 Stop: $${stopPrice.toFixed(2)}`);
     } else {
       console.log(`⏸️ HOLD: Mantendo posição`);
       console.log(`📊 Preço atual: $${currentPrice.toFixed(2)}`);
       return; // Não salva trades HOLD
     }
 
-    // Usar sistema de Risk/Reward 2:1 baseado na confiança
-    const riskPercent = analysis.confidence >= CONFIDENCE_LEVELS.HIGH ? 0.5 : analysis.confidence >= CONFIDENCE_LEVELS.MEDIUM ? 1.0 : 1.5;
+    // Usar lógica específica do TradeSimulator para manter consistência histórica
+    const { targetPrice, stopPrice } = calculateTradeSimulatorPrices(
+      currentPrice,
+      analysis.confidence,
+      analysis.action
+    );
 
-    let targetPrice: number;
-    let stopPrice: number;
-
-    if (analysis.action === 'BUY') {
-      targetPrice = currentPrice * (1 + (riskPercent * 2) / 100);  // Reward = 2x Risk
-      stopPrice = currentPrice * (1 - riskPercent / 100);
-    } else {
-      targetPrice = currentPrice * (1 - (riskPercent * 2) / 100);  // Reward = 2x Risk
-      stopPrice = currentPrice * (1 + riskPercent / 100);
-    }
+    console.log(`🎯 Alvo: $${targetPrice.toFixed(2)} | 🛑 Stop: $${stopPrice.toFixed(2)}`);
 
     const potentialGain = Math.abs(targetPrice - currentPrice);
     const potentialLoss = Math.abs(stopPrice - currentPrice);
@@ -283,7 +287,8 @@ export class TradeSimulator {
         potentialGain: potentialGain,
         potentialLoss: potentialLoss,
         riskRewardRatio: riskRewardRatio
-      }
+      },
+      riskCalculationMethod: 'calculateTradeSimulatorPrices'
     };
 
     this.trades.push(trade);

@@ -13,6 +13,7 @@ export interface BotConfig {
   tradesFile: string;
   requiresValidation?: boolean;
   requiresFiltering?: boolean;
+  riskCalculationMethod?: string;
 }
 
 export interface TradeExecutionResult {
@@ -136,7 +137,7 @@ export class BotFlowManager {
     console.log(`💰 Preço: $${decision.price}`);
 
     // Salvar histórico
-    const trade = createTradeRecord(decision, simulatedOrder, this.config.tradesFile);
+    const trade = createTradeRecord(decision, simulatedOrder, this.config.tradesFile, this.config.riskCalculationMethod);
     saveTradeHistory(trade, this.config.tradesFile);
 
     console.log('\n🎯 TRADE SIMULADO COM SUCESSO!');

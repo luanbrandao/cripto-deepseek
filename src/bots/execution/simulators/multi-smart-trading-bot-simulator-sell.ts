@@ -24,7 +24,8 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
       isSimulation: true,
       tradesFile: UNIFIED_TRADING_CONFIG.FILES.MULTI_SMART_SIMULATOR_SELL,
       requiresFiltering: true,
-      requiresValidation: true
+      requiresValidation: true,
+      riskCalculationMethod: 'Real Market Method'
     };
 
     this.flowManager = new BotFlowManager(this, config);

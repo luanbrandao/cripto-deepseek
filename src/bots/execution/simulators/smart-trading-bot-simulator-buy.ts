@@ -22,7 +22,8 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
       isSimulation: true,
       tradesFile: UNIFIED_TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY,
       requiresFiltering: true,
-      requiresValidation: true
+      requiresValidation: true,
+      riskCalculationMethod: 'Basic Method'
     };
 
     this.flowManager = new BotFlowManager(this, config);

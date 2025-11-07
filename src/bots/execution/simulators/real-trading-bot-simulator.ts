@@ -17,7 +17,8 @@ export class RealTradingBotSimulator extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Real Trading Bot Simulator',
       isSimulation: true,
-      tradesFile: UNIFIED_TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR
+      tradesFile: UNIFIED_TRADING_CONFIG.FILES.REAL_BOT_SIMULATOR,
+      riskCalculationMethod: 'Real Market Method'
     };
 
     this.flowManager = new BotFlowManager(this, config);

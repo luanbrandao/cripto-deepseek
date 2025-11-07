@@ -3,7 +3,7 @@ import { RiskManager } from '../../services/risk-manager';
 import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 import * as path from 'path';
 
-export function createTradeRecord(decision: any, orderResult: any, fileName: string): Trade {
+export function createTradeRecord(decision: any, orderResult: any, fileName: string, riskCalculationMethod?: string): Trade {
   const { riskPercent, rewardPercent } = RiskManager.calculateDynamicRiskReward(decision.price, decision.confidence);
 
   const trade: Trade = {
@@ -28,7 +28,8 @@ export function createTradeRecord(decision: any, orderResult: any, fileName: str
       potentialGain: decision.price * rewardPercent,
       potentialLoss: decision.price * riskPercent,
       riskRewardRatio: rewardPercent / riskPercent
-    }
+    },
+    riskCalculationMethod: riskCalculationMethod || 'Dynamic Risk Manager'
   };
 
   if (orderResult) {
