@@ -11,9 +11,9 @@ import { findSupportResistanceLevels } from '../analysis/support-resistance-calc
  * Calcula preços de target e stop para uma ação específica
  */
 function calculatePricesForAction(
-  price: number, 
-  riskPercent: number, 
-  rewardPercent: number, 
+  price: number,
+  riskPercent: number,
+  rewardPercent: number,
   action: 'BUY' | 'SELL'
 ) {
   if (action === 'BUY') {
@@ -22,7 +22,7 @@ function calculatePricesForAction(
       stopPrice: price * (1 - riskPercent)
     };
   }
-  
+
   return {
     targetPrice: price * (1 - rewardPercent),
     stopPrice: price * (1 + riskPercent)
@@ -36,7 +36,7 @@ function calculatePricesForAction(
 export function calculateTargetAndStopPrices(price: number, confidence: number, action: 'BUY' | 'SELL') {
   const { riskPercent, rewardPercent } = calculateRiskReward(confidence);
   const { targetPrice, stopPrice } = calculatePricesForAction(price, riskPercent, rewardPercent, action);
-  
+
   return { targetPrice, stopPrice, riskPercent: riskPercent * 100 };
 }
 
@@ -51,13 +51,13 @@ export function calculateTargetAndStopPricesRealMarket(
   volatility: number
 ) {
   const { riskPercent, rewardPercent } = RiskManager.calculateDynamicRiskReward(price, confidence);
-  
+
   // Ajustar com volatilidade
   const adjustedRisk = riskPercent * (1 + volatility / 2);
   const adjustedReward = rewardPercent * (1 + volatility / 2);
-  
+
   const { targetPrice, stopPrice } = calculatePricesForAction(price, adjustedRisk, adjustedReward, action);
-  
+
   return { targetPrice, stopPrice, riskPercent: adjustedRisk * 100 };
 }
 
@@ -74,26 +74,35 @@ export function calculateTargetAndStopPricesWithLevels(
   // Usar volatility-calculator existente
   const volatility = calculateVolatility(klines);
   const levels = findSupportResistanceLevels(klines, price);
+
+  // Usar lógica própria baseada em níveis técnicos + volatilidade
+  // Calcular risco baseado na distância aos níveis de suporte/resistência
+  const supportDistance = Math.abs(price - levels.support) / price;
+  const resistanceDistance = Math.abs(levels.resistance - price) / price;
   
-  // Usar lógica própria baseada em níveis técnicos (não chamar o outro método)
-  const { riskPercent, rewardPercent } = calculateRiskReward(confidence);
-  const baseResult = calculatePricesForAction(price, riskPercent, rewardPercent, action);
-  const baseResultWithPercent = { ...baseResult, riskPercent: riskPercent * 100 };
+  // Ajustar risco baseado na volatilidade e distância aos níveis
+  const baseRisk = Math.max(0.005, Math.min(0.02, volatility / 100)); // 0.5% a 2%
+  const levelAdjustment = action === 'BUY' ? supportDistance : resistanceDistance;
+  const adjustedRisk = baseRisk * (1 + levelAdjustment);
+  const adjustedReward = adjustedRisk * 2.1; // Ratio ligeiramente maior que 2:1
   
+  const baseResult = calculatePricesForAction(price, adjustedRisk, adjustedReward, action);
+  const baseResultWithPercent = { ...baseResult, riskPercent: adjustedRisk * 100 };
+
   const optimizedTarget = adjustTargetToNearestLevel(
-    baseResultWithPercent.targetPrice, 
+    baseResultWithPercent.targetPrice,
     action === 'BUY' ? levels.resistance : levels.support,
     price,
     action
   );
-  
+
   const optimizedStop = adjustStopToProtectionLevel(
     baseResultWithPercent.stopPrice,
     action === 'BUY' ? levels.support : levels.resistance,
     price,
     action
   );
-  
+
   return {
     targetPrice: optimizedTarget,
     stopPrice: optimizedStop,
@@ -121,12 +130,12 @@ function adjustTargetToNearestLevel(
 ): number {
   const distanceToLevel = Math.abs(nearestLevel - currentPrice) / currentPrice;
   const distanceToTarget = Math.abs(calculatedTarget - currentPrice) / currentPrice;
-  
+
   if (Math.abs(distanceToLevel - distanceToTarget) < 0.002) {
     const buffer = currentPrice * 0.001;
     return action === 'BUY' ? nearestLevel - buffer : nearestLevel + buffer;
   }
-  
+
   return calculatedTarget;
 }
 
@@ -137,12 +146,12 @@ function adjustStopToProtectionLevel(
   action: 'BUY' | 'SELL'
 ): number {
   const buffer = currentPrice * 0.002;
-  
+
   if (action === 'BUY') {
     const protectedStop = protectionLevel - buffer;
     return Math.min(calculatedStop, protectedStop);
   }
-  
+
   const protectedStop = protectionLevel + buffer;
   return Math.max(calculatedStop, protectedStop);
 }
