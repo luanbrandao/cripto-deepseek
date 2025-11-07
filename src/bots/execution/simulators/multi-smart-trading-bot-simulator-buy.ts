@@ -2,7 +2,7 @@ import { BaseTradingBot } from '../../core/base-trading-bot';
 import { BotFlowManager, BotConfig } from '../../utils/execution/bot-flow-manager';
 import { MarketTrendAnalyzer } from '../../services/market-trend-analyzer';
 import { calculateRiskRewardDynamic } from '../../utils/risk/trade-validators';
-import { calculateTargetAndStopPricesWithLevels } from '../../utils/risk/price-calculator';
+import { calculateTargetAndStopPricesRealMarket } from '../../utils/risk/price-calculator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { validateAdvancedBuyStrength } from '../../utils/validation/advanced-buy-validator';
 import { AdvancedEmaAnalyzer } from '../../services/advanced-ema-analyzer';
@@ -152,15 +152,15 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     console.log('🔍 Validação final com Suporte/Resistência + Volatilidade...');
     console.log(`📊 Volatilidade ${symbol}: ${volatility.toFixed(2)}%`);
 
-    const priceResult = calculateTargetAndStopPricesWithLevels(
+    const priceResult = calculateTargetAndStopPricesRealMarket(
       boostedDecision.price,
       boostedDecision.confidence,
       boostedDecision.action,
-      klines
+      volatility
     );
 
-    console.log(`🎯 Target: ${priceResult.targetPrice.toFixed(2)} (Nível: ${priceResult.levels.resistance.toFixed(2)})`);
-    console.log(`🛑 Stop: ${priceResult.stopPrice.toFixed(2)} (Suporte: ${priceResult.levels.support.toFixed(2)})`);
+    console.log(`🎯 Target: ${priceResult.targetPrice.toFixed(2)} (Real Market Method)`);
+    console.log(`🛑 Stop: ${priceResult.stopPrice.toFixed(2)} (Real Market Method)`);
 
     const { targetPrice, stopPrice } = priceResult;
 
