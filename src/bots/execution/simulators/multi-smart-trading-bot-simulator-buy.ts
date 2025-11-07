@@ -76,7 +76,12 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
 
       const threshold = this.getThresholdBuyMarketCondition(condition.type);
 
-      if (this.isSymbolValid(analysis, threshold)) {
+      const strengthValid = validateAdvancedBuyStrength(analysis, threshold);
+      const strongUptrend = this.advancedEmaAnalyzer.isStrongUptrend(analysis);
+      const moderateUptrend = this.advancedEmaAnalyzer.isModerateUptrend(analysis);
+      const trendValid = strongUptrend || moderateUptrend;
+
+      if (strengthValid && trendValid) {
         validSymbols.push(symbol);
         console.log(`✅ ${symbol}: ${analysis.overallStrength.toFixed(1)} (${condition.type})`);
       } else {
@@ -87,20 +92,26 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     return validSymbols;
   }
 
+  // private getThresholdBuyMarketCondition(marketType: string): number {
+  //   switch (marketType) {
+  //     case 'BULL_MARKET': return 25; // Mais oportunidades em bull market
+  //     case 'BEAR_MARKET': return 35; // Seletivo em bear market
+  //     case 'SIDEWAYS': return 30;    // Moderado em mercado lateral
+  //     default: return 31.4;          // Padrão mais realista para mercado atual
+  //   }
+  // }
+
   private getThresholdBuyMarketCondition(marketType: string): number {
     switch (marketType) {
-      case 'BULL_MARKET': return 65;
-      case 'BEAR_MARKET': return 85;
-      default: return 75;
+      case 'BULL_MARKET': return 25; // Mais oportunidades em bull market
+      case 'BEAR_MARKET': return 35; // Seletivo em bear market
+      case 'SIDEWAYS': return 30;    // Moderado em mercado lateral
+      default: return 31.4;          // Padrão mais realista para mercado atual
     }
   }
-
   private isSymbolValid(analysis: any, threshold: number): boolean {
-    // Validação específica para compras - procura por tendências de alta
-    const isBullishTrend = this.advancedEmaAnalyzer.isStrongUptrend(analysis) ||
-      this.advancedEmaAnalyzer.isModerateUptrend(analysis);
-
-    return validateAdvancedBuyStrength(analysis, threshold) && isBullishTrend;
+    // Esta função não é mais usada - lógica movida para filterSymbolsByStrength
+    return true;
   }
 
   private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {

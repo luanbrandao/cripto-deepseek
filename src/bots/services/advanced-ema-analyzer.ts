@@ -26,7 +26,7 @@ export class AdvancedEmaAnalyzer {
 
   analyzeAdvanced(prices: number[], volumes?: number[]): AdvancedEmaAnalysis {
     const currentPrice = prices[prices.length - 1];
-    
+
     // Calculate multiple EMAs
     const ema12 = calculateEMA(prices, 12);
     const ema26 = calculateEMA(prices, 26);
@@ -92,6 +92,16 @@ export class AdvancedEmaAnalyzer {
     );
   }
 
+  // isModerateUptrend(analysis: AdvancedEmaAnalysis): boolean {
+  //   return (
+  //     analysis.shortTerm.trend === 'UP' &&
+  //     (analysis.mediumTerm.trend === 'UP' || analysis.mediumTerm.trend === 'SIDEWAYS' || analysis.longTerm.trend === 'UP') &&
+  //     analysis.momentum > 25 &&
+  //     analysis.overallStrength > 20
+  //   );
+  // }
+
+
   isModerateUptrend(analysis: AdvancedEmaAnalysis): boolean {
     return (
       analysis.shortTerm.trend === 'UP' &&
@@ -101,11 +111,21 @@ export class AdvancedEmaAnalyzer {
     );
   }
 
+  // isModerateUptrend(analysis: AdvancedEmaAnalysis): boolean {
+  //   return (
+  //     analysis.shortTerm.trend === 'UP' &&
+  //     (analysis.mediumTerm.trend === 'UP' || analysis.mediumTerm.trend === 'SIDEWAYS' || analysis.longTerm.trend === 'UP') &&
+  //     analysis.momentum > 25 &&
+  //     analysis.overallStrength > 20
+  //   );
+  // }
+
+
   getMarketCondition(analysis: AdvancedEmaAnalysis): MarketCondition {
     if (this.isStrongUptrend(analysis)) {
       return { type: 'BULL_MARKET', confidence: 90 };
     }
-    
+
     if (this.isModerateUptrend(analysis)) {
       return { type: 'BULL_MARKET', confidence: 70 };
     }
@@ -128,7 +148,7 @@ export class AdvancedEmaAnalyzer {
   private calculateTrendStrength(current: number, fast: number, slow: number): number {
     const fastSlowDiff = Math.abs(fast - slow) / slow * 100;
     const currentFastDiff = Math.abs(current - fast) / fast * 100;
-    
+
     const strength = (fastSlowDiff * 0.6) + (currentFastDiff * 0.4);
     return Math.min(100, strength * 10);
   }
@@ -138,10 +158,10 @@ export class AdvancedEmaAnalyzer {
 
     const recent = prices.slice(-7);
     const previous = prices.slice(-14, -7);
-    
+
     const recentAvg = recent.reduce((a, b) => a + b) / recent.length;
     const previousAvg = previous.reduce((a, b) => a + b) / previous.length;
-    
+
     const momentum = ((recentAvg - previousAvg) / previousAvg) * 100;
     return Math.max(0, Math.min(100, 50 + momentum * 5));
   }
@@ -165,7 +185,7 @@ export class AdvancedEmaAnalyzer {
     const avgLoss = losses / period;
 
     if (avgLoss === 0) return 100;
-    
+
     const rs = avgGain / avgLoss;
     return 100 - (100 / (1 + rs));
   }
@@ -175,7 +195,7 @@ export class AdvancedEmaAnalyzer {
 
     const recentVolume = volumes.slice(-5).reduce((a, b) => a + b) / 5;
     const avgVolume = volumes.slice(-20).reduce((a, b) => a + b) / 20;
-    
+
     const volumeRatio = recentVolume / avgVolume;
     return Math.min(100, Math.max(0, volumeRatio * 50));
   }

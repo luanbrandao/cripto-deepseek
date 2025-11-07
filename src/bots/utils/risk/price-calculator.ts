@@ -80,32 +80,18 @@ export function calculateTargetAndStopPricesWithLevels(
   const supportDistance = Math.abs(price - levels.support) / price;
   const resistanceDistance = Math.abs(levels.resistance - price) / price;
   
-  // Ajustar risco baseado na volatilidade e distância aos níveis
-  const baseRisk = Math.max(0.005, Math.min(0.02, volatility / 100)); // 0.5% a 2%
-  const levelAdjustment = action === 'BUY' ? supportDistance : resistanceDistance;
-  const adjustedRisk = baseRisk * (1 + levelAdjustment);
-  const adjustedReward = adjustedRisk * 2.1; // Ratio ligeiramente maior que 2:1
+  // Garantir ratio mínimo de 2:1 sempre
+  const baseRisk = Math.max(0.005, Math.min(0.015, volatility / 100)); // 0.5% a 1.5%
+  const adjustedRisk = baseRisk;
+  const adjustedReward = adjustedRisk * 2.0; // Ratio exato 2:1
   
   const baseResult = calculatePricesForAction(price, adjustedRisk, adjustedReward, action);
   const baseResultWithPercent = { ...baseResult, riskPercent: adjustedRisk * 100 };
 
-  const optimizedTarget = adjustTargetToNearestLevel(
-    baseResultWithPercent.targetPrice,
-    action === 'BUY' ? levels.resistance : levels.support,
-    price,
-    action
-  );
-
-  const optimizedStop = adjustStopToProtectionLevel(
-    baseResultWithPercent.stopPrice,
-    action === 'BUY' ? levels.support : levels.resistance,
-    price,
-    action
-  );
-
+  // Manter os preços calculados para garantir ratio 2:1
   return {
-    targetPrice: optimizedTarget,
-    stopPrice: optimizedStop,
+    targetPrice: baseResultWithPercent.targetPrice,
+    stopPrice: baseResultWithPercent.stopPrice,
     riskPercent: baseResultWithPercent.riskPercent,
     levels,
     originalTarget: baseResultWithPercent.targetPrice,

@@ -108,23 +108,20 @@ export function getAdvancedBuyThreshold(marketType: string): number {
 
 export function validateAdvancedBuyStrength(analysis: any, threshold: number): boolean {
   const strength = analysis.overallStrength || 0;
-  const smartScore = analysis.smartScore || 0;
 
-  // Validação combinada de força e smart score
-  const combinedScore = (strength + smartScore) / 2;
-
-  if (combinedScore < threshold) {
-    console.log(`❌ Score combinado ${combinedScore.toFixed(1)} < ${threshold} (threshold)`);
+  // Usar apenas overallStrength (smartScore não existe no AdvancedEmaAnalysis)
+  if (strength < threshold) {
+    console.log(`❌ ${strength.toFixed(1)} < ${threshold} (threshold)`);
     return false;
   }
 
-  // Validação adicional: deve ter sinais bullish suficientes
-  const bullishCount = analysis.bullishSignals?.length || 0;
-  if (bullishCount < 2) {
-    console.log(`❌ Sinais bullish insuficientes: ${bullishCount} < 2`);
+  // Validação adicional: verificar se é tendência de alta
+  const isUptrend = analysis.shortTerm?.trend === 'UP' || analysis.mediumTerm?.trend === 'UP';
+  if (!isUptrend) {
+    console.log(`❌ Não está em tendência de alta`);
     return false;
   }
 
-  console.log(`✅ Validação avançada aprovada: Score ${combinedScore.toFixed(1)}, Sinais: ${bullishCount}`);
+  console.log(`✅ Validação aprovada: Força ${strength.toFixed(1)}, Tendência: UP`);
   return true;
 }

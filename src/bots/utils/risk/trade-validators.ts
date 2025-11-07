@@ -118,7 +118,9 @@ export function calculateRiskRewardDynamic(entryPrice: number, targetPrice: numb
   
   console.log(`📊 Risk/Reward Dinâmico: ${(rewardPercent * 100).toFixed(2)}%/${(riskPercent * 100).toFixed(2)}% (${ratio.toFixed(2)}:1)`);
   
-  const isValid = ratio >= UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO;
+  // Usar tolerância para evitar problemas de precisão numérica
+  const tolerance = 0.01;
+  const isValid = ratio >= (UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO - tolerance);
   
   if (!isValid) {
     console.log(`❌ RATIO INSUFICIENTE: ${ratio.toFixed(2)}:1 < ${UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1`);

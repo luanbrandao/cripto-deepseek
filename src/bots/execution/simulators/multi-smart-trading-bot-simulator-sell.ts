@@ -98,6 +98,15 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     }
   }
 
+  // private getThresholdSellMarketCondition(marketType: string): number {
+  //   switch (marketType) {
+  //     case 'BULL_MARKET': return 40;  // Mais rigoroso em mercado de alta
+  //     case 'BEAR_MARKET': return 20;  // Muito permissivo em mercado de baixa
+  //     case 'SIDEWAYS': return 30;     // Moderado em mercado lateral
+  //     default: return 35;             // Padrão para mercado lateral
+  //   }
+  // }
+
   private isSymbolValid(analysis: any, threshold: number): boolean {
     // Validação específica para vendas - procura por tendências de baixa
     const isBearishTrend = this.isBearishByEma(analysis);
