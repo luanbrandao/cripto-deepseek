@@ -8,7 +8,7 @@ export class RiskManager {
 
     // Quanto maior a confiança, menor o risco
     const riskPercent = Math.max(BASE_PERCENT, Math.min(MAX_PERCENT,
-      MAX_PERCENT - ((confidence - 70) / 15) * (MAX_PERCENT - BASE_PERCENT)
+      MAX_PERCENT - ((confidence - UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) / 15) * (MAX_PERCENT - BASE_PERCENT)
     ));
 
     // GARANTIR SEMPRE 2:1 - Reward é EXATAMENTE 2x o risco

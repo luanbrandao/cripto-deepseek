@@ -6,6 +6,12 @@ import * as path from 'path';
 import { Trade, TradeStorage } from '../../core/utils/trade-storage';
 import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
+// Níveis de confiança para cálculo de risco
+const CONFIDENCE_LEVELS = {
+  HIGH: UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE,    // 90% (alta confiança)
+  MEDIUM: UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE,   // 85% (média confiança)
+} as const;
+
 interface SymbolAnalysis {
   symbol: string;
   analysis: any;
@@ -219,7 +225,7 @@ export class TradeSimulator {
       tradeAmount = amount;
       console.log(`🟢 COMPRA: $${amount} (${cryptoAmount.toFixed(6)} crypto)`);
       // Calcular preços com Risk/Reward 2:1
-      const riskPercent = analysis.confidence >= 80 ? 0.5 : analysis.confidence >= 75 ? 1.0 : 1.5;
+      const riskPercent = analysis.confidence >= CONFIDENCE_LEVELS.HIGH ? 0.5 : analysis.confidence >= CONFIDENCE_LEVELS.MEDIUM ? 1.0 : 1.5;
       const targetPrice = currentPrice * (1 + (riskPercent * 2) / 100);
       const stopPrice = currentPrice * (1 - riskPercent / 100);
       console.log(`🎯 Alvo: $${targetPrice.toFixed(2)} | 🛑 Stop: $${stopPrice.toFixed(2)}`);
@@ -231,7 +237,7 @@ export class TradeSimulator {
       this.portfolio.totalTrades++;
       console.log(`🔴 VENDA: $${sellValue.toFixed(2)}`);
       // Calcular preços com Risk/Reward 2:1
-      const riskPercent = analysis.confidence >= 80 ? 0.5 : analysis.confidence >= 75 ? 1.0 : 1.5;
+      const riskPercent = analysis.confidence >= CONFIDENCE_LEVELS.HIGH ? 0.5 : analysis.confidence >= CONFIDENCE_LEVELS.MEDIUM ? 1.0 : 1.5;
       const targetPrice = currentPrice * (1 - (riskPercent * 2) / 100);
       const stopPrice = currentPrice * (1 + riskPercent / 100);
       console.log(`🎯 Alvo: $${targetPrice.toFixed(2)} | 🛑 Stop: $${stopPrice.toFixed(2)}`);
@@ -242,7 +248,7 @@ export class TradeSimulator {
     }
 
     // Usar sistema de Risk/Reward 2:1 baseado na confiança
-    const riskPercent = analysis.confidence >= 80 ? 0.5 : analysis.confidence >= 75 ? 1.0 : 1.5;
+    const riskPercent = analysis.confidence >= CONFIDENCE_LEVELS.HIGH ? 0.5 : analysis.confidence >= CONFIDENCE_LEVELS.MEDIUM ? 1.0 : 1.5;
 
     let targetPrice: number;
     let stopPrice: number;

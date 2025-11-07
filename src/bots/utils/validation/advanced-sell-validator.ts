@@ -1,3 +1,4 @@
+import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
 import { validateRiskReward, calculateRiskReward } from '../risk/trade-validators';
 
 export function validateAdvancedBearishTrend(trendAnalysis: any, isSimulation = false): boolean {
@@ -18,13 +19,13 @@ export function validateAdvancedSellDecision(decision: any): boolean {
     console.log('⏸️ Análise multi-dimensional não recomenda venda - aguardando');
     return false;
   }
-  
+
   // Validação de confiança mínima para vendas avançadas
-  if (decision.confidence < 85) {
-    console.log(`❌ Confiança ${decision.confidence}% insuficiente para venda avançada (mín: 85%)`);
+  if (decision.confidence < UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
+    console.log(`❌ Confiança ${decision.confidence}% insuficiente para venda avançada (mín: ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}%)`);
     return false;
   }
-  
+
   console.log('✅ Decisão de VENDA AVANÇADA aprovada');
   console.log(`📊 Smart Score: ${decision.smartScore || 'N/A'}`);
   console.log(`🔍 Sinais Bearish: ${decision.bearishSignals?.length || 0}`);
@@ -41,13 +42,13 @@ export function boostAdvancedSellConfidence(decision: any) {
   if (!validateAdvancedSellRiskReward(decision)) {
     throw new Error('Risk/Reward ratio insuficiente - venda avançada cancelada');
   }
-  
+
   // Boost inteligente para vendas avançadas
   let boost = 0;
-  
+
   // Base boost para confirmação EMA bearish
   boost += 5;
-  
+
   // Boost baseado no Smart Score
   if (decision.smartScore >= 90) {
     boost += 5; // Score muito alto
@@ -56,7 +57,7 @@ export function boostAdvancedSellConfidence(decision: any) {
   } else if (decision.smartScore >= 70) {
     boost += 2; // Score médio
   }
-  
+
   // Boost baseado no número de sinais bearish
   const bearishCount = decision.bearishSignals?.length || 0;
   if (bearishCount >= 5) {
@@ -64,14 +65,14 @@ export function boostAdvancedSellConfidence(decision: any) {
   } else if (bearishCount >= 3) {
     boost += 2; // Sinais suficientes
   }
-  
+
   // Boost baseado no nível de risco
   if (decision.riskLevel === 'LOW') {
     boost += 3; // Baixo risco = mais boost
   } else if (decision.riskLevel === 'MEDIUM') {
     boost += 1; // Risco médio = boost moderado
   }
-  
+
   // Boost para padrões específicos
   const reason = decision.reason?.toLowerCase() || '';
   if (reason.includes('death cross') || reason.includes('rompimento')) {
@@ -83,15 +84,15 @@ export function boostAdvancedSellConfidence(decision: any) {
   if (reason.includes('divergência')) {
     boost += 1;
   }
-  
+
   const boostedConfidence = Math.min(98, decision.confidence + boost);
   decision.confidence = boostedConfidence;
   decision.reason = `${decision.reason} + Análise multi-dimensional confirmada (+${boost}% boost)`;
-  
+
   console.log('🎯 CONFIRMAÇÃO MULTI-DIMENSIONAL: VENDA AVANÇADA APROVADA!');
   console.log(`✅ Risk/Reward 2:1 confirmado! Boost avançado: +${boost}%`);
   console.log(`📊 Confiança final: ${boostedConfidence}%`);
-  
+
   return decision;
 }
 
@@ -107,13 +108,13 @@ export function getAdvancedSellThreshold(marketType: string): number {
 
 export function validateAdvancedSellStrength(analysis: any, threshold: number): boolean {
   const strength = analysis.overallStrength || 0;
-  
+
   // Para vendas, usar apenas overallStrength (smartScore vem do DeepSeek, não do EMA)
   if (strength < threshold) {
     console.log(`❌ Score combinado ${strength.toFixed(1)} < ${threshold} (threshold)`);
     return false;
   }
-  
+
   console.log(`✅ Validação avançada aprovada: Score ${strength.toFixed(1)}`);
   return true;
 }

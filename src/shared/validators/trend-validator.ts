@@ -1,4 +1,5 @@
 import { validateRiskReward, calculateRiskReward } from '../../bots/utils/risk/trade-validators';
+import { UNIFIED_TRADING_CONFIG } from '../config/unified-trading-config';
 
 export interface TrendValidationOptions {
   direction: 'UP' | 'DOWN';
@@ -52,9 +53,9 @@ export function boostConfidence(
   
   let boost = options.baseBoost;
   
-  if (decision.confidence >= 85) {
+  if (decision.confidence >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) {
     boost += 3;
-  } else if (decision.confidence >= 75) {
+  } else if (decision.confidence >= UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE) {
     boost += 6;
   } else {
     boost += 8;

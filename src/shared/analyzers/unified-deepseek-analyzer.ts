@@ -214,7 +214,7 @@ IMPORTANTE:
 Responda em JSON:
 {
   "action": "SELL" ou "HOLD",
-  "confidence": número de 0-100 (mínimo 85 para SELL),
+  "confidence": número de 0-100 (mínimo ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE} para SELL),
   "reason": "explicação detalhada da análise multi-dimensional bearish",
   "price": ${parseFloat(price.price)},
   "symbol": "${symbol}",
@@ -258,8 +258,8 @@ Responda em JSON:
         analysis.action = 'HOLD';
       }
       
-      if (analysis.action === 'SELL' && analysis.confidence < 85) {
-        console.log(`⚠️ ${symbol}: Confiança ${analysis.confidence}% < 85% - Convertendo para HOLD`);
+      if (analysis.action === 'SELL' && analysis.confidence < UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
+        console.log(`⚠️ ${symbol}: Confiança ${analysis.confidence}% < ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}% - Convertendo para HOLD`);
         analysis.action = 'HOLD';
         analysis.confidence = Math.max(50, analysis.confidence - 20);
       }

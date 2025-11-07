@@ -1,5 +1,6 @@
 import { BinancePublicClient } from '../../core/clients/binance-public-client';
 import EmaAnalyzer from '../../analyzers/emaAnalyzer';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 interface MarketData {
   price24h: number[];
@@ -34,7 +35,7 @@ export class MarketTrendAnalyzer {
     };
 
     const emaAnalysis = this.emaAnalyzer.analyze(marketData);
-    const isUptrend = emaAnalysis.action === 'BUY' && emaAnalysis.confidence >= 70;
+    const isUptrend = emaAnalysis.action === 'BUY' && emaAnalysis.confidence >= UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE;
 
     console.log(`📈 Tendência EMA: ${emaAnalysis.action} (${emaAnalysis.confidence}%)`);
     console.log(`💭 Razão EMA: ${emaAnalysis.reason}`);
