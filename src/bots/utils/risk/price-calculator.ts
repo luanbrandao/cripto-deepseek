@@ -74,17 +74,21 @@ export function calculateTargetAndStopPricesWithLevels(
   // Usar volatility-calculator existente
   const volatility = calculateVolatility(klines);
   const levels = findSupportResistanceLevels(klines, price);
-  const baseResult = calculateTargetAndStopPricesRealMarket(price, confidence, action, volatility);
+  
+  // Usar lógica própria baseada em níveis técnicos (não chamar o outro método)
+  const { riskPercent, rewardPercent } = calculateRiskReward(confidence);
+  const baseResult = calculatePricesForAction(price, riskPercent, rewardPercent, action);
+  const baseResultWithPercent = { ...baseResult, riskPercent: riskPercent * 100 };
   
   const optimizedTarget = adjustTargetToNearestLevel(
-    baseResult.targetPrice, 
+    baseResultWithPercent.targetPrice, 
     action === 'BUY' ? levels.resistance : levels.support,
     price,
     action
   );
   
   const optimizedStop = adjustStopToProtectionLevel(
-    baseResult.stopPrice,
+    baseResultWithPercent.stopPrice,
     action === 'BUY' ? levels.support : levels.resistance,
     price,
     action
@@ -93,10 +97,10 @@ export function calculateTargetAndStopPricesWithLevels(
   return {
     targetPrice: optimizedTarget,
     stopPrice: optimizedStop,
-    riskPercent: baseResult.riskPercent,
+    riskPercent: baseResultWithPercent.riskPercent,
     levels,
-    originalTarget: baseResult.targetPrice,
-    originalStop: baseResult.stopPrice,
+    originalTarget: baseResultWithPercent.targetPrice,
+    originalStop: baseResultWithPercent.stopPrice,
     volatility
   };
 }
