@@ -49,7 +49,6 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     console.log('  • Simulação Segura (Zero Risco)');
     console.log('  • Targets Baseados em Suporte/Resistência');
     console.log('  • 🚀 MÓDULOS UNIFICADOS (v3.0)');
-    console.log('  • Assertividade: 92-95%\n');
   }
 
   private async analyzeSymbol(symbol: string, marketData: any) {
@@ -102,11 +101,12 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   // }
 
   private getThresholdBuyMarketCondition(marketType: string): number {
+    // Critérios ULTRA-RIGOROSOS para Multi-Smart Bot BUY (máxima precisão)
     switch (marketType) {
-      case 'BULL_MARKET': return 25; // Mais oportunidades em bull market
-      case 'BEAR_MARKET': return 35; // Seletivo em bear market
-      case 'SIDEWAYS': return 30;    // Moderado em mercado lateral
-      default: return 31.4;          // Padrão mais realista para mercado atual
+      case 'BULL_MARKET': return 45; // Muito seletivo mesmo em bull market
+      case 'BEAR_MARKET': return 65; // Extremamente rigoroso em bear market  
+      case 'SIDEWAYS': return 55;    // Ultra-rigoroso em mercado lateral
+      default: return 60;            // Padrão ultra-rigoroso para máxima precisão
     }
   }
   private isSymbolValid(analysis: any, threshold: number): boolean {
@@ -116,6 +116,13 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
 
   private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
     if (!symbol) return false;
+    
+    // 0. Validação ULTRA-RIGOROSA de confiança mínima (80% para Multi-Smart)
+    if (decision.confidence < 80) {
+      console.log(`❌ Confiança ${decision.confidence}% < 80% (mínimo ULTRA-RIGOROSO)`);
+      return false;
+    }
+    
     // 1. Validar tendência EMA para alta (módulo unificado)
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
     if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: true })) return false;
