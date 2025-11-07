@@ -3,36 +3,77 @@
  */
 
 import { spawn } from 'child_process';
-import * as path from 'path';
 import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
-console.log('🚀 EXECUTANDO TODOS OS TESTES DO SISTEMA\n');
+console.log('🚀 EXECUTANDO TODOS OS TESTES DO SISTEMA');
+console.log('📊 Testes unitários, validações e simuladores (sem APIs externas)');
+console.log('⚠️  Nota: Testes que requerem APIs (Binance/DeepSeek) não estão incluídos\n');
 
 const tests = [
+  // 🧮 Calculator Tests (Unitários - Rápidos)
   {
-    name: 'Teste Completo de Cálculos',
-    script: 'test-calculations.ts',
-    description: 'Valida todos os cálculos principais'
+    name: 'Price Calculator Tests',
+    script: 'src/scripts/tests/test-price-calculator.ts',
+    description: 'Testa os 3 métodos de cálculo de preços (unitário)'
   },
   {
-    name: 'Teste EMA Calculator',
-    script: 'test-ema-calculator.ts',
+    name: 'EMA Calculator Tests',
+    script: 'src/scripts/tests/test-ema-calculator.ts',
     description: 'Testa cálculos de EMA'
   },
   {
-    name: 'Teste Support/Resistance',
-    script: 'test-support-resistance.ts',
+    name: 'Support/Resistance Tests',
+    script: 'src/scripts/tests/test-support-resistance.ts',
     description: 'Testa análise de suporte e resistência'
   },
   {
-    name: 'Teste Volatility',
-    script: 'test-volatility.ts',
+    name: 'Volatility Tests',
+    script: 'src/scripts/tests/test-volatility.ts',
     description: 'Testa cálculo de volatilidade'
   },
   {
-    name: 'Teste Risk/Reward',
-    script: 'test-risk-reward.ts',
-    description: 'Testa validação de risk/reward'
+    name: 'Risk/Reward Tests',
+    script: 'src/scripts/tests/test-risk-reward.ts',
+    description: 'Testa validação de risk/reward 2:1'
+  },
+  {
+    name: 'Calculations Tests',
+    script: 'src/scripts/tests/test-calculations.ts',
+    description: 'Testa cálculos gerais do sistema'
+  },
+  
+  // 🤖 Bot Validation Tests
+  {
+    name: 'Symbol Checker Tests',
+    script: 'src/scripts/tests/test-symbol-checker.ts',
+    description: 'Testa verificação de trades duplicados'
+  },
+  {
+    name: 'Real Bot Validation',
+    script: 'src/scripts/tests/test-real-bot-validation.ts',
+    description: 'Valida bot de trading real'
+  },
+  {
+    name: 'All Bots Validation',
+    script: 'src/scripts/tests/test-all-bots-validation.ts',
+    description: 'Valida todos os bots de trading'
+  },
+  {
+    name: 'All Simulators Tests',
+    script: 'src/scripts/tests/test-all-simulators.ts',
+    description: 'Testa todos os simuladores'
+  },
+  
+  // 🔌 Specific Bot Tests
+  {
+    name: 'Multi Smart Bot Buy Tests',
+    script: 'src/scripts/tests/test-multi-smart-bot-buy.ts',
+    description: 'Testa Multi Smart Bot BUY'
+  },
+  {
+    name: 'Multi Smart Bot Simulator Buy Tests',
+    script: 'src/scripts/tests/test-multismart-bot-simulator-buy.ts',
+    description: 'Testa simulador Multi Smart Bot BUY'
   }
 ];
 
@@ -47,8 +88,7 @@ function runTest(test: typeof tests[0]): Promise<boolean> {
     console.log(`📝 ${test.description}`);
     console.log(`${'='.repeat(60)}`);
 
-    const scriptPath = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${test.script}`;
-    const child = spawn('ts-node', [scriptPath], {
+    const child = spawn('ts-node', [test.script], {
       stdio: 'pipe',
       shell: true
     });
