@@ -62,6 +62,7 @@ export const UNIFIED_TRADING_CONFIG = {
     MULTI_SMART_BUY: 'multiSmartTradingBotBuy.json',
     MULTI_SMART_SIMULATOR_BUY: 'multiSmartTradingBotSimulatorBuy.json',
     MULTI_SMART_SIMULATOR_SELL: 'multiSmartTradingBotSimulatorSell.json',
+    ELITE_SIMULATOR: 'eliteTradingBotSimulator.json',
   },
 
   // FUNÇÕES AUXILIARES

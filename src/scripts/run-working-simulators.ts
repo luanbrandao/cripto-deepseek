@@ -10,7 +10,10 @@ const workingSimulators = [
   { name: 'Support/Resistance Simulator', command: 'yarn simulate-support' },
   
   // NEUTRAL SIMULATORS (testando)
-  { name: 'Real Trading Bot Simulator', command: 'yarn real-trading-bot-simulator' }
+  { name: 'Real Trading Bot Simulator', command: 'yarn real-trading-bot-simulator' },
+  
+  // ELITE SIMULATORS (alta performance)
+  { name: 'Elite Trading Bot Simulator', command: 'npm run elite-trading-bot-simulator' }
 ];
 
 async function runWorkingSimulators() {

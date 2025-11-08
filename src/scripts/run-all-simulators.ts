@@ -15,6 +15,7 @@ const simulators = [
   // BUY ONLY SIMULATORS (Long-Only)
   { name: 'Smart Trading Bot BUY Simulator', command: 'yarn smart-trading-bot-buy-simulator' },
   { name: 'Multi-Smart Trading Bot BUY Simulator', command: 'yarn multi-smart-trading-bot-buy-simulator' },
+  { name: 'Elite Trading Bot Simulator', command: 'yarn elite-trading-bot-simulator' },
 
   // SELL ONLY SIMULATORS (Short-Only)
   { name: 'Smart Trading Bot SELL Simulator', command: 'yarn smart-trading-bot-sell-simulator' },
