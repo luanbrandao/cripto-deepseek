@@ -12,13 +12,13 @@ export interface DeepSeekAnalysisOptions {
 
 export class UnifiedDeepSeekAnalyzer {
   static async analyze(
-    deepseek: DeepSeekService, 
-    symbol: string, 
+    deepseek: DeepSeekService,
+    symbol: string,
     marketData: any,
     options: DeepSeekAnalysisOptions
   ) {
     console.log(`\n🧠 Analisando ${symbol} com DeepSeek AI (${options.strategy})...`);
-    
+
     const prompt = this.buildPrompt(symbol, options);
     const analysis = await deepseek.analyzeMarket(marketData, prompt);
 
@@ -26,7 +26,7 @@ export class UnifiedDeepSeekAnalyzer {
     console.log(analysis.substring(0, 500) + '...');
 
     const price = parseFloat(marketData.price.price);
-    
+
     return options.parseMode === 'ADVANCED'
       ? await UnifiedAnalysisParser.parseAdvanced(analysis, symbol, price)
       : await UnifiedAnalysisParser.parseBasic(analysis, symbol, price);
@@ -42,13 +42,13 @@ export class UnifiedDeepSeekAnalyzer {
     switch (options.strategy) {
       case 'SMART_TRADE':
         return `${baseContext} including 24h klines. Focus on BULLISH signals only. Provide a CLEAR BUY recommendation if conditions are favorable, otherwise HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators for upward momentum.`;
-      
+
       case 'MULTI_SMART_TRADE':
         return `${baseContext} including 24h klines with advanced multi-dimensional analysis. Focus on BULLISH signals with EMA confirmation, volume analysis, and momentum indicators. Provide detailed BUY recommendation with high confidence if multiple indicators align, otherwise HOLD. Consider Smart Scoring with technical confluence.`;
-      
+
       case 'REAL_TRADE':
         return `${baseContext} and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning. Consider both bullish and bearish scenarios.`;
-      
+
       default:
         return `${baseContext} and provide trading recommendation with detailed analysis.`;
     }
@@ -57,7 +57,7 @@ export class UnifiedDeepSeekAnalyzer {
   // Métodos de conveniência para compatibilidade
   static async analyzeSmartTrade(deepseek: DeepSeekService, symbol: string, marketData: any) {
     console.log(`\n🧠 Analisando ${symbol} com SMART-TRADE...`);
-    
+
     const analysis = await deepseek.analyzeMarket(
       marketData,
       `Analyze ${symbol} market data including 24h klines. Focus on BULLISH signals only. Provide a CLEAR BUY recommendation if conditions are favorable, otherwise HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators for upward momentum.`
@@ -71,7 +71,7 @@ export class UnifiedDeepSeekAnalyzer {
 
   static async analyzeRealTrade(deepseek: DeepSeekService, symbol: string, marketData: any) {
     console.log(`\n🧠 Analisando ${symbol} com REAL-TRADE...`);
-    
+
     const analysis = await deepseek.analyzeMarket(
       marketData,
       `Analyze ${symbol} market data (${UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME} timeframe, ${UNIFIED_TRADING_CONFIG.CHART.PERIODS} periods) and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning.`
@@ -90,9 +90,9 @@ export class UnifiedDeepSeekAnalyzer {
     });
   }
 
-  static async analyzeMultiSmartTrade(deepseek: DeepSeekService, symbol: string, marketData: any) {
+  static async analyzeMultiSmartTradeBuy(deepseek: DeepSeekService, symbol: string, marketData: any) {
     console.log(`\n🧠 Analisando ${symbol} com MULTI-ENHANCED SMART-TRADE...`);
-    
+
     const prompt = `Analyze ${symbol} comprehensively using the following data:
     - Current price and 24h statistics
     - Candlestick patterns from klines data
@@ -108,7 +108,7 @@ export class UnifiedDeepSeekAnalyzer {
     Be specific about confidence level and provide clear reasoning for BUY or HOLD recommendation.`;
 
     const analysis = await deepseek.analyzeMarket(marketData, prompt);
-    
+
     console.log(`\n📋 Análise DeepSeek MULTI_SMART_TRADE (primeiros 500 chars):`);
     console.log(analysis.substring(0, 500) + '...');
 
@@ -156,9 +156,9 @@ export class UnifiedDeepSeekAnalyzer {
 
   static async analyzeMultiSmartTradeSell(deepseek: DeepSeekService, symbol: string, marketData: any) {
     console.log(`\n🧠 Analisando ${symbol} com MULTI-ENHANCED SMART-TRADE SELL...`);
-    
+
     const { price, stats, klines } = marketData;
-    
+
     const prompt = `
 Você é um especialista em análise técnica AVANÇADA focado EXCLUSIVAMENTE em identificar oportunidades de VENDA (SHORT) com análise multi-dimensional.
 
@@ -225,10 +225,10 @@ Responda em JSON:
 
     try {
       const rawResponse = await deepseek.analyzeMarket(marketData, prompt);
-      
+
       console.log(`\n📋 Análise DeepSeek MULTI_SMART_TRADE_SELL (primeiros 500 chars):`);
       console.log(rawResponse.substring(0, 500) + '...');
-      
+
       // Parse da resposta JSON
       let analysis;
       try {
@@ -257,7 +257,7 @@ Responda em JSON:
       if (!analysis.action || !['SELL', 'HOLD'].includes(analysis.action)) {
         analysis.action = 'HOLD';
       }
-      
+
       if (analysis.action === 'SELL' && analysis.confidence < UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
         console.log(`⚠️ ${symbol}: Confiança ${analysis.confidence}% < ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}% - Convertendo para HOLD`);
         analysis.action = 'HOLD';
@@ -268,7 +268,7 @@ Responda em JSON:
       console.log(`   Ação: ${analysis.action} (${analysis.confidence}%)`);
       console.log(`   Smart Score: ${analysis.smartScore || 'N/A'}`);
       console.log(`   Sinais Bearish: ${analysis.bearishSignals?.length || 0}`);
-      
+
       return analysis;
     } catch (error) {
       console.error(`❌ Erro na análise MULTI-SELL para ${symbol}:`, error);
@@ -287,7 +287,7 @@ Responda em JSON:
 
   static async analyzeSmartTradeSell(deepseek: DeepSeekService, symbol: string, marketData: any) {
     console.log(`\n🧠 Analisando ${symbol} com SMART-TRADE SELL...`);
-    
+
     const analysis = await deepseek.analyzeMarket(
       marketData,
       `Analyze ${symbol} market data including 24h klines. Focus on BEARISH signals only. Provide a CLEAR SELL recommendation if conditions are favorable, otherwise HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators for downward momentum. Look for resistance levels, bearish patterns, and distribution signals.`
@@ -301,10 +301,10 @@ Responda em JSON:
 
   static async analyzeSmartTradeBuy(deepseek: DeepSeekService, symbol: string, marketData: any) {
     console.log(`\n🧠 Analisando ${symbol} com SMART-TRADE BUY...`);
-    
+
     const analysis = await deepseek.analyzeMarket(
       marketData,
-      `Analyze ${symbol} market data including 24h klines. Focus on BULLISH signals only. Provide a CLEAR BUY recommendation if conditions are favorable, otherwise HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators for upward momentum.`
+      `Analyze ${symbol} market data including 24h klines. Focus on BULLISH signals only. Provide a CLEAR BUY recommendation if conditions are favorable, otherwise HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators for upward momentum. Look for resistance levels, bearish patterns, and distribution signals.`
     );
 
     console.log(`\n📋 Análise DeepSeek SMART_TRADE_BUY (primeiros 500 chars):`);

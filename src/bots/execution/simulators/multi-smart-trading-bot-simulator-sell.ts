@@ -55,7 +55,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   }
 
   private async analyzeSymbol(symbol: string, marketData: any) {
-    return await UnifiedDeepSeekAnalyzer.analyzeMultiSmartTrade(this.deepseek!, symbol, marketData);
+    return await UnifiedDeepSeekAnalyzer.analyzeMultiSmartTradeSell(this.deepseek!, symbol, marketData);
   }
 
   private async filterSymbolsByStrength(symbols: string[]): Promise<string[]> {
@@ -133,13 +133,13 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
 
   private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
     if (!symbol) return false;
-    
+
     // 0. Validação ULTRA-RIGOROSA de confiança mínima (80% para Multi-Smart SELL)
     if (decision.confidence < 80) {
       console.log(`❌ Confiança ${decision.confidence}% < 80% (mínimo ULTRA-RIGOROSO SELL)`);
       return false;
     }
-    
+
     // 1. Validar tendência EMA para baixa (módulo unificado)
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
     if (!validateTrendAnalysis(trendAnalysis, { direction: 'DOWN', isSimulation: true })) return false;

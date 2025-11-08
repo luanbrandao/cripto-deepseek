@@ -42,7 +42,7 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
-    return await UnifiedDeepSeekAnalyzer.analyzeSmartTrade(this.deepseek!, symbol, marketData);
+    return await UnifiedDeepSeekAnalyzer.analyzeSmartTradeBuy(this.deepseek!, symbol, marketData);
   }
 
   private async filterSymbolsByEma(symbols: string[]): Promise<string[]> {
