@@ -24,7 +24,6 @@
     "multi-smart-trading-bot-sell-simulator": "ts-node src/bots/execution/simulators/multi-smart-trading-bot-simulator-sell.ts",
     "_comment2c": "--- NEUTRAL Simulators ---",
     "real-trading-bot-simulator": "ts-node src/bots/execution/simulators/real-trading-bot-simulator.ts",
-    "_comment2d": "--- PATTERN Simulators ---",
     "simulate-123": "ts-node src/scripts/simulators/simulate-123.ts",
     "simulate-ema": "ts-node src/scripts/simulators/simulate-ema.ts",
     "simulate-support": "ts-node src/scripts/simulators/simulate-support.ts",
@@ -81,6 +80,7 @@
     "_comment5": "=== UTILITIES ===",
     "check-trades": "ts-node src/scripts/check-trades.ts",
     "update-all-trades": "ts-node src/scripts/update-all-trades.ts",
+    "analyze-all-trades": "ts-node src/scripts/analyze-all-trades.ts",
     "diagnose-400": "ts-node src/scripts/diagnostics/diagnose-400-error.ts"
   },
   "dependencies": {
