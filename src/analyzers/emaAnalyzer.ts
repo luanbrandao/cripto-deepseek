@@ -1,4 +1,5 @@
 import { calculateEMA } from '../bots/utils/analysis/ema-calculator';
+import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
 
 interface MarketData {
   price24h: number[];
@@ -68,6 +69,60 @@ class EmaAnalyzer {
     };
   }
 
+  // Método público para validação EMA avançada
+  public validateEmaStrengthPublic(prices: number[]): { isValid: boolean; reason: string; score: number } {
+    return this.validateEmaStrength(prices);
+  }
+
+  private calculateEMA(prices: number[], period: number): number {
+    const multiplier = 2 / (period + 1);
+    let ema = prices[0];
+
+    for (let i = 1; i < prices.length; i++) {
+      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
+    }
+
+    return ema;
+  }
+
+  private validateEmaStrength(prices: number[]): { isValid: boolean; reason: string; score: number } {
+    if (prices.length < 26) {
+      return { isValid: false, reason: 'Dados insuficientes', score: 0 };
+    }
+
+    // Calcular EMAs
+    const ema12 = this.calculateEMA(prices, 12);
+    const ema26 = this.calculateEMA(prices, 26);
+    const currentPrice = prices[prices.length - 1];
+
+    // Verificar separação mínima usando BOT_SPECIFIC_CONFIG
+    const minSeparation = UNIFIED_TRADING_CONFIG.EMA_ADVANCED?.MIN_SEPARATION || 0.005;
+    const separation = (ema12 - ema26) / ema26;
+
+    if (separation < minSeparation) {
+      return {
+        isValid: false,
+        reason: `Separação EMA ${(separation * 100).toFixed(2)}% < ${(minSeparation * 100).toFixed(1)}%`,
+        score: separation * 1000
+      };
+    }
+
+    // Verificar se preço está acima das EMAs
+    if (currentPrice < ema12 || ema12 < ema26) {
+      return {
+        isValid: false,
+        reason: 'Preço não está acima das EMAs ou EMAs não alinhadas',
+        score: 0
+      };
+    }
+
+    const score = Math.min(100, separation * 1000);
+    return {
+      isValid: true,
+      reason: `Separação EMA ${(separation * 100).toFixed(2)}% OK`,
+      score
+    };
+  }
 
 }
 
