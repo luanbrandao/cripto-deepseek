@@ -1,4 +1,5 @@
 import { AdvancedEmaAnalyzer } from './advanced-ema-analyzer';
+import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 export interface SmartScore {
   emaScore: number;        // 0-100 (peso: 35%)
@@ -111,7 +112,7 @@ export class SmartScoringSystem {
     const volumeRatio = recentAvg / overallAvg;
     
     // Score based on volume ratio
-    if (volumeRatio > 1.5) return 90;      // High volume
+    if (volumeRatio > 1.5) return UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE;      // High volume
     if (volumeRatio > 1.2) return 75;      // Above average
     if (volumeRatio > 0.8) return 60;      // Normal
     if (volumeRatio > 0.5) return 40;      // Below average
@@ -169,17 +170,17 @@ export class SmartScoringSystem {
     confidence = confidence * (1 - aiWeight) + aiConfidence * aiWeight;
 
     // Score-based adjustments
-    if (finalScore > 85) confidence += 5;
-    if (finalScore > 90) confidence += 5;
+    if (finalScore > UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE) confidence += 5;
+    if (finalScore > UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) confidence += 5;
     if (finalScore < 40) confidence -= 10;
 
     return Math.min(95, Math.max(50, confidence));
   }
 
   private getRecommendation(finalScore: number, aiAction: string): SmartScore['recommendation'] {
-    if (finalScore >= 90 && aiAction === 'BUY') return 'STRONG_BUY';
+    if (finalScore >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE && aiAction === 'BUY') return 'STRONG_BUY';
     if (finalScore >= 75 && aiAction === 'BUY') return 'BUY';
-    if (finalScore >= 90 && aiAction === 'SELL') return 'STRONG_SELL';
+    if (finalScore >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE && aiAction === 'SELL') return 'STRONG_SELL';
     if (finalScore >= 75 && aiAction === 'SELL') return 'SELL';
     return 'HOLD';
   }
@@ -190,7 +191,7 @@ export class SmartScoringSystem {
       case 'BULL_MARKET':
         return 65; // Lower threshold in bull market
       case 'BEAR_MARKET':
-        return 85; // Higher threshold in bear market
+        return UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE; // Higher threshold in bear market
       case 'SIDEWAYS':
         return 75; // Medium threshold in sideways market
       default:

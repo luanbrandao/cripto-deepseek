@@ -13,10 +13,10 @@ async function main() {
   console.log('🚀 ANÁLISE DE MERCADO COM DEEPSEEK AI e API public da Binance');
 
   try {
-    const symbol = 'SOLUSDT';
+    const symbol = UNIFIED_TRADING_CONFIG.DEFAULT_SYMBOL;
     const price = await binancePublic.getPrice(symbol);
     const stats = await binancePublic.get24hrStats(symbol);
-    const klines = await binancePublic.getKlines(symbol, '1h', 24);
+    const klines = await binancePublic.getKlines(symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, 24);
 
     console.log(`💰 ${symbol}: $${parseFloat(price.price).toLocaleString()}`);
     console.log(`📈 Variação 24h: ${parseFloat(stats.priceChangePercent).toFixed(2)}%`);

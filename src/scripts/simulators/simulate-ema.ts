@@ -16,8 +16,8 @@ async function runEmaSimulation() {
   const analyzer = new EmaAnalyzer(emaConfig);
 
   const tradesFile = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/ema${emaConfig.fastPeriod}-${emaConfig.slowPeriod}Trades.json`;
-  const simulator = new TradeSimulator(analyzer, 1000, TRADING_CONFIG.SYMBOLS, tradesFile);
-  await simulator.simulate(TRADING_CONFIG.SYMBOLS);
+  const simulator = new TradeSimulator(analyzer, UNIFIED_TRADING_CONFIG.SIMULATION.INITIAL_BALANCE, UNIFIED_TRADING_CONFIG.SYMBOLS, tradesFile);
+  await simulator.simulate(UNIFIED_TRADING_CONFIG.SYMBOLS);
 }
 
 // Só executa se for chamado diretamente (não importado)

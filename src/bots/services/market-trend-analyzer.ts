@@ -19,13 +19,20 @@ export class MarketTrendAnalyzer {
 
   constructor() {
     this.binancePublic = new BinancePublicClient();
-    this.emaAnalyzer = new EmaAnalyzer({ fastPeriod: 12, slowPeriod: 26 });
+    this.emaAnalyzer = new EmaAnalyzer({ 
+      fastPeriod: UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD, 
+      slowPeriod: UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD 
+    });
   }
 
   async checkMarketTrendWithEma(symbol: string): Promise<TrendAnalysis> {
     console.log('📊 Verificando tendência do mercado com EMA...');
 
-    const klines = await this.binancePublic.getKlines(symbol, '1h', 26);
+    const klines = await this.binancePublic.getKlines(
+      symbol, 
+      UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, 
+      UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD
+    );
     const prices = klines.map((k: any) => parseFloat(k[4])); // Close prices
     const currentPrice = prices[prices.length - 1];
 

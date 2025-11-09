@@ -50,11 +50,11 @@ export function boostAdvancedBuyConfidence(decision: any) {
   boost += 5;
 
   // Boost baseado no Smart Score
-  if (decision.smartScore >= 90) {
+  if (decision.smartScore >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) {
     boost += 5; // Score muito alto
-  } else if (decision.smartScore >= 80) {
+  } else if (decision.smartScore >= UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE) {
     boost += 3; // Score alto
-  } else if (decision.smartScore >= 70) {
+  } else if (decision.smartScore >= UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
     boost += 2; // Score médio
   }
 
@@ -85,7 +85,7 @@ export function boostAdvancedBuyConfidence(decision: any) {
     boost += 1;
   }
 
-  const boostedConfidence = Math.min(98, decision.confidence + boost);
+  const boostedConfidence = Math.min(UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE + 8, decision.confidence + boost);
   decision.confidence = boostedConfidence;
   decision.reason = `${decision.reason} + Análise multi-dimensional confirmada (+${boost}% boost)`;
 
@@ -100,7 +100,7 @@ export function getAdvancedBuyThreshold(marketType: string): number {
   // Thresholds otimizados para compras avançadas
   switch (marketType) {
     case 'BULL_MARKET': return 65; // Mais oportunidades em bull market
-    case 'BEAR_MARKET': return 85; // Muito seletivo em bear market
+    case 'BEAR_MARKET': return UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE; // Muito seletivo em bear market
     case 'SIDEWAYS': return 75;    // Moderado em mercado lateral
     default: return 70;            // Padrão equilibrado
   }

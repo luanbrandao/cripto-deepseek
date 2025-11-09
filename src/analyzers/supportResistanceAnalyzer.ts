@@ -1,4 +1,5 @@
 import { findPivotPoints } from '../bots/utils/analysis/support-resistance-calculator';
+import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
 
 interface Candle {
   open: number;
@@ -50,9 +51,9 @@ export default class SupportResistanceAnalyzer {
 
   analyze(marketData: MarketData, isSimulation: boolean = true): AnalysisResult {
     const { candles, currentPrice } = marketData;
-    
+
     console.log(`🔍 Debug: Recebidos ${candles?.length || 0} candles, preço atual: ${currentPrice}`);
-    
+
     // APENAS SIMULAÇÃO - Bloquear trades reais
     if (!isSimulation) {
       console.log('🚫 SUPORTE/RESISTÊNCIA: Apenas simulação permitida - Trade real bloqueado');
@@ -64,7 +65,7 @@ export default class SupportResistanceAnalyzer {
         levels: []
       };
     }
-    
+
     if (!candles || candles.length < 10) {
       return {
         action: 'HOLD',
@@ -74,26 +75,26 @@ export default class SupportResistanceAnalyzer {
         levels: []
       };
     }
-    
+
     // Usar todos os dados disponíveis se menor que lookbackPeriods
     const actualLookback = Math.min(this.lookbackPeriods, candles.length);
     console.log(`🔍 Debug: Usando ${actualLookback} candles para análise`);
 
     // Identificar níveis de suporte e resistência
     const levels = this.identifySupportResistanceLevels(candles, actualLookback);
-    
+
     // Identificar níveis psicológicos
     const psychologicalLevels = this.identifyPsychologicalLevels(currentPrice);
-    
+
     // Combinar todos os níveis
     const allLevels = [...levels, ...psychologicalLevels];
-    
+
     // Log dos níveis identificados
     this.logSupportResistanceLevels(allLevels, currentPrice);
-    
+
     // Analisar situação atual
     const analysis = this.analyzeCurrentSituation(currentPrice, allLevels, candles);
-    
+
     return {
       action: analysis.action,
       confidence: analysis.confidence,
@@ -107,33 +108,33 @@ export default class SupportResistanceAnalyzer {
     const levels: SupportResistanceLevel[] = [];
     const actualLookback = lookbackPeriods || this.lookbackPeriods;
     const recentCandles = candles.slice(-actualLookback);
-    
+
     // Identificar máximas e mínimas locais
     const pivots = findPivotPoints(recentCandles);
-    
+
     // Agrupar preços similares
     const priceGroups = this.groupSimilarPrices(pivots);
-    
+
     // Criar níveis baseados nos grupos
     priceGroups.forEach(group => {
       if (group.prices.length >= this.minTouches) {
         const avgPrice = group.prices.reduce((sum, p) => sum + p.price, 0) / group.prices.length;
         const touches = group.prices.length;
-        
+
         // Determinar se é suporte ou resistência baseado no contexto
         const isResistance = group.prices.some(p => p.type === 'high');
         const isSupport = group.prices.some(p => p.type === 'low');
-        
+
         let type: 'support' | 'resistance';
         if (isResistance && isSupport) {
           type = avgPrice > candles[candles.length - 1].close ? 'resistance' : 'support';
         } else {
           type = isResistance ? 'resistance' : 'support';
         }
-        
+
         // Calcular força do nível
         const strength = this.calculateLevelStrength(touches, group.prices);
-        
+
         levels.push({
           price: avgPrice,
           touches,
@@ -147,44 +148,44 @@ export default class SupportResistanceAnalyzer {
         });
       }
     });
-    
+
     return levels.sort((a, b) => b.strength - a.strength);
   }
 
 
 
-  private groupSimilarPrices(pivots: Array<{price: number, type: 'high' | 'low', timestamp: number}>): Array<{prices: Array<{price: number, type: 'high' | 'low', timestamp: number}>}> {
-    const groups: Array<{prices: Array<{price: number, type: 'high' | 'low', timestamp: number}>}> = [];
-    
+  private groupSimilarPrices(pivots: Array<{ price: number, type: 'high' | 'low', timestamp: number }>): Array<{ prices: Array<{ price: number, type: 'high' | 'low', timestamp: number }> }> {
+    const groups: Array<{ prices: Array<{ price: number, type: 'high' | 'low', timestamp: number }> }> = [];
+
     pivots.forEach(pivot => {
       let addedToGroup = false;
-      
+
       for (const group of groups) {
         const avgPrice = group.prices.reduce((sum, p) => sum + p.price, 0) / group.prices.length;
         const tolerance = avgPrice * this.tolerance;
-        
+
         if (Math.abs(pivot.price - avgPrice) <= tolerance) {
           group.prices.push(pivot);
           addedToGroup = true;
           break;
         }
       }
-      
+
       if (!addedToGroup) {
         groups.push({ prices: [pivot] });
       }
     });
-    
+
     return groups;
   }
 
   private identifyPsychologicalLevels(currentPrice: number): SupportResistanceLevel[] {
     const levels: SupportResistanceLevel[] = [];
     const range = currentPrice * 0.1; // 10% range around current price
-    
+
     // Identificar números redondos próximos
     const roundNumbers = [];
-    
+
     // Números redondos baseados na magnitude do preço
     if (currentPrice >= 1000) {
       // Para preços altos, usar centenas
@@ -211,7 +212,7 @@ export default class SupportResistanceAnalyzer {
         roundNumbers.push(base + (i * 0.1));
       }
     }
-    
+
     roundNumbers.forEach(price => {
       if (price > 0 && Math.abs(price - currentPrice) <= range) {
         levels.push({
@@ -223,34 +224,34 @@ export default class SupportResistanceAnalyzer {
         });
       }
     });
-    
+
     return levels;
   }
 
-  private calculateLevelStrength(touches: number, prices: Array<{price: number, type: 'high' | 'low', timestamp: number}>): number {
+  private calculateLevelStrength(touches: number, prices: Array<{ price: number, type: 'high' | 'low', timestamp: number }>): number {
     let strength = 0;
-    
+
     // Força baseada no número de toques
     strength += Math.min(touches * 0.2, 0.8);
-    
+
     // Força baseada na idade dos toques (mais recente = mais forte)
     const now = Date.now();
     const avgAge = prices.reduce((sum, p) => sum + (now - p.timestamp), 0) / prices.length;
     const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 dias
     const ageScore = Math.max(0, 1 - (avgAge / maxAge));
     strength += ageScore * 0.2;
-    
+
     return Math.min(strength, 1);
   }
 
-  private analyzeCurrentSituation(currentPrice: number, levels: SupportResistanceLevel[], candles: Candle[]): {action: 'BUY' | 'SELL' | 'HOLD', confidence: number, reason: string} {
+  private analyzeCurrentSituation(currentPrice: number, levels: SupportResistanceLevel[], candles: Candle[]): { action: 'BUY' | 'SELL' | 'HOLD', confidence: number, reason: string } {
     const tolerance = currentPrice * 0.005; // 0.5% tolerance
-    
+
     // Encontrar níveis próximos
-    const nearbyLevels = levels.filter(level => 
+    const nearbyLevels = levels.filter(level =>
       Math.abs(level.price - currentPrice) <= tolerance * 2
     );
-    
+
     if (nearbyLevels.length === 0) {
       return {
         action: 'HOLD',
@@ -258,66 +259,66 @@ export default class SupportResistanceAnalyzer {
         reason: 'Preço em área neutra, sem níveis significativos próximos'
       };
     }
-    
+
     // Analisar tendência recente
     const recentCandles = candles.slice(-10);
     const trend = this.analyzeTrend(recentCandles);
-    
+
     // Encontrar o nível mais próximo e forte
-    const strongestLevel = nearbyLevels.reduce((prev, current) => 
+    const strongestLevel = nearbyLevels.reduce((prev, current) =>
       current.strength > prev.strength ? current : prev
     );
-    
+
     let action: 'BUY' | 'SELL' | 'HOLD' = 'HOLD';
     let confidence = 50;
     let reason = '';
-    
+
     if (strongestLevel.type === 'support' && currentPrice <= strongestLevel.price + tolerance) {
       if (trend === 'down' || trend === 'sideways') {
         action = 'BUY';
-        confidence = Math.min(70 + (strongestLevel.strength * 20), 90);
+        confidence = Math.min(UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE + (strongestLevel.strength * 10), UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE);
         reason = `Preço próximo ao suporte forte em $${strongestLevel.price.toFixed(4)} (${strongestLevel.touches} toques)`;
       }
     } else if (strongestLevel.type === 'resistance' && currentPrice >= strongestLevel.price - tolerance) {
       if (trend === 'up' || trend === 'sideways') {
         action = 'SELL';
-        confidence = Math.min(70 + (strongestLevel.strength * 20), 90);
+        confidence = Math.min(UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE + (strongestLevel.strength * 10), UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE);
         reason = `Preço próximo à resistência forte em $${strongestLevel.price.toFixed(4)} (${strongestLevel.touches} toques)`;
       }
     }
-    
+
     // Verificar rompimentos
     const lastCandle = candles[candles.length - 1];
     const prevCandle = candles[candles.length - 2];
-    
+
     for (const level of levels.slice(0, 3)) { // Top 3 strongest levels
-      if (level.type === 'resistance' && 
-          prevCandle.close <= level.price && 
-          lastCandle.close > level.price) {
+      if (level.type === 'resistance' &&
+        prevCandle.close <= level.price &&
+        lastCandle.close > level.price) {
         action = 'BUY';
         confidence = Math.min(75 + (level.strength * 15), 85);
         reason = `Rompimento de resistência em $${level.price.toFixed(4)} - sinal de alta`;
         break;
-      } else if (level.type === 'support' && 
-                 prevCandle.close >= level.price && 
-                 lastCandle.close < level.price) {
+      } else if (level.type === 'support' &&
+        prevCandle.close >= level.price &&
+        lastCandle.close < level.price) {
         action = 'SELL';
         confidence = Math.min(75 + (level.strength * 15), 85);
         reason = `Rompimento de suporte em $${level.price.toFixed(4)} - sinal de baixa`;
         break;
       }
     }
-    
+
     return { action, confidence, reason };
   }
 
   private analyzeTrend(candles: Candle[]): 'up' | 'down' | 'sideways' {
     if (candles.length < 3) return 'sideways';
-    
+
     const first = candles[0].close;
     const last = candles[candles.length - 1].close;
     const change = (last - first) / first;
-    
+
     if (change > 0.02) return 'up';
     if (change < -0.02) return 'down';
     return 'sideways';
@@ -333,11 +334,11 @@ export default class SupportResistanceAnalyzer {
     console.log('════════════════════════════════════════════════════════════');
     console.log(`💰 Preço Atual: $${currentPrice.toFixed(4)}`);
     console.log('────────────────────────────────────────────────────────────');
-    
+
     // Separar suportes e resistências
     const supports = levels.filter(l => l.type === 'support').sort((a, b) => b.price - a.price);
     const resistances = levels.filter(l => l.type === 'resistance').sort((a, b) => a.price - b.price);
-    
+
     // Mostrar resistências (acima do preço atual)
     if (resistances.length > 0) {
       console.log('🔴 RESISTÊNCIAS:');
@@ -348,9 +349,9 @@ export default class SupportResistanceAnalyzer {
         console.log(`   ${index + 1}. $${level.price.toFixed(4)} (+${distance}%) | ${level.touches} toques | ${strengthBar} ${(level.strength * 100).toFixed(0)}%${zoneInfo}`);
       });
     }
-    
+
     console.log('────────────────────────────────────────────────────────────');
-    
+
     // Mostrar suportes (abaixo do preço atual)
     if (supports.length > 0) {
       console.log('🟢 SUPORTES:');
@@ -361,7 +362,7 @@ export default class SupportResistanceAnalyzer {
         console.log(`   ${index + 1}. $${level.price.toFixed(4)} (-${distance}%) | ${level.touches} toques | ${strengthBar} ${(level.strength * 100).toFixed(0)}%${zoneInfo}`);
       });
     }
-    
+
     console.log('════════════════════════════════════════════════════════════\n');
   }
 }

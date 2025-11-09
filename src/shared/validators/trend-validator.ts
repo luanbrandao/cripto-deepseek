@@ -65,8 +65,8 @@ export function boostConfidence(
     const scoreMatch = decision.reason.match(/Smart Score: ([0-9.]+)/);
     if (scoreMatch) {
       const smartScore = parseFloat(scoreMatch[1]);
-      if (smartScore > 90) boost += 4;
-      else if (smartScore > 85) boost += 2;
+      if (smartScore > UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) boost += 4;
+      else if (smartScore > UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE) boost += 2;
     }
   }
   
@@ -77,7 +77,7 @@ export function boostConfidence(
     }
   }
   
-  const boostedConfidence = Math.min(95, decision.confidence + Math.min(boost, options.maxBoost));
+  const boostedConfidence = Math.min(UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE, decision.confidence + Math.min(boost, options.maxBoost));
   decision.confidence = boostedConfidence;
   
   const trendText = options.trendType === 'BUY' ? 'COMPRA' : 'VENDA';

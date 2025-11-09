@@ -1,5 +1,7 @@
 import { TradeDecision } from '../../bots/types/trading';
 
+import { UNIFIED_TRADING_CONFIG } from '../config/unified-trading-config';
+
 interface SentimentAnalysis {
   bullishScore: number;
   bearishScore: number;
@@ -106,7 +108,7 @@ export class UnifiedAnalysisParser {
     return {
       bullishScore,
       bearishScore,
-      confidence: Math.min(95, Math.max(50, totalScore * 8))
+      confidence: Math.min(UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE, Math.max(50, totalScore * 8))
     };
   }
 
@@ -121,7 +123,7 @@ export class UnifiedAnalysisParser {
   }
 
   private static extractMomentumScore(analysis: string): number {
-    if (analysis.includes('strong momentum')) return 90;
+    if (analysis.includes('strong momentum')) return UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE;
     if (analysis.includes('momentum')) return 75;
     if (analysis.includes('weak momentum')) return 30;
     return 50;
@@ -171,7 +173,7 @@ export class UnifiedAnalysisParser {
     if (signals.volume > 80) baseConfidence += 3;
 
     baseConfidence += confidenceFactors;
-    return Math.min(95, Math.max(50, baseConfidence));
+    return Math.min(UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE, Math.max(50, baseConfidence));
   }
 
   private static generateDetailedReason(

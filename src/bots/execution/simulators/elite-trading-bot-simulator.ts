@@ -11,18 +11,18 @@ import * as path from 'path';
 
 // Configurações Elite - Sistema de 5 Camadas
 const ELITE_CONFIG = {
-  SYMBOLS: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT'],
-  MIN_CONFIDENCE: 90,
+  SYMBOLS: UNIFIED_TRADING_CONFIG.SYMBOLS,
+  MIN_CONFIDENCE: UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE,
   MIN_SCORE: 85,           // Score mínimo total (pré-validação + IA)
   PERFECT_SCORE: 95,
   PRE_VALIDATION_MIN: 60,  // Score mínimo para chamar IA
-  MIN_RR: 4.0,
-  TARGET_RR: 6.0,
-  PERFECT_RR: 8.0,
-  MAX_TRADES_DAY: 2,
+  MIN_RR: UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO * 2, // 4.0
+  TARGET_RR: UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO * 3, // 6.0
+  PERFECT_RR: UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO * 4, // 8.0
+  MAX_TRADES_DAY: UNIFIED_TRADING_CONFIG.LIMITS.MAX_ACTIVE_TRADES,
   COOLDOWN_HOURS: 6,
-  TIMEFRAME: '1h',
-  PERIODS: 50,
+  TIMEFRAME: UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME,
+  PERIODS: UNIFIED_TRADING_CONFIG.CHART.PERIODS,
   
   // Pesos das camadas de pré-validação
   WEIGHTS: {
@@ -43,7 +43,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     super(apiKey, apiSecret, true);
     this.eliteAnalyzer = new EliteAnalyzer();
     this.riskManager = new EliteRiskManager();
-    this.tradesFile = path.resolve('./src/storage/trades/eliteTradingBotSimulator.json');
+    this.tradesFile = path.resolve(`${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${UNIFIED_TRADING_CONFIG.FILES.ELITE_SIMULATOR}`);
   }
 
   protected logBotInfo() {
@@ -619,7 +619,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
       entryPrice: aiDecision.price,
       targetPrice: prices.target2, // Target principal
       stopPrice: prices.stopLoss,
-      amount: this.getTradeAmount() * (positionSize / 100),
+      amount: UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD * (positionSize / 100),
       confidence: aiDecision.confidence,
       reason: `Elite Setup (Score: ${score.totalScore}/100) - ${aiDecision.reason}`,
       status: 'pending',
@@ -650,19 +650,19 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
   private calculatePositionSize(score: number): number {
     if (score >= ELITE_CONFIG.PERFECT_SCORE) return 1.5; // Setup perfeito
-    if (score >= 90) return 1.0; // Setup excelente
+    if (score >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) return 1.0; // Setup excelente
     return 0.5; // Setup bom
   }
 
   private calculateRiskReward(score: number): number {
     if (score >= ELITE_CONFIG.PERFECT_SCORE) return ELITE_CONFIG.PERFECT_RR; // 8:1
-    if (score >= 90) return ELITE_CONFIG.TARGET_RR; // 6:1
+    if (score >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) return ELITE_CONFIG.TARGET_RR; // 6:1
     return ELITE_CONFIG.MIN_RR; // 4:1
   }
 
   private getSetupClassification(score: number): string {
     if (score >= ELITE_CONFIG.PERFECT_SCORE) return '🌟 SETUP PERFEITO';
-    if (score >= 90) return '⭐ SETUP EXCELENTE';
+    if (score >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) return '⭐ SETUP EXCELENTE';
     return '✨ SETUP BOM';
   }
 

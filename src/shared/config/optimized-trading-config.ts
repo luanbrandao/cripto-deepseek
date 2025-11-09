@@ -3,10 +3,12 @@
  * Baseada em análise técnica e estatística dos dados históricos
  */
 
+import { UNIFIED_TRADING_CONFIG } from './unified-trading-config';
+
 export const OPTIMIZED_TRADING_CONFIG = {
   // 💰 CONFIGURAÇÕES FINANCEIRAS OTIMIZADAS
   TRADE_AMOUNT_USD: 20,              // ↑ Aumentado de $15 para $20
-  MIN_CONFIDENCE: 68,                // ↓ Reduzido de 75% para 68%
+  MIN_CONFIDENCE: UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE,
   MIN_RISK_REWARD_RATIO: 1.7,       // ↓ Reduzido de 2.0 para 1.7
   TRADE_COOLDOWN_MINUTES: 2,         // ↓ Reduzido de 5 para 2 minutos
 
@@ -106,19 +108,19 @@ export const OPTIMIZED_TRADING_CONFIG = {
 // 🎯 CONFIGURAÇÕES ESPECÍFICAS POR BOT TYPE
 export const BOT_SPECIFIC_CONFIG = {
   SMART_BOTS: {
-    MIN_CONFIDENCE: 65,            // Mais agressivo
+    MIN_CONFIDENCE: UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE,
     RISK_MULTIPLIER: 0.8,          // Risco reduzido
     BOOST_FACTOR: 1.2              // Boost moderado
   },
 
   MULTI_SMART_BOTS: {
-    MIN_CONFIDENCE: 70,            // Seletivo mas executável
+    MIN_CONFIDENCE: UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE,
     RISK_MULTIPLIER: 1.0,          // Risco padrão
     BOOST_FACTOR: 1.5              // Boost maior
   },
 
   SIMULATORS: {
-    MIN_CONFIDENCE: 60,            // Muito agressivo para testes
+    MIN_CONFIDENCE: UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE,
     RISK_MULTIPLIER: 0.7,          // Risco baixo
     BOOST_FACTOR: 1.1              // Boost mínimo
   }

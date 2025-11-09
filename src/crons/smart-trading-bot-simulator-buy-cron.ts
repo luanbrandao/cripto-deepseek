@@ -1,14 +1,15 @@
 import cron from 'node-cron';
 import * as dotenv from 'dotenv';
 import { SmartTradingBotSimulatorBuy } from '../bots';
+import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
 
 dotenv.config();
 
-console.log('🤖 Smart Trading Bot Simulator BUY Cron iniciado - Execução a cada 5 minutos');
+console.log(`🤖 Smart Trading Bot Simulator BUY Cron iniciado - Execução a cada ${UNIFIED_TRADING_CONFIG.TRADE_COOLDOWN_MINUTES} minutos`);
 
 
 
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule(`*/${UNIFIED_TRADING_CONFIG.TRADE_COOLDOWN_MINUTES} * * * *`, async () => {
   const timestamp = new Date().toLocaleString('pt-BR');
   console.log(`\n⏰ [${timestamp}] Executando Smart Trading Bot Simulator BUY...`);
 

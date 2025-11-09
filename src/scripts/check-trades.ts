@@ -1,9 +1,10 @@
 import { TradeMonitor } from '../monitor/trade-monitor';
+import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
 import * as fs from 'fs';
 
 async function checkTradesContinuously() {
   const monitor = new TradeMonitor();
-  const filePath = './src/trades/ema12-26Trades.json';
+  const filePath = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/ema${UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD}-${UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD}Trades.json`;
 
   console.log('🔄 Iniciando monitoramento contínuo de trades...');
 

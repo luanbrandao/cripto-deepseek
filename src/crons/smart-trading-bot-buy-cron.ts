@@ -1,11 +1,12 @@
 import cron from 'node-cron';
 import { SmartTradingBotBuy } from '../bots/execution/real/smart-trading-bot-buy';
+import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
 import * as dotenv from 'dotenv';
 import { validateBinanceKeys } from '../bots/utils/validation/env-validator';
 
 dotenv.config();
 
-console.log('🤖 Smart Trading Bot Cron iniciado - Execução a cada 5 minutos');
+console.log(`🤖 Smart Trading Bot Cron iniciado - Execução a cada ${UNIFIED_TRADING_CONFIG.TRADE_COOLDOWN_MINUTES} minutos`);
 
 const keys = validateBinanceKeys();
 if (!keys) {
@@ -15,7 +16,7 @@ if (!keys) {
 
 const { apiKey, apiSecret } = keys;
 
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule(`*/${UNIFIED_TRADING_CONFIG.TRADE_COOLDOWN_MINUTES} * * * *`, async () => {
   const timestamp = new Date().toLocaleString('pt-BR');
   console.log(`\n⏰ [${timestamp}] Executando Smart Trading Bot...`);
 

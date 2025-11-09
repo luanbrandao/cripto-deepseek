@@ -8,8 +8,8 @@ async function runSimulation123() {
   console.log('📊 Estratégia: Padrão 123 de Reversão + Múltiplas Moedas\n');
 
   const tradesFile = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/123analyzerTrades.json`;
-  const simulator = new TradeSimulator(Analyzer123, 1000, TRADING_CONFIG.SYMBOLS, tradesFile);
-  await simulator.simulate(TRADING_CONFIG.SYMBOLS);
+  const simulator = new TradeSimulator(Analyzer123, UNIFIED_TRADING_CONFIG.SIMULATION.INITIAL_BALANCE, UNIFIED_TRADING_CONFIG.SYMBOLS, tradesFile);
+  await simulator.simulate(UNIFIED_TRADING_CONFIG.SYMBOLS);
 }
 
 // Só executa se for chamado diretamente (não importado)
