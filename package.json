@@ -64,6 +64,7 @@
     "test:all-simulators": "ts-node src/scripts/tests/test-all-simulators.ts",
     "test:multi-smart-bot-simulator-buy": "ts-node src/scripts/tests/test-multi-smart-bot-simulator-buy.ts",
     "test:multi-smart-bot-buy": "ts-node src/scripts/tests/test-multi-smart-bot-buy.ts",
+    "analyze-performance": "ts-node src/scripts/performance-analyzer.ts",
     "_comment4f": "--- 📊 Legacy Test Names (Backward Compatibility) ---",
     "run-all-tests": "npm run test:all",
     "test-calculations": "npm run test:calculations",
