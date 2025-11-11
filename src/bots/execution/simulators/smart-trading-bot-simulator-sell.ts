@@ -5,7 +5,7 @@ import { calculateRiskRewardDynamic, validateConfidence } from '../../utils/risk
 import { calculateTargetAndStopPrices } from '../../utils/risk/price-calculator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../../shared/validators/trend-validator';
 
@@ -20,7 +20,7 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Smart Trading Bot Simulator SELL',
       isSimulation: true,
-      tradesFile: UNIFIED_TRADING_CONFIG.FILES.SMART_SIMULATOR_SELL,
+      tradesFile: TradingConfigManager.getConfig().FILES.SMART_SIMULATOR_SELL,
       requiresFiltering: true,
       requiresValidation: true,
       riskCalculationMethod: 'Basic Method'
@@ -29,8 +29,8 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
     this.emaAnalyzer = new EmaAnalyzer({
-      fastPeriod: UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD,
-      slowPeriod: UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD
+      fastPeriod: TradingConfigManager.getConfig().EMA.FAST_PERIOD,
+      slowPeriod: TradingConfigManager.getConfig().EMA.SLOW_PERIOD
     });
   }
 
@@ -50,7 +50,7 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
     const validSymbols = [];
 
     for (const symbol of symbols) {
-      const klines = await this.getBinancePublic().getKlines(symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, UNIFIED_TRADING_CONFIG.CHART.PERIODS);
+      const klines = await this.getBinancePublic().getKlines(symbol, TradingConfigManager.getConfig().CHART.TIMEFRAME, TradingConfigManager.getConfig().CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const currentPrice = prices[prices.length - 1];
       const emaAnalysis = this.emaAnalyzer.analyze({ price24h: prices, currentPrice });
@@ -132,7 +132,7 @@ if (require.main === module) {
   logBotStartup(
     'Smart Bot Simulator SELL',
     '🧪 Modo seguro - Apenas simulação, sem trades reais\n🔴 Análise dupla: EMA + DeepSeek AI - APENAS VENDAS',
-    UNIFIED_TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
+    TradingConfigManager.getConfig().SIMULATION.STARTUP_DELAY,
     true
   ).then(() => main());
 }

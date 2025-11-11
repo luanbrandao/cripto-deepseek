@@ -1,5 +1,5 @@
 import { validateRiskReward, calculateRiskReward } from '../../bots/utils/risk/trade-validators';
-import { UNIFIED_TRADING_CONFIG } from '../config/unified-trading-config';
+import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 
 export interface TrendValidationOptions {
   direction: 'UP' | 'DOWN';
@@ -8,13 +8,13 @@ export interface TrendValidationOptions {
 }
 
 export function validateTrendAnalysis(
-  trendAnalysis: any, 
+  trendAnalysis: any,
   options: TrendValidationOptions
 ): boolean {
   const { direction, isSimulation = false } = options;
-  
+
   const isValidTrend = direction === 'UP' ? trendAnalysis.isUptrend : !trendAnalysis.isUptrend;
-  
+
   if (!isValidTrend) {
     const trendType = direction === 'UP' ? 'ALTA' : 'BAIXA';
     console.log(`❌ MERCADO NÃO ESTÁ EM TENDÊNCIA DE ${trendType}`);
@@ -44,47 +44,47 @@ export function validateRiskRewardRatio(decision: any): boolean {
 }
 
 export function boostConfidence(
-  decision: any, 
+  decision: any,
   options: { baseBoost: number; maxBoost: number; trendType: 'BUY' | 'SELL' }
 ): any {
   if (!validateRiskRewardRatio(decision)) {
     throw new Error('Risk/Reward ratio insuficiente - trade cancelado');
   }
-  
+
   let boost = options.baseBoost;
-  
-  if (decision.confidence >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) {
+
+  if (decision.confidence >= TradingConfigManager.getConfig().HIGH_CONFIDENCE) {
     boost += 3;
-  } else if (decision.confidence >= UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE) {
+  } else if (decision.confidence >= TradingConfigManager.getConfig().MEDIUM_CONFIDENCE) {
     boost += 6;
   } else {
     boost += 8;
   }
-  
+
   if (decision.reason?.includes('Smart Score:')) {
     const scoreMatch = decision.reason.match(/Smart Score: ([0-9.]+)/);
     if (scoreMatch) {
       const smartScore = parseFloat(scoreMatch[1]);
-      if (smartScore > UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) boost += 4;
-      else if (smartScore > UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE) boost += 2;
+      if (smartScore > TradingConfigManager.getConfig().HIGH_CONFIDENCE) boost += 4;
+      else if (smartScore > TradingConfigManager.getConfig().MEDIUM_CONFIDENCE) boost += 2;
     }
   }
-  
+
   if (options.trendType === 'SELL' && decision.reason) {
     const bearishPatterns = ['resistência', 'divergência', 'rompimento', 'distribuição'];
     if (bearishPatterns.some(pattern => decision.reason.includes(pattern))) {
       boost += 3;
     }
   }
-  
-  const boostedConfidence = Math.min(UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE, decision.confidence + Math.min(boost, options.maxBoost));
+
+  const boostedConfidence = Math.min(TradingConfigManager.getConfig().HIGH_CONFIDENCE, decision.confidence + Math.min(boost, options.maxBoost));
   decision.confidence = boostedConfidence;
-  
+
   const trendText = options.trendType === 'BUY' ? 'COMPRA' : 'VENDA';
   decision.reason = `${decision.reason} + EMA confirmado (+${boost}% boost)`;
-  
+
   console.log(`🎯 DUPLA CONFIRMAÇÃO: EMA + DEEPSEEK AI APROVAM ${trendText}!`);
   console.log(`✅ Risk/Reward 2:1 confirmado! Boost inteligente: +${boost}%`);
-  
+
   return decision;
 }

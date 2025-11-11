@@ -1,7 +1,7 @@
 import { BinancePublicClient } from '../../core/clients/binance-public-client';
 import { BinancePrivateClient } from '../../core/clients/binance-private-client';
 import { DeepSeekService } from '../../core/clients/deepseek-client';
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 
 export abstract class BaseTradingBot {
   protected binancePublic: BinancePublicClient;
@@ -25,11 +25,11 @@ export abstract class BaseTradingBot {
   public abstract executeTrade(...args: any[]): Promise<any>;
 
   public getSymbols(): string[] {
-    return UNIFIED_TRADING_CONFIG.SYMBOLS;
+    return TradingConfigManager.getConfig().SYMBOLS;
   }
 
   public getTradeAmount(): number {
-    return UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD;
+    return TradingConfigManager.getConfig().TRADE_AMOUNT_USD;
   }
 
   public getBinancePublic(): BinancePublicClient {

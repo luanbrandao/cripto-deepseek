@@ -7,7 +7,7 @@ import { calculateRiskRewardDynamic } from '../../utils/risk/trade-validators';
 import { calculateTargetAndStopPrices } from '../../utils/risk/price-calculator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { AdvancedEmaAnalyzer } from '../../services/advanced-ema-analyzer';
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../../../shared/validators/trend-validator';
 
@@ -30,14 +30,14 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Multi-Smart Trading Bot BUY',
       isSimulation: false,
-      tradesFile: UNIFIED_TRADING_CONFIG.FILES.MULTI_SMART_BUY
+      tradesFile: TradingConfigManager.getConfig().FILES.MULTI_SMART_BUY
     };
 
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
     this.advancedEmaAnalyzer = new AdvancedEmaAnalyzer({
-      fastPeriod: UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD,
-      slowPeriod: UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD
+      fastPeriod: TradingConfigManager.getConfig().EMA.FAST_PERIOD,
+      slowPeriod: TradingConfigManager.getConfig().EMA.SLOW_PERIOD
     });
   }
 
@@ -56,7 +56,7 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
   }
 
   private async analyzeSymbol(symbol: string, marketData: any) {
-    return await UnifiedDeepSeekAnalyzer.analyzeMultiSmartTrade(this.deepseek!, symbol, marketData);
+    return await UnifiedDeepSeekAnalyzer.analyzeMultiSmartTradeBuy(this.deepseek!, symbol, marketData);
   }
 
   private async filterSymbolsByStrength(symbols: string[]): Promise<string[]> {
@@ -67,8 +67,8 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
     for (const symbol of symbols) {
       const klines = await this.getBinancePublic().getKlines(
         symbol,
-        UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME,
-        UNIFIED_TRADING_CONFIG.CHART.PERIODS
+        TradingConfigManager.getConfig().CHART.TIMEFRAME,
+        TradingConfigManager.getConfig().CHART.PERIODS
       );
 
       const prices = klines.map((k: any) => parseFloat(k[4]));
@@ -162,6 +162,6 @@ if (require.main === module) {
   logBotStartup(
     'Multi-Smart Trading Bot BUY',
     '⚠️  TRADES REAIS - Ordens executadas na Binance\n🧠 Análise multi-dimensional avançada - APENAS COMPRAS',
-    UNIFIED_TRADING_CONFIG.SIMULATION.STARTUP_DELAY
+    TradingConfigManager.getConfig().SIMULATION.STARTUP_DELAY
   ).then(() => main());
 }

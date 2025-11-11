@@ -1,6 +1,5 @@
 import { findPivotPoints } from '../bots/utils/analysis/support-resistance-calculator';
-import { UNIFIED_TRADING_CONFIG, BOT_SPECIFIC_CONFIG } from '../shared/config/unified-trading-config';
-import { ULTRA_CONSERVATIVE_CONFIG } from '../shared/config/ultra-conservative-config';
+import { TradingConfigManager } from '../shared/config/trading-config-manager';
 
 interface Candle {
   open: number;
@@ -45,7 +44,7 @@ export default class SupportResistanceAnalyzer {
   private lookbackPeriods: number;
 
   constructor(config: { tolerance?: number; minTouches?: number; lookbackPeriods?: number } = {}) {
-    const srConfig = BOT_SPECIFIC_CONFIG?.SUPPORT_RESISTANCE;
+    const srConfig = TradingConfigManager.getBotConfig().SUPPORT_RESISTANCE;
     this.tolerance = config.tolerance || srConfig?.MAX_DISTANCE || 0.005;
     this.minTouches = config.minTouches || srConfig?.MIN_TOUCHES || 2;
     this.lookbackPeriods = config.lookbackPeriods || 30;
@@ -247,10 +246,11 @@ export default class SupportResistanceAnalyzer {
   }
 
   private analyzeCurrentSituation(currentPrice: number, levels: SupportResistanceLevel[], candles: Candle[]): { action: 'BUY' | 'SELL' | 'HOLD', confidence: number, reason: string } {
-    const srConfig = BOT_SPECIFIC_CONFIG?.SUPPORT_RESISTANCE;
+    const config = TradingConfigManager.getConfig();
+    const srConfig = TradingConfigManager.getBotConfig().SUPPORT_RESISTANCE;
     const tolerance = currentPrice * (srConfig?.MAX_DISTANCE || 0.005);
-    const minConfidence = ULTRA_CONSERVATIVE_CONFIG?.MIN_CONFIDENCE || UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE || 70;
-    const highConfidence = ULTRA_CONSERVATIVE_CONFIG?.MIN_CONFIDENCE || UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE || 90;
+    const minConfidence = config.MIN_CONFIDENCE;
+    const highConfidence = config.HIGH_CONFIDENCE;
 
     // Encontrar níveis próximos que atendem ao mínimo de toques
     const nearbyLevels = levels.filter(level =>

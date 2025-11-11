@@ -4,7 +4,7 @@ import { BotFlowManager } from '../../utils/execution/bot-flow-manager';
 import { BotConfig } from '../../core/types';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 
 dotenv.config();
@@ -18,7 +18,7 @@ export class RealTradingBot extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Real Trading Bot',
       isSimulation: false,
-      tradesFile: UNIFIED_TRADING_CONFIG.FILES.REAL_BOT
+      tradesFile: TradingConfigManager.getConfig().FILES.REAL_BOT
     };
 
     this.flowManager = new BotFlowManager(this, config);

@@ -1,6 +1,7 @@
 import { calculateEMA } from '../bots/utils/analysis/ema-calculator';
 import { UNIFIED_TRADING_CONFIG, BOT_SPECIFIC_CONFIG } from '../shared/config/unified-trading-config';
-import { ULTRA_CONSERVATIVE_CONFIG } from '../shared/config/ultra-conservative-config';
+import { TradingConfigManager } from '../shared/config/trading-config-manager';
+
 
 interface MarketData {
   price24h: number[];
@@ -44,7 +45,7 @@ class EmaAnalyzer {
     let reason = "Mercado estável";
 
     // Usar configurações dinâmicas baseadas no contexto
-    const minConfidence = ULTRA_CONSERVATIVE_CONFIG?.MIN_CONFIDENCE || UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE || 70;
+    const minConfidence = TradingConfigManager.getConfig().MIN_CONFIDENCE || 70;
     const emaConfig = BOT_SPECIFIC_CONFIG?.EMA_BOT;
 
     if (currentPrice > emaFast && emaFast > emaSlow && priceChange > 2) {
@@ -101,7 +102,7 @@ class EmaAnalyzer {
     const currentPrice = prices[prices.length - 1];
 
     // Verificar separação mínima usando BOT_SPECIFIC_CONFIG
-    const minSeparation = UNIFIED_TRADING_CONFIG.EMA_ADVANCED?.MIN_SEPARATION || 0.005;
+    const minSeparation = TradingConfigManager.getConfig().EMA_ADVANCED?.MIN_SEPARATION || 0.005;
     const separation = (ema12 - ema26) / ema26;
 
     if (separation < minSeparation) {

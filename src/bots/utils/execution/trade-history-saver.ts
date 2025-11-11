@@ -1,6 +1,6 @@
 import { TradeStorage, Trade } from '../../../core/utils/trade-storage';
 import { RiskManager } from '../../services/risk-manager';
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import * as path from 'path';
 
 export function createTradeRecord(decision: any, orderResult: any, fileName: string, riskCalculationMethod?: string): Trade {
@@ -18,7 +18,7 @@ export function createTradeRecord(decision: any, orderResult: any, fileName: str
     stopPrice: decision.action === 'BUY'
       ? decision.price * (1 - riskPercent)
       : decision.price * (1 + riskPercent),
-    amount: orderResult ? UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD : 0,
+    amount: orderResult ? TradingConfigManager.getConfig().TRADE_AMOUNT_USD : 0,
     balance: 0,
     crypto: 0,
     reason: decision.reason,
@@ -42,7 +42,7 @@ export function createTradeRecord(decision: any, orderResult: any, fileName: str
 }
 
 export function saveTradeHistory(trade: Trade, fileName: string) {
-  const tradesFile = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${fileName}`;
+  const tradesFile = `${TradingConfigManager.getConfig().PATHS.TRADES_DIR}/${fileName}`;
 
   TradeStorage.saveTrades([trade], tradesFile);
   console.log(`\n💾 Trade salvo no histórico: ${fileName}`);

@@ -1,6 +1,6 @@
 import { TradeDecision } from '../../bots/types/trading';
 
-import { UNIFIED_TRADING_CONFIG } from '../config/unified-trading-config';
+import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 
 interface SentimentAnalysis {
   bullishScore: number;
@@ -46,12 +46,12 @@ export class UnifiedAnalysisParser {
 
     for (const { pattern, action, confidence } of explicitPatterns) {
       if (pattern.test(analysis)) {
-        return { 
-          action: action as any, 
-          confidence, 
-          reason: `DeepSeek AI: Recomendação de ${action.toLowerCase()}`, 
-          symbol, 
-          price 
+        return {
+          action: action as any,
+          confidence,
+          reason: `DeepSeek AI: Recomendação de ${action.toLowerCase()}`,
+          symbol,
+          price
         };
       }
     }
@@ -108,7 +108,7 @@ export class UnifiedAnalysisParser {
     return {
       bullishScore,
       bearishScore,
-      confidence: Math.min(UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE, Math.max(50, totalScore * 8))
+      confidence: Math.min(TradingConfigManager.getConfig().HIGH_CONFIDENCE, Math.max(50, totalScore * 8))
     };
   }
 
@@ -123,7 +123,7 @@ export class UnifiedAnalysisParser {
   }
 
   private static extractMomentumScore(analysis: string): number {
-    if (analysis.includes('strong momentum')) return UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE;
+    if (analysis.includes('strong momentum')) return TradingConfigManager.getConfig().HIGH_CONFIDENCE;
     if (analysis.includes('momentum')) return 75;
     if (analysis.includes('weak momentum')) return 30;
     return 50;
@@ -161,24 +161,24 @@ export class UnifiedAnalysisParser {
   }
 
   private static calculateDynamicConfidence(
-    sentiment: SentimentAnalysis, 
-    confidenceFactors: number, 
+    sentiment: SentimentAnalysis,
+    confidenceFactors: number,
     signals: TechnicalSignals
   ): number {
     let baseConfidence = sentiment.confidence;
-    
+
     if (signals.breakout) baseConfidence += 5;
     if (signals.support) baseConfidence += 3;
     if (signals.momentum > 80) baseConfidence += 4;
     if (signals.volume > 80) baseConfidence += 3;
 
     baseConfidence += confidenceFactors;
-    return Math.min(UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE, Math.max(50, baseConfidence));
+    return Math.min(TradingConfigManager.getConfig().HIGH_CONFIDENCE, Math.max(50, baseConfidence));
   }
 
   private static generateDetailedReason(
-    analysis: string, 
-    sentiment: SentimentAnalysis, 
+    analysis: string,
+    sentiment: SentimentAnalysis,
     signals: TechnicalSignals
   ): string {
     const reasons = [];

@@ -1,7 +1,7 @@
 import { BaseTradingBot } from '../../core/base-trading-bot';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { calculateTargetAndStopPrices, calculateTargetAndStopPricesRealMarket, calculateTargetAndStopPricesWithLevels } from '../../utils/risk/price-calculator';
 import { getMarketData } from '../../utils/data/market-data-fetcher';
@@ -27,7 +27,7 @@ export class CalculateTargetTestBot extends BaseTradingBot {
   }
 
   private async analyzeMultipleSymbols() {
-    const symbols = UNIFIED_TRADING_CONFIG.SYMBOLS;
+    const symbols = TradingConfigManager.getConfig().SYMBOLS;
     const analyses = [];
 
     for (const symbol of symbols) {
@@ -44,9 +44,9 @@ export class CalculateTargetTestBot extends BaseTradingBot {
 
         // Para teste de calculadoras, incluir todas as decisões que atendem confiança mínima
         // Se for HOLD, converter para BUY para testar calculadoras
-        if (decision.confidence >= UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
+        if (decision.confidence >= TradingConfigManager.getConfig().MIN_CONFIDENCE) {
           let testDecision = decision;
-          
+
           // Se for HOLD, converter para BUY para fins de teste
           if (decision.action === 'HOLD') {
             testDecision = {
@@ -56,7 +56,7 @@ export class CalculateTargetTestBot extends BaseTradingBot {
             };
             console.log(`   🔄 Convertendo HOLD para BUY para teste de calculadoras`);
           }
-          
+
           analyses.push({
             symbol,
             decision: testDecision,
@@ -91,7 +91,7 @@ export class CalculateTargetTestBot extends BaseTradingBot {
   async executeTest() {
     this.logBotInfo();
 
-    console.log(`\n🔍 Analisando ${UNIFIED_TRADING_CONFIG.SYMBOLS.length} moedas para encontrar a melhor oportunidade...`);
+    console.log(`\n🔍 Analisando ${TradingConfigManager.getConfig().SYMBOLS.length} moedas para encontrar a melhor oportunidade...`);
 
     try {
       // 1. Análise multi-moeda com DeepSeek
@@ -114,7 +114,7 @@ export class CalculateTargetTestBot extends BaseTradingBot {
 
       // Agora todas as decisões já foram convertidas para BUY/SELL se necessário
       console.log(`🔧 Testando calculadoras com ação: ${decision.action}`);
-      
+
       if (decision.action === 'HOLD') {
         console.log('⚠️ ERRO: Decisão HOLD não deveria chegar aqui após conversão');
         return;

@@ -4,7 +4,7 @@ import * as path from 'path';
 import { Trade, TradeStorage } from './core/utils/trade-storage';
 import { BinancePublicClient } from './core/clients/binance-public-client';
 import { DeepSeekService } from './core/clients/deepseek-client';
-import { UNIFIED_TRADING_CONFIG } from './shared/config/unified-trading-config';
+import TradingConfigManager from './shared/config/trading-config-manager';
 
 async function main() {
   const binancePublic = new BinancePublicClient();
@@ -13,10 +13,10 @@ async function main() {
   console.log('🚀 ANÁLISE DE MERCADO COM DEEPSEEK AI e API public da Binance');
 
   try {
-    const symbol = UNIFIED_TRADING_CONFIG.DEFAULT_SYMBOL;
+    const symbol = TradingConfigManager.getConfig().DEFAULT_SYMBOL;
     const price = await binancePublic.getPrice(symbol);
     const stats = await binancePublic.get24hrStats(symbol);
-    const klines = await binancePublic.getKlines(symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, 24);
+    const klines = await binancePublic.getKlines(symbol, TradingConfigManager.getConfig().CHART.TIMEFRAME, 24);
 
     console.log(`💰 ${symbol}: $${parseFloat(price.price).toLocaleString()}`);
     console.log(`📈 Variação 24h: ${parseFloat(stats.priceChangePercent).toFixed(2)}%`);
@@ -63,7 +63,7 @@ async function main() {
       actualReturn: 0
     };
 
-    const tradesFile = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/deepseekAnalysis.json`;
+    const tradesFile = `${TradingConfigManager.getConfig().PATHS.TRADES_DIR}/deepseekAnalysis.json`;
     TradeStorage.saveTrades([trade], tradesFile);
     console.log('\n💾 Análise salva no histórico: deepseekAnalysis.json');
 

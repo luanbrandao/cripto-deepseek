@@ -1,6 +1,7 @@
 import { BinancePrivateClient } from '../../core/clients/binance-private-client';
 import { TradeDecision } from '../types/trading';
 import { UNIFIED_TRADING_CONFIG, UnifiedTradingState } from '../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 import { RiskManager } from './risk-manager';
 
 export class TradeExecutor {
@@ -34,8 +35,8 @@ export class TradeExecutor {
       return false;
     }
 
-    if (decision.action === 'HOLD' || decision.confidence < UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
-      console.log(`⏸️ Trade não executado - Confiança ${decision.confidence}% < ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}% mínimo`);
+    if (decision.action === 'HOLD' || decision.confidence < TradingConfigManager.getConfig().MIN_CONFIDENCE) {
+      console.log(`⏸️ Trade não executado - Confiança ${decision.confidence}% < ${TradingConfigManager.getConfig().MIN_CONFIDENCE}% mínimo`);
       return false;
     }
 
@@ -45,8 +46,8 @@ export class TradeExecutor {
   private static isInCooldown(): boolean {
     const timeSinceLastTrade = (Date.now() - UnifiedTradingState.getLastTradeTime()) / (1000 * 60);
 
-    if (timeSinceLastTrade < UNIFIED_TRADING_CONFIG.TRADE_COOLDOWN_MINUTES && UnifiedTradingState.getLastTradeTime() > 0) {
-      const remainingTime = (UNIFIED_TRADING_CONFIG.TRADE_COOLDOWN_MINUTES - timeSinceLastTrade).toFixed(1);
+    if (timeSinceLastTrade < TradingConfigManager.getConfig().TRADE_COOLDOWN_MINUTES && UnifiedTradingState.getLastTradeTime() > 0) {
+      const remainingTime = (TradingConfigManager.getConfig().TRADE_COOLDOWN_MINUTES - timeSinceLastTrade).toFixed(1);
       console.log(`⏸️ Cooldown ativo - aguarde ${remainingTime} minutos`);
       return true;
     }
@@ -61,8 +62,8 @@ export class TradeExecutor {
     console.log(`📊 Risk/Reward: ${(rewardPercent * 100).toFixed(1)}%/${(riskPercent * 100).toFixed(1)}% (${riskRewardRatio.toFixed(1)}:1)`);
 
     // VALIDAÇÃO RIGOROSA: MÍNIMO 2:1
-    if (riskRewardRatio < UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO) {
-      console.log(`❌ Trade REJEITADO - R/R ${riskRewardRatio.toFixed(2)}:1 < ${UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (MÍNIMO OBRIGATÓRIO)`);
+    if (riskRewardRatio < TradingConfigManager.getConfig().MIN_RISK_REWARD_RATIO) {
+      console.log(`❌ Trade REJEITADO - R/R ${riskRewardRatio.toFixed(2)}:1 < ${TradingConfigManager.getConfig().MIN_RISK_REWARD_RATIO}:1 (MÍNIMO OBRIGATÓRIO)`);
       return false;
     }
 
@@ -101,7 +102,7 @@ export class TradeExecutor {
   }
 
   private static async placeOrder(decision: TradeDecision, binancePrivate: BinancePrivateClient) {
-    console.log(`\n🚨 EXECUTANDO ORDEM: ${decision.action} ${decision.symbol} - $${UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD}`);
+    console.log(`\n🚨 EXECUTANDO ORDEM: ${decision.action} ${decision.symbol} - $${TradingConfigManager.getConfig().TRADE_AMOUNT_USD}`);
 
     if (decision.action !== 'BUY' && decision.action !== 'SELL') {
       throw new Error(`Ação inválida: ${decision.action}`);
@@ -110,7 +111,7 @@ export class TradeExecutor {
     const orderResult = await binancePrivate.createMarketOrder(
       decision.symbol,
       decision.action,
-      UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD
+      TradingConfigManager.getConfig().TRADE_AMOUNT_USD
     );
 
     console.log('✅ Ordem executada!');
@@ -139,8 +140,8 @@ export class TradeExecutor {
 
     console.log(`💰 USDT: $${usdtFree.toFixed(2)}`);
 
-    if (usdtFree < UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD) {
-      console.log(`❌ Saldo insuficiente. Necessário: $${UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD}`);
+    if (usdtFree < TradingConfigManager.getConfig().TRADE_AMOUNT_USD) {
+      console.log(`❌ Saldo insuficiente. Necessário: $${TradingConfigManager.getConfig().TRADE_AMOUNT_USD}`);
       return false;
     }
 
@@ -155,7 +156,7 @@ export class TradeExecutor {
 
     console.log(`🪙 ${baseAsset}: ${assetFree.toFixed(6)} (~$${assetValueUSD.toFixed(2)})`);
 
-    if (assetValueUSD < UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD) {
+    if (assetValueUSD < TradingConfigManager.getConfig().TRADE_AMOUNT_USD) {
       console.log(`❌ Saldo insuficiente de ${baseAsset}`);
       return false;
     }

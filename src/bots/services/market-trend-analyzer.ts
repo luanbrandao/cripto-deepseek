@@ -1,6 +1,6 @@
 import { BinancePublicClient } from '../../core/clients/binance-public-client';
 import EmaAnalyzer from '../../analyzers/emaAnalyzer';
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 
 interface MarketData {
   price24h: number[];
@@ -19,9 +19,9 @@ export class MarketTrendAnalyzer {
 
   constructor() {
     this.binancePublic = new BinancePublicClient();
-    this.emaAnalyzer = new EmaAnalyzer({ 
-      fastPeriod: UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD, 
-      slowPeriod: UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD 
+    this.emaAnalyzer = new EmaAnalyzer({
+      fastPeriod: TradingConfigManager.getConfig().EMA.FAST_PERIOD,
+      slowPeriod: TradingConfigManager.getConfig().EMA.SLOW_PERIOD
     });
   }
 
@@ -29,9 +29,9 @@ export class MarketTrendAnalyzer {
     console.log('📊 Verificando tendência do mercado com EMA...');
 
     const klines = await this.binancePublic.getKlines(
-      symbol, 
-      UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, 
-      UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD
+      symbol,
+      TradingConfigManager.getConfig().CHART.TIMEFRAME,
+      TradingConfigManager.getConfig().EMA.SLOW_PERIOD
     );
     const prices = klines.map((k: any) => parseFloat(k[4])); // Close prices
     const currentPrice = prices[prices.length - 1];
@@ -42,7 +42,7 @@ export class MarketTrendAnalyzer {
     };
 
     const emaAnalysis = this.emaAnalyzer.analyze(marketData);
-    const isUptrend = emaAnalysis.action === 'BUY' && emaAnalysis.confidence >= UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE;
+    const isUptrend = emaAnalysis.action === 'BUY' && emaAnalysis.confidence >= TradingConfigManager.getConfig().MIN_CONFIDENCE;
 
     console.log(`📈 Tendência EMA: ${emaAnalysis.action} (${emaAnalysis.confidence}%)`);
     console.log(`💭 Razão EMA: ${emaAnalysis.reason}`);

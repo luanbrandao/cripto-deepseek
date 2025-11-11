@@ -3,7 +3,7 @@
  * Implementa validações rigorosas para aumentar win rate de 14% para 80%+
  */
 
-import { ULTRA_CONSERVATIVE_CONFIG } from '../config/ultra-conservative-config';
+import TradingConfigManager from '../config/trading-config-manager';
 
 export interface UltraConservativeAnalysis {
   isValid: boolean;
@@ -85,7 +85,8 @@ export class UltraConservativeAnalyzer {
     );
 
     // ✅ VALIDAÇÃO FINAL
-    if (analysis.score >= ULTRA_CONSERVATIVE_CONFIG.SCORING_SYSTEM.MIN_TOTAL_SCORE) {
+    const minTotalScore = 85; // Score mínimo ultra-conservador
+    if (analysis.score >= minTotalScore) {
       analysis.isValid = true;
       analysis.confidence = Math.min(analysis.score, 95); // Cap em 95%
       analysis.riskLevel = this.calculateRiskLevel(analysis.score);
@@ -107,19 +108,22 @@ export class UltraConservativeAnalyzer {
   private static passesExclusionFilters(symbol: string, marketData: any): boolean {
     const { price, stats, volume24h } = marketData;
     
-    // Volume mínimo
-    if (volume24h < ULTRA_CONSERVATIVE_CONFIG.FILTERS.MIN_VOLUME_24H) {
+    const config = TradingConfigManager.getConfig();
+    
+    // Volume mínimo (usando valor padrão se não disponível)
+    const minVolume24h = 1000000000; // $1B mínimo
+    if (volume24h < minVolume24h) {
       return false;
     }
     
     // Volatilidade máxima
     const volatility = Math.abs(stats.priceChangePercent);
-    if (volatility > ULTRA_CONSERVATIVE_CONFIG.FILTERS.MAX_VOLATILITY) {
+    if (volatility > config.MARKET_FILTERS.MAX_VOLATILITY) {
       return false;
     }
     
     // Apenas símbolos aprovados
-    if (!ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.includes(symbol)) {
+    if (!config.SYMBOLS.includes(symbol)) {
       return false;
     }
     
@@ -146,7 +150,8 @@ export class UltraConservativeAnalyzer {
     
     // RSI em zona segura (25 pontos)
     const rsi = this.calculateRSI(klines);
-    const [rsiMin, rsiMax] = ULTRA_CONSERVATIVE_CONFIG.FILTERS.RSI_SAFE_ZONE;
+    const config = TradingConfigManager.getConfig();
+    const [rsiMin, rsiMax] = [35, 65]; // Zona segura padrão
     if (rsi >= rsiMin && rsi <= rsiMax) {
       score += 25;
       details.push(`✅ RSI em zona segura: ${rsi.toFixed(1)}`);
@@ -184,8 +189,11 @@ export class UltraConservativeAnalyzer {
     
     const { klines, volume24h } = marketData;
     
+    const config = TradingConfigManager.getConfig();
+    const minVolume24h = 1000000000; // $1B mínimo
+    
     // Volume 24h adequado (40 pontos)
-    if (volume24h >= ULTRA_CONSERVATIVE_CONFIG.FILTERS.MIN_VOLUME_24H) {
+    if (volume24h >= minVolume24h) {
       score += 40;
       details.push(`✅ Volume 24h excelente: $${(volume24h / 1e9).toFixed(2)}B`);
     }
@@ -195,7 +203,8 @@ export class UltraConservativeAnalyzer {
     const currentVolume = klines[klines.length - 1][5]; // Volume da última vela
     const volumeRatio = currentVolume / avgVolume;
     
-    if (volumeRatio >= ULTRA_CONSERVATIVE_CONFIG.FILTERS.VOLUME_SPIKE_MIN) {
+    const volumeSpikeMin = 2.0; // 2x a média mínimo
+    if (volumeRatio >= volumeSpikeMin) {
       score += 35;
       details.push(`✅ Pico de volume: ${volumeRatio.toFixed(2)}x média`);
     } else {
@@ -223,9 +232,12 @@ export class UltraConservativeAnalyzer {
     
     const { klines } = marketData;
     
+    const config = TradingConfigManager.getConfig();
+    const minTrendStrength = 0.8; // 80% força mínima
+    
     // Força da tendência (50 pontos)
     const trendStrength = this.calculateTrendStrength(klines);
-    if (trendStrength >= ULTRA_CONSERVATIVE_CONFIG.FILTERS.MIN_TREND_STRENGTH) {
+    if (trendStrength >= minTrendStrength) {
       score += 50;
       details.push(`✅ Tendência forte: ${(trendStrength * 100).toFixed(1)}%`);
     } else {
@@ -261,8 +273,10 @@ export class UltraConservativeAnalyzer {
       return { isValid: false, confidence: 0 };
     }
     
+    const config = TradingConfigManager.getConfig();
+    
     // Confiança mínima ultra-alta
-    if (aiAnalysis.confidence < ULTRA_CONSERVATIVE_CONFIG.MIN_CONFIDENCE) {
+    if (aiAnalysis.confidence < config.MIN_CONFIDENCE) {
       return { isValid: false, confidence: aiAnalysis.confidence };
     }
     
@@ -288,7 +302,13 @@ export class UltraConservativeAnalyzer {
     trendScore: number,
     aiConfidence: number
   ): number {
-    const weights = ULTRA_CONSERVATIVE_CONFIG.SCORING_SYSTEM;
+    // Pesos para cálculo do score final
+    const weights = {
+      TECHNICAL_WEIGHT: 0.3,
+      AI_WEIGHT: 0.3,
+      VOLUME_WEIGHT: 0.2,
+      SENTIMENT_WEIGHT: 0.2
+    };
     
     const weightedScore = (
       (technicalScore * weights.TECHNICAL_WEIGHT) +

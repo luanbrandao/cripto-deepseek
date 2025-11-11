@@ -1,6 +1,6 @@
 import { DeepSeekService } from '../../core/clients/deepseek-client';
 import { UnifiedAnalysisParser } from '../parsers/unified-analysis-parser';
-import { UNIFIED_TRADING_CONFIG } from '../config/unified-trading-config';
+import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 import { SmartScoringSystem } from '../../bots/services/smart-scoring-system';
 import { AdvancedEmaAnalyzer } from '../../bots/services/advanced-ema-analyzer';
 
@@ -46,7 +46,7 @@ export class UnifiedDeepSeekAnalyzer {
       return options.customPrompt;
     }
 
-    const baseContext = `Analyze ${symbol} market data (${UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME} timeframe, ${UNIFIED_TRADING_CONFIG.CHART.PERIODS} periods)`;
+    const baseContext = `Analyze ${symbol} market data (${TradingConfigManager.getConfig().CHART.TIMEFRAME} timeframe, ${TradingConfigManager.getConfig().CHART.PERIODS} periods)`;
 
     switch (options.strategy) {
       case 'SMART_TRADE':
@@ -85,7 +85,7 @@ export class UnifiedDeepSeekAnalyzer {
 
     const analysis = await deepseek.analyzeMarket(
       marketData,
-      `Analyze ${symbol} market data (${UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME} timeframe, ${UNIFIED_TRADING_CONFIG.CHART.PERIODS} periods) and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning.`,
+      `Analyze ${symbol} market data (${TradingConfigManager.getConfig().CHART.TIMEFRAME} timeframe, ${TradingConfigManager.getConfig().CHART.PERIODS} periods) and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning.`,
       'realBot',
       symbol
     );
@@ -227,7 +227,7 @@ IMPORTANTE:
 Responda em JSON:
 {
   "action": "SELL" ou "HOLD",
-  "confidence": número de 0-100 (mínimo ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE} para SELL),
+  "confidence": número de 0-100 (mínimo ${TradingConfigManager.getConfig().MIN_CONFIDENCE} para SELL),
   "reason": "explicação detalhada da análise multi-dimensional bearish",
   "price": ${parseFloat(price.price)},
   "symbol": "${symbol}",
@@ -271,8 +271,8 @@ Responda em JSON:
         analysis.action = 'HOLD';
       }
 
-      if (analysis.action === 'SELL' && analysis.confidence < UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
-        console.log(`⚠️ ${symbol}: Confiança ${analysis.confidence}% < ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}% - Convertendo para HOLD`);
+      if (analysis.action === 'SELL' && analysis.confidence < TradingConfigManager.getConfig().MIN_CONFIDENCE) {
+        console.log(`⚠️ ${symbol}: Confiança ${analysis.confidence}% < ${TradingConfigManager.getConfig().MIN_CONFIDENCE}% - Convertendo para HOLD`);
         analysis.action = 'HOLD';
         analysis.confidence = Math.max(50, analysis.confidence - 20);
       }

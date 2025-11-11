@@ -94,11 +94,15 @@ const bestAnalysis = await UnifiedMultiSymbolAnalyzer.analyzeMultipleSymbols(
 
 ### **5. Unified Config**
 ```typescript
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../shared/config/trading-config-manager';
 
 // Usar configuração centralizada
-const symbols = UNIFIED_TRADING_CONFIG.SYMBOLS;
-const maxTrades = UNIFIED_TRADING_CONFIG.getMaxActiveTrades(true);
+const symbols = TradingConfigManager.getConfig().SYMBOLS;
+const maxTrades = TradingConfigManager.getMaxActiveTrades(true);
+
+// Alternar entre modos
+TradingConfigManager.setMode('BALANCED');          // Modo balanceado
+TradingConfigManager.setMode('ULTRA_CONSERVATIVE'); // Modo ultra-conservador
 ```
 
 ## 📈 Impacto da Refatoração

@@ -1,4 +1,4 @@
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { validateRiskReward, calculateRiskReward } from '../risk/trade-validators';
 
 export function validateAdvancedBearishTrend(trendAnalysis: any, isSimulation = false): boolean {
@@ -21,8 +21,8 @@ export function validateAdvancedSellDecision(decision: any): boolean {
   }
 
   // Validação de confiança mínima para vendas avançadas
-  if (decision.confidence < UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
-    console.log(`❌ Confiança ${decision.confidence}% insuficiente para venda avançada (mín: ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}%)`);
+  if (decision.confidence < TradingConfigManager.getConfig().MIN_CONFIDENCE) {
+    console.log(`❌ Confiança ${decision.confidence}% insuficiente para venda avançada (mín: ${TradingConfigManager.getConfig().MIN_CONFIDENCE}%)`);
     return false;
   }
 
@@ -50,9 +50,9 @@ export function boostAdvancedSellConfidence(decision: any) {
   boost += 5;
 
   // Boost baseado no Smart Score
-  if (decision.smartScore >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) {
+  if (decision.smartScore >= TradingConfigManager.getConfig().HIGH_CONFIDENCE) {
     boost += 5; // Score muito alto
-  } else if (decision.smartScore >= UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE) {
+  } else if (decision.smartScore >= TradingConfigManager.getConfig().MIN_CONFIDENCE) {
     boost += 3; // Score alto
   } else if (decision.smartScore >= 70) {
     boost += 2; // Score médio
@@ -85,7 +85,7 @@ export function boostAdvancedSellConfidence(decision: any) {
     boost += 1;
   }
 
-  const boostedConfidence = Math.min(UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE + 8, decision.confidence + boost);
+  const boostedConfidence = Math.min(TradingConfigManager.getConfig().HIGH_CONFIDENCE + 8, decision.confidence + boost);
   decision.confidence = boostedConfidence;
   decision.reason = `${decision.reason} + Análise multi-dimensional confirmada (+${boost}% boost)`;
 
@@ -99,10 +99,10 @@ export function boostAdvancedSellConfidence(decision: any) {
 export function getAdvancedSellThreshold(marketType: string): number {
   // Thresholds mais rigorosos para vendas avançadas
   switch (marketType) {
-    case 'BULL_MARKET': return UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE; // Muito seletivo em bull market
+    case 'BULL_MARKET': return TradingConfigManager.getConfig().HIGH_CONFIDENCE; // Muito seletivo em bull market
     case 'BEAR_MARKET': return 70; // Mais oportunidades em bear market
-    case 'SIDEWAYS': return UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE;    // Seletivo em mercado lateral
-    default: return UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE;            // Padrão conservador
+    case 'SIDEWAYS': return TradingConfigManager.getConfig().MIN_CONFIDENCE;    // Seletivo em mercado lateral
+    default: return TradingConfigManager.getConfig().MEDIUM_CONFIDENCE;            // Padrão conservador
   }
 }
 

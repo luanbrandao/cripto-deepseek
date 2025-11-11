@@ -1,6 +1,6 @@
 import { BaseTradingBot } from '../../core/base-trading-bot';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { getMarketData } from '../../utils/data/market-data-fetcher';
 import { EliteAnalyzer } from '../../../shared/analyzers/elite-analyzer';
@@ -11,19 +11,19 @@ import * as path from 'path';
 
 // Configurações Elite - Sistema de 5 Camadas
 const ELITE_CONFIG = {
-  SYMBOLS: UNIFIED_TRADING_CONFIG.SYMBOLS,
-  MIN_CONFIDENCE: UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE,
+  SYMBOLS: TradingConfigManager.getConfig().SYMBOLS,
+  MIN_CONFIDENCE: TradingConfigManager.getConfig().HIGH_CONFIDENCE,
   MIN_SCORE: 85,           // Score mínimo total (pré-validação + IA)
   PERFECT_SCORE: 95,
   PRE_VALIDATION_MIN: 60,  // Score mínimo para chamar IA
-  MIN_RR: UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO * 2, // 4.0
-  TARGET_RR: UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO * 3, // 6.0
-  PERFECT_RR: UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO * 4, // 8.0
-  MAX_TRADES_DAY: UNIFIED_TRADING_CONFIG.LIMITS.MAX_ACTIVE_TRADES,
+  MIN_RR: TradingConfigManager.getConfig().MIN_RISK_REWARD_RATIO * 2, // 4.0
+  TARGET_RR: TradingConfigManager.getConfig().MIN_RISK_REWARD_RATIO * 3, // 6.0
+  PERFECT_RR: TradingConfigManager.getConfig().MIN_RISK_REWARD_RATIO * 4, // 8.0
+  MAX_TRADES_DAY: TradingConfigManager.getConfig().LIMITS.MAX_ACTIVE_TRADES,
   COOLDOWN_HOURS: 6,
-  TIMEFRAME: UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME,
-  PERIODS: UNIFIED_TRADING_CONFIG.CHART.PERIODS,
-  
+  TIMEFRAME: TradingConfigManager.getConfig().CHART.TIMEFRAME,
+  PERIODS: TradingConfigManager.getConfig().CHART.PERIODS,
+
   // Pesos das camadas de pré-validação
   WEIGHTS: {
     EMA_CONFLUENCE: 20,      // Alinhamento EMA (8>21>55>200)
@@ -43,7 +43,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     super(apiKey, apiSecret, true);
     this.eliteAnalyzer = new EliteAnalyzer();
     this.riskManager = new EliteRiskManager();
-    this.tradesFile = path.resolve(`${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${UNIFIED_TRADING_CONFIG.FILES.ELITE_SIMULATOR}`);
+    this.tradesFile = path.resolve(`${TradingConfigManager.getConfig().PATHS.TRADES_DIR}/${TradingConfigManager.getConfig().FILES.ELITE_SIMULATOR}`);
   }
 
   protected logBotInfo() {
@@ -106,7 +106,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
         // Buscar dados de mercado
         const marketData = await getMarketData(
-          this.getBinancePublic(), 
+          this.getBinancePublic(),
           symbol
         );
 
@@ -124,7 +124,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
             score: eliteScore,
             marketData
           });
-          
+
           console.log(`✅ ${symbol}: SETUP ELITE BUY DETECTADO (Score: ${eliteScore.totalScore}/100)`);
         } else if (eliteScore && eliteScore.totalScore >= ELITE_CONFIG.MIN_SCORE) {
           console.log(`⚠️ ${symbol}: Score alto mas não é BUY (${eliteScore.aiDecision.action})`);
@@ -166,7 +166,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     // PRÉ-VALIDAÇÃO: Verificar condições básicas antes da IA
     const preValidation = this.performPreValidation(marketData);
     console.log(`   🛡️ Pré-validação: ${preValidation.score}/75`);
-    
+
     if (preValidation.score < ELITE_CONFIG.PRE_VALIDATION_MIN) {
       console.log(`   ❌ Mercado não atende critérios mínimos (${preValidation.score}/${ELITE_CONFIG.PRE_VALIDATION_MIN}) - Pulando IA`);
       return {
@@ -189,15 +189,15 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
     // Camada 5: AI Analysis (25 pontos) - Só se passou na pré-validação
     const aiDecision = await UnifiedDeepSeekAnalyzer.analyzeRealTrade(
-      this.deepseek!, 
-      symbol, 
+      this.deepseek!,
+      symbol,
       marketData
     );
 
     // Validar se é BUY em tendência de alta com critérios rigorosos
     let aiScore = 0;
     const minEmaForBuy = 12; // Mínimo 60% do score EMA (12/20)
-    
+
     if (aiDecision.confidence >= ELITE_CONFIG.MIN_CONFIDENCE) {
       if (aiDecision.action === 'BUY') {
         if (preValidation.emaScore >= minEmaForBuy) {
@@ -212,7 +212,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     } else {
       console.log(`   ❌ Confiança IA insuficiente (${aiDecision.confidence}%/${ELITE_CONFIG.MIN_CONFIDENCE}%)`);
     }
-    
+
     console.log(`   🧠 AI Score: ${aiScore}/25 (${aiDecision.confidence}% confiança, ${aiDecision.action})`);
 
     const totalScore = preValidation.score + aiScore;
@@ -254,7 +254,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     console.log(`   📊 Volume/Momentum: ${volumeScore}/15`);
 
     const totalScore = emaScore + srScore + candleScore + volumeScore;
-    
+
     return {
       emaScore,
       srScore,
@@ -272,7 +272,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
     const closes = klines.map(k => parseFloat(k[4]));
     const currentPrice = closes[closes.length - 1];
-    
+
     // Calcular EMAs (ajustado para dados disponíveis)
     const ema8 = this.calculateEMA(closes, 8);
     const ema21 = this.calculateEMA(closes, 21);
@@ -307,7 +307,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
       score += 4;
       details.push('✅ Separação adequada');
     } else {
-      details.push(`❌ Separação insuficiente (${(sep1*100).toFixed(2)}%/${(sep2*100).toFixed(2)}%)`);
+      details.push(`❌ Separação insuficiente (${(sep1 * 100).toFixed(2)}%/${(sep2 * 100).toFixed(2)}%)`);
     }
 
     // 4. Inclinação positiva (4 pontos)
@@ -331,7 +331,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     }
 
     const lows = klines.map(k => parseFloat(k[3]));
-    
+
     let score = 0;
     const details = [];
 
@@ -342,7 +342,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     if (nearestSupport) {
       const distance = Math.abs(currentPrice - nearestSupport.level) / currentPrice;
       const distancePercent = (distance * 100).toFixed(2);
-      
+
       // 1. Proximidade ideal ao suporte (10 pontos)
       if (distance >= 0.002 && distance <= 0.008) {
         score += 10;
@@ -442,7 +442,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     const closes = klines.slice(-20).map(k => parseFloat(k[4]));
     const recentVolume = volumes.slice(-3).reduce((a, b) => a + b, 0) / 3;
     const avgVolume = volumes.reduce((a, b) => a + b, 0) / volumes.length;
-    
+
     let score = 0;
     const details = [];
 
@@ -493,10 +493,10 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
   private calculateSlope(prices: number[], period: number): number {
     if (prices.length < 2) return 0;
-    
+
     const ema1 = this.calculateEMA(prices.slice(0, -1), period);
     const ema2 = this.calculateEMA(prices, period);
-    
+
     return (ema2 - ema1) / ema1;
   }
 
@@ -505,7 +505,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     const tolerance = currentPrice * 0.01;
 
     for (let i = 1; i < lows.length - 1; i++) {
-      if (lows[i] <= lows[i-1] && lows[i] <= lows[i+1]) {
+      if (lows[i] <= lows[i - 1] && lows[i] <= lows[i + 1]) {
         const level = lows[i];
         let touches = 1;
 
@@ -516,9 +516,9 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
         }
 
         if (touches >= 2) {
-          levels.push({ 
-            level, 
-            touches, 
+          levels.push({
+            level,
+            touches,
             recent: i > lows.length - 50 // Últimas 50 velas
           });
         }
@@ -561,7 +561,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
     const returns = [];
     for (let i = 1; i < closes.length; i++) {
-      const returnRate = (closes[i] - closes[i-1]) / closes[i-1];
+      const returnRate = (closes[i] - closes[i - 1]) / closes[i - 1];
       if (!isNaN(returnRate) && isFinite(returnRate)) {
         returns.push(returnRate);
       }
@@ -571,7 +571,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
     const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
     const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - mean, 2), 0) / returns.length;
-    
+
     return Math.sqrt(variance) * 100;
   }
 
@@ -619,7 +619,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
       entryPrice: aiDecision.price,
       targetPrice: prices.target2, // Target principal
       stopPrice: prices.stopLoss,
-      amount: UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD * (positionSize / 100),
+      amount: TradingConfigManager.getConfig().TRADE_AMOUNT_USD * (positionSize / 100),
       confidence: aiDecision.confidence,
       reason: `Elite Setup (Score: ${score.totalScore}/100) - ${aiDecision.reason}`,
       status: 'pending',
@@ -650,19 +650,19 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
   private calculatePositionSize(score: number): number {
     if (score >= ELITE_CONFIG.PERFECT_SCORE) return 1.5; // Setup perfeito
-    if (score >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) return 1.0; // Setup excelente
+    if (score >= TradingConfigManager.getConfig().HIGH_CONFIDENCE) return 1.0; // Setup excelente
     return 0.5; // Setup bom
   }
 
   private calculateRiskReward(score: number): number {
     if (score >= ELITE_CONFIG.PERFECT_SCORE) return ELITE_CONFIG.PERFECT_RR; // 8:1
-    if (score >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) return ELITE_CONFIG.TARGET_RR; // 6:1
+    if (score >= TradingConfigManager.getConfig().HIGH_CONFIDENCE) return ELITE_CONFIG.TARGET_RR; // 6:1
     return ELITE_CONFIG.MIN_RR; // 4:1
   }
 
   private getSetupClassification(score: number): string {
     if (score >= ELITE_CONFIG.PERFECT_SCORE) return '🌟 SETUP PERFEITO';
-    if (score >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) return '⭐ SETUP EXCELENTE';
+    if (score >= TradingConfigManager.getConfig().HIGH_CONFIDENCE) return '⭐ SETUP EXCELENTE';
     return '✨ SETUP BOM';
   }
 
@@ -699,33 +699,33 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
   private validateFinalSetup(setup: any): boolean {
     const { score } = setup;
     const { aiDecision, emaScore, totalScore } = score;
-    
+
     console.log('\n🔍 VALIDAÇÃO FINAL DO SETUP:');
-    
+
     // 1. Verificar se é BUY
     if (aiDecision.action !== 'BUY') {
       console.log(`❌ Ação inválida: ${aiDecision.action} (esperado: BUY)`);
       return false;
     }
-    
+
     // 2. Verificar score total
     if (totalScore < ELITE_CONFIG.MIN_SCORE) {
       console.log(`❌ Score insuficiente: ${totalScore}/${ELITE_CONFIG.MIN_SCORE}`);
       return false;
     }
-    
+
     // 3. Verificar EMA para BUY (tendência de alta)
     if (emaScore < 12) {
       console.log(`❌ EMA insuficiente para BUY: ${emaScore}/20 (mínimo 12)`);
       return false;
     }
-    
+
     // 4. Verificar confiança IA
     if (aiDecision.confidence < ELITE_CONFIG.MIN_CONFIDENCE) {
       console.log(`❌ Confiança IA insuficiente: ${aiDecision.confidence}%/${ELITE_CONFIG.MIN_CONFIDENCE}%`);
       return false;
     }
-    
+
     console.log('✅ Todas as validações finais aprovadas!');
     return true;
   }
@@ -734,15 +734,15 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     // Verificar se existe trade recente (simulação de cooldown)
     const now = Date.now();
     const cooldownMs = ELITE_CONFIG.COOLDOWN_HOURS * 60 * 60 * 1000;
-    
+
     if (fs.existsSync(this.tradesFile)) {
       const trades = JSON.parse(fs.readFileSync(this.tradesFile, 'utf8'));
       const lastTrade = trades[trades.length - 1];
-      
+
       if (lastTrade) {
         const lastTradeTime = new Date(lastTrade.timestamp).getTime();
         const timeDiff = now - lastTradeTime;
-        
+
         if (timeDiff < cooldownMs) {
           const remainingHours = Math.ceil((cooldownMs - timeDiff) / (60 * 60 * 1000));
           console.log(`\n⏰ COOLDOWN ATIVO: Aguarde ${remainingHours}h para próximo trade elite`);
@@ -750,27 +750,27 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
         }
       }
     }
-    
+
     return true;
   }
 
   private saveEliteTrade(trade: any) {
     try {
       let trades = [];
-      
+
       if (fs.existsSync(this.tradesFile)) {
         trades = JSON.parse(fs.readFileSync(this.tradesFile, 'utf8'));
       }
-      
+
       trades.push(trade);
-      
+
       // Manter apenas últimos 50 trades
       if (trades.length > 50) {
         trades = trades.slice(-50);
       }
-      
+
       fs.writeFileSync(this.tradesFile, JSON.stringify(trades, null, 2));
-      
+
     } catch (error) {
       console.error('❌ Erro ao salvar trade elite:', error);
     }

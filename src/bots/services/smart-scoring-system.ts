@@ -1,5 +1,5 @@
 import { AdvancedEmaAnalyzer } from './advanced-ema-analyzer';
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 
 export interface SmartScore {
   emaScore: number;        // 0-100 (peso: 35%)
@@ -62,7 +62,7 @@ export class SmartScoringSystem {
 
   private calculateEmaScore(technicalData: TechnicalData): number {
     const analysis = this.emaAnalyzer.analyzeAdvanced(technicalData.prices, technicalData.volumes);
-    
+
     let score = analysis.overallStrength;
 
     // Bonus for strong trends
@@ -105,14 +105,14 @@ export class SmartScoringSystem {
 
     const recentVolume = technicalData.volumes.slice(-5);
     const avgVolume = technicalData.volumes.slice(-20);
-    
+
     const recentAvg = recentVolume.reduce((a, b) => a + b) / recentVolume.length;
     const overallAvg = avgVolume.reduce((a, b) => a + b) / avgVolume.length;
-    
+
     const volumeRatio = recentAvg / overallAvg;
-    
+
     // Score based on volume ratio
-    if (volumeRatio > 1.5) return UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE;      // High volume
+    if (volumeRatio > 1.5) return TradingConfigManager.getConfig().HIGH_CONFIDENCE;      // High volume
     if (volumeRatio > 1.2) return 75;      // Above average
     if (volumeRatio > 0.8) return 60;      // Normal
     if (volumeRatio > 0.5) return 40;      // Below average
@@ -126,17 +126,17 @@ export class SmartScoringSystem {
     // Price momentum (last 7 vs previous 7)
     const recent = prices.slice(-7);
     const previous = prices.slice(-14, -7);
-    
+
     const recentAvg = recent.reduce((a, b) => a + b) / recent.length;
     const previousAvg = previous.reduce((a, b) => a + b) / previous.length;
-    
+
     const priceChange = ((recentAvg - previousAvg) / previousAvg) * 100;
-    
+
     // Volatility check
     const volatility = this.calculateVolatility(recent);
-    
+
     let momentumScore = 50 + (priceChange * 10);
-    
+
     // Adjust for volatility (high volatility reduces score)
     if (volatility > 5) {
       momentumScore -= 15;
@@ -152,12 +152,12 @@ export class SmartScoringSystem {
 
     const returns = [];
     for (let i = 1; i < prices.length; i++) {
-      returns.push((prices[i] - prices[i-1]) / prices[i-1]);
+      returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
     }
 
     const avgReturn = returns.reduce((a, b) => a + b) / returns.length;
     const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - avgReturn, 2), 0) / returns.length;
-    
+
     return Math.sqrt(variance) * 100;
   }
 
@@ -170,17 +170,17 @@ export class SmartScoringSystem {
     confidence = confidence * (1 - aiWeight) + aiConfidence * aiWeight;
 
     // Score-based adjustments
-    if (finalScore > UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE) confidence += 5;
-    if (finalScore > UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE) confidence += 5;
+    if (finalScore > TradingConfigManager.getConfig().MEDIUM_CONFIDENCE) confidence += 5;
+    if (finalScore > TradingConfigManager.getConfig().HIGH_CONFIDENCE) confidence += 5;
     if (finalScore < 40) confidence -= 10;
 
     return Math.min(95, Math.max(50, confidence));
   }
 
   private getRecommendation(finalScore: number, aiAction: string): SmartScore['recommendation'] {
-    if (finalScore >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE && aiAction === 'BUY') return 'STRONG_BUY';
+    if (finalScore >= TradingConfigManager.getConfig().HIGH_CONFIDENCE && aiAction === 'BUY') return 'STRONG_BUY';
     if (finalScore >= 75 && aiAction === 'BUY') return 'BUY';
-    if (finalScore >= UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE && aiAction === 'SELL') return 'STRONG_SELL';
+    if (finalScore >= TradingConfigManager.getConfig().HIGH_CONFIDENCE && aiAction === 'SELL') return 'STRONG_SELL';
     if (finalScore >= 75 && aiAction === 'SELL') return 'SELL';
     return 'HOLD';
   }
@@ -191,7 +191,7 @@ export class SmartScoringSystem {
       case 'BULL_MARKET':
         return 65; // Lower threshold in bull market
       case 'BEAR_MARKET':
-        return UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE; // Higher threshold in bear market
+        return TradingConfigManager.getConfig().MEDIUM_CONFIDENCE; // Higher threshold in bear market
       case 'SIDEWAYS':
         return 75; // Medium threshold in sideways market
       default:

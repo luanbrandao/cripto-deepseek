@@ -32,12 +32,12 @@ export class UltraConservativeSetup {
     console.log('──────────────────────────────────────────────────────────────');
     console.log(`✅ Confiança Mínima: ${ULTRA_CONSERVATIVE_CONFIG.MIN_CONFIDENCE}% (era 70%)`);
     console.log(`✅ Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1 (era 2:1)`);
-    console.log(`✅ Cooldown: ${ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS}h (era 5min)`);
+    console.log(`✅ Cooldown: ${Math.round(ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_MINUTES / 60)}h (era 5min)`);
     console.log(`✅ Símbolos: ${ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.join(', ')} (apenas os mais estáveis)`);
     console.log(`✅ Timeframe: ${ULTRA_CONSERVATIVE_CONFIG.CHART.TIMEFRAME} (era 1h)`);
     console.log(`✅ Períodos: ${ULTRA_CONSERVATIVE_CONFIG.CHART.PERIODS} (era 50)`);
-    console.log(`✅ Volume Mínimo: $${(ULTRA_CONSERVATIVE_CONFIG.FILTERS.MIN_VOLUME_24H / 1e9).toFixed(1)}B`);
-    console.log(`✅ Volatilidade Máxima: ${ULTRA_CONSERVATIVE_CONFIG.FILTERS.MAX_VOLATILITY}%`);
+    console.log(`✅ Volume Mínimo: $1.0B (ultra-conservador)`);
+    console.log(`✅ Volatilidade Máxima: ${ULTRA_CONSERVATIVE_CONFIG.MARKET_FILTERS.MAX_VOLATILITY}%`);
   }
   
   private static logExpectedResults() {
@@ -76,13 +76,13 @@ export class UltraConservativeSetup {
   static getConfigForBot(botType: 'SMART' | 'REAL' | 'EMA' | 'SUPPORT_RESISTANCE') {
     switch (botType) {
       case 'SMART':
-        return BOT_ULTRA_CONSERVATIVE_CONFIG.SMART_BOT;
+        return BOT_ULTRA_CONSERVATIVE_CONFIG.SMART_BOT_BUY;
       case 'REAL':
         return BOT_ULTRA_CONSERVATIVE_CONFIG.REAL_BOT;
       case 'EMA':
         return BOT_ULTRA_CONSERVATIVE_CONFIG.EMA_BOT;
       case 'SUPPORT_RESISTANCE':
-        return BOT_ULTRA_CONSERVATIVE_CONFIG.SUPPORT_RESISTANCE_BOT;
+        return BOT_ULTRA_CONSERVATIVE_CONFIG.SUPPORT_RESISTANCE;
       default:
         return ULTRA_CONSERVATIVE_CONFIG;
     }
@@ -101,8 +101,8 @@ export class UltraConservativeSetup {
         message: `Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`
       },
       {
-        check: ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS >= 12,
-        message: `Cooldown: ${ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS}h`
+        check: ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_MINUTES >= 720,
+        message: `Cooldown: ${Math.round(ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_MINUTES / 60)}h`
       },
       {
         check: ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.length <= 2,

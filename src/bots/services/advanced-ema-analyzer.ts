@@ -1,4 +1,4 @@
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 import { calculateEMA } from '../utils/analysis/ema-calculator';
 
 interface AdvancedEmaAnalysis {
@@ -124,7 +124,7 @@ export class AdvancedEmaAnalyzer {
 
   getMarketCondition(analysis: AdvancedEmaAnalysis): MarketCondition {
     if (this.isStrongUptrend(analysis)) {
-      return { type: 'BULL_MARKET', confidence: UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE };
+      return { type: 'BULL_MARKET', confidence: TradingConfigManager.getConfig().HIGH_CONFIDENCE };
     }
 
     if (this.isModerateUptrend(analysis)) {

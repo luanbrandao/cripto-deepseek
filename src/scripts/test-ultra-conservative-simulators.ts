@@ -3,15 +3,17 @@
  * Executa todos os simuladores com configuração ultra-rigorosa
  */
 
-import { ULTRA_CONSERVATIVE_CONFIG } from '../shared/config/ultra-conservative-config';
+import TradingConfigManager from '../shared/config/trading-config-manager';
 
 async function testAllUltraConservativeSimulators() {
+  const config = TradingConfigManager.getConfig();
+  
   console.log('🛡️ TESTE COMPLETO DOS SIMULADORES ULTRA-CONSERVADORES v4.0');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log(`🎯 Objetivo: Validar win rate de 75-85% com máxima segurança`);
-  console.log(`🛡️ Configuração: Confiança ${ULTRA_CONSERVATIVE_CONFIG.MIN_CONFIDENCE}% | R/R ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
-  console.log(`🪙 Símbolos: ${ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.join(', ')} (apenas os mais estáveis)`);
-  console.log(`⏰ Cooldown: ${ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS}h entre trades\n`);
+  console.log(`🛡️ Configuração: Confiança ${config.MIN_CONFIDENCE}% | R/R ${config.MIN_RISK_REWARD_RATIO}:1`);
+  console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')} (apenas os mais estáveis)`);
+  console.log(`⏰ Cooldown: ${config.TRADE_COOLDOWN_MINUTES} minutos entre trades\n`);
 
   const simulators = [
     {

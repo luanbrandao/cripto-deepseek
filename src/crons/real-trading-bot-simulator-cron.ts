@@ -3,11 +3,11 @@ import cron from 'node-cron';
 import * as dotenv from 'dotenv';
 import { validateBinanceKeys } from '../bots/utils/validation/env-validator';
 import { RealTradingBotSimulator } from '../bots';
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../shared/config/trading-config-manager';
 
 dotenv.config();
 
-console.log(`🤖 Real Trading Bot Simulator Cron iniciado - Execução a cada ${UNIFIED_TRADING_CONFIG.TRADE_COOLDOWN_MINUTES} minutos`);
+console.log(`🤖 Real Trading Bot Simulator Cron iniciado - Execução a cada ${TradingConfigManager.getConfig().TRADE_COOLDOWN_MINUTES} minutos`);
 
 // Validar chaves da Binance
 const keys = validateBinanceKeys();
@@ -18,7 +18,7 @@ if (!keys) {
 
 const { apiKey, apiSecret } = keys;
 
-cron.schedule(`*/${UNIFIED_TRADING_CONFIG.TRADE_COOLDOWN_MINUTES} * * * *`, async () => {
+cron.schedule(`*/${TradingConfigManager.getConfig().TRADE_COOLDOWN_MINUTES} * * * *`, async () => {
   const timestamp = new Date().toLocaleString('pt-BR');
   console.log(`\n⏰ [${timestamp}] Executando Real Trading Bot Simulator...`);
 

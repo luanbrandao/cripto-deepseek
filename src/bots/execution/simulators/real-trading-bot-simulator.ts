@@ -2,10 +2,13 @@ import { BaseTradingBot } from '../../core/base-trading-bot';
 import { BotFlowManager, BotConfig } from '../../utils/execution/bot-flow-manager';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
-import { ULTRA_CONSERVATIVE_CONFIG } from '../../../shared/config/ultra-conservative-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import * as dotenv from 'dotenv';
+
+// Ativar modo ultra-conservador
+TradingConfigManager.setMode('ULTRA_CONSERVATIVE');
 
 dotenv.config();
 
@@ -26,14 +29,16 @@ export class RealTradingBotSimulator extends BaseTradingBot {
   }
 
   protected logBotInfo() {
+    const config = TradingConfigManager.getConfig();
+    
     console.log('🛡️ ULTRA-CONSERVATIVE REAL BOT SIMULATOR - NÃO EXECUTA TRADES REAIS\n');
     logBotHeader('🛡️ ULTRA-CONSERVATIVE REAL BOT SIMULATOR v4.0', 'Win Rate Target: 82%+ | Máxima Segurança | Apenas Simulação', true);
     console.log('🎯 Configuração Ultra-Conservadora:');
-    console.log(`   📊 Confiança Mínima: ${ULTRA_CONSERVATIVE_CONFIG.MIN_CONFIDENCE}%`);
-    console.log(`   🛡️ Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
-    console.log(`   ⏰ Cooldown: ${ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS}h`);
-    console.log(`   🪙 Símbolos: ${ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.join(', ')}`);
-    console.log('   🧪 MODO SIMULAÇÃO - Zero risco financeiro\n');
+    console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
+    console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
+    console.log(`⏰ Cooldown: ${config.TRADE_COOLDOWN_MINUTES} minutos`);
+    console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')}`);
+    console.log('🧪 MODO SIMULAÇÃO - Zero risco financeiro\n');
   }
 
   private async analyzeWithRealTradeLogic(symbol: string, marketData: any) {

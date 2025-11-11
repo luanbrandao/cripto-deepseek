@@ -8,7 +8,7 @@ import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import * as dotenv from 'dotenv';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
-import { ULTRA_CONSERVATIVE_CONFIG } from '../../../shared/config/ultra-conservative-config';
+import TradingConfigManager from '../../../shared/config/trading-config-manager';
 import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../../../shared/validators/trend-validator';
@@ -31,19 +31,22 @@ export class SmartTradingBotBuy extends BaseTradingBot {
 
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
+    const config = TradingConfigManager.getConfig();
     this.emaAnalyzer = new EmaAnalyzer({
-      fastPeriod: ULTRA_CONSERVATIVE_CONFIG.EMA.FAST_PERIOD,
-      slowPeriod: ULTRA_CONSERVATIVE_CONFIG.EMA.SLOW_PERIOD
+      fastPeriod: config.EMA.FAST_PERIOD,
+      slowPeriod: config.EMA.SLOW_PERIOD
     });
   }
 
   protected logBotInfo() {
+    const config = TradingConfigManager.getConfig();
+    
     logBotHeader('🛡️ ULTRA-CONSERVATIVE SMART BOT BUY v4.0', 'Win Rate Target: 80%+ | Risk/Reward: 3:1 | Confiança Min: 90%');
     console.log('🎯 Configuração Ultra-Conservadora:');
-    console.log(`   📊 Confiança Mínima: ${ULTRA_CONSERVATIVE_CONFIG.MIN_CONFIDENCE}%`);
-    console.log(`   🛡️ Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
-    console.log(`   ⏰ Cooldown: ${ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS}h`);
-    console.log(`   🪙 Símbolos: ${ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.join(', ')}`);
+    console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
+    console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
+    console.log(`⏰ Cooldown: ${config.TRADE_COOLDOWN_MINUTES} minutos`);
+    console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')}`);
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
@@ -54,7 +57,8 @@ export class SmartTradingBotBuy extends BaseTradingBot {
     const validSymbols = [];
 
     for (const symbol of symbols) {
-      const klines = await this.getBinancePublic().getKlines(symbol, ULTRA_CONSERVATIVE_CONFIG.CHART.TIMEFRAME, ULTRA_CONSERVATIVE_CONFIG.CHART.PERIODS);
+      const config = TradingConfigManager.getConfig();
+      const klines = await this.getBinancePublic().getKlines(symbol, config.CHART.TIMEFRAME, config.CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const currentPrice = prices[prices.length - 1];
       const emaAnalysis = this.emaAnalyzer.analyze({ price24h: prices, currentPrice });

@@ -4,7 +4,7 @@ import { BotConfig, TradeDecision } from '../../core/types';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
 import SupportResistanceAnalyzer from '../../../analyzers/supportResistanceAnalyzer';
-import { ULTRA_CONSERVATIVE_CONFIG } from '../../../shared/config/ultra-conservative-config';
+import TradingConfigManager from '../../../shared/config/trading-config-manager';
 import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
 import { BaseTradingBot } from '../../core/base-trading-bot';
 
@@ -37,7 +37,7 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
     };
 
     this.flowManager = new BotFlowManager(this, config);
-    
+
     // Configuração ultra-conservadora para S/R
     this.srAnalyzer = new SupportResistanceAnalyzer({
       tolerance: 0.005,              // ↓ Mais rigoroso (era 0.008)
@@ -47,19 +47,23 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
   }
 
   protected logBotInfo() {
+    const config = TradingConfigManager.getConfig();
+    const botConfig = TradingConfigManager.getBotConfig();
+    
     console.log('🛡️ ULTRA-CONSERVATIVE S/R SIMULATOR - NÃO EXECUTA TRADES REAIS\n');
     logBotHeader('🛡️ ULTRA-CONSERVATIVE S/R SIMULATOR v4.0', 'Win Rate Target: 78%+ | Suporte/Resistência Ultra-Rigoroso | Apenas Simulação', true);
     console.log('🎯 Configuração Ultra-Conservadora:');
-    console.log(`   📊 Confiança Mínima: ${ULTRA_CONSERVATIVE_CONFIG.MIN_CONFIDENCE}%`);
-    console.log(`   🛡️ Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
-    console.log(`   ⏰ Cooldown: ${ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS}h`);
-    console.log(`   🪙 Símbolos: ${ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.join(', ')}`);
-    console.log('   🎯 S/R Config: Min 2 toques, Força >80%, Tolerância 0.5%');
-    console.log('   🧪 MODO SIMULAÇÃO - Zero risco financeiro\n');
+    console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
+    console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
+    console.log(`⏰ Cooldown: ${config.TRADE_COOLDOWN_MINUTES} minutos`);
+    console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')}`);
+    console.log('🎯 S/R Config: Min 2 toques, Força >80%, Tolerância 0.5%');
+    console.log('🧪 MODO SIMULAÇÃO - Zero risco financeiro\n');
   }
 
   private async getMarketData(symbol: string): Promise<MarketDataSR> {
-    const klines = await this.getBinancePublic().getKlines(symbol, ULTRA_CONSERVATIVE_CONFIG.CHART.TIMEFRAME, ULTRA_CONSERVATIVE_CONFIG.CHART.PERIODS);
+    const config = TradingConfigManager.getConfig();
+    const klines = await this.getBinancePublic().getKlines(symbol, config.CHART.TIMEFRAME, config.CHART.PERIODS);
     const prices = klines.map((k: any) => parseFloat(k[4]));
     const currentPrice = prices[prices.length - 1];
 
@@ -95,7 +99,7 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
 
     console.log(`📈 Sinal S/R: ${analysis.action} (${analysis.confidence}%)`);
     console.log(`💭 Razão: ${analysis.reason}`);
-    
+
     if (analysis.levels && analysis.levels.length > 0) {
       console.log(`🎯 Níveis identificados: ${analysis.levels.length}`);
       analysis.levels.slice(0, 3).forEach((level: any, index: number) => {
@@ -110,10 +114,10 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
       symbol,
       price: marketData.currentPrice
     };
-    
+
     // Adicionar levels como propriedade extra
     (tradeDecision as any).levels = analysis.levels || [];
-    
+
     return tradeDecision;
   }
 
@@ -124,22 +128,22 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
 
   private async validateSRDecision(decision: TradeDecision, symbol?: string, marketData?: any): Promise<boolean> {
     if (!symbol || !marketData) return false;
-    
+
     console.log('🛡️ VALIDAÇÃO ULTRA-CONSERVADORA S/R PARA SIMULAÇÃO...');
-    
+
     // 🚨 ANÁLISE ULTRA-RIGOROSA EM 5 CAMADAS
     const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
-    
+
     if (!ultraAnalysis.isValid) {
       console.log('❌ SIMULAÇÃO REJEITADA pela análise ultra-conservadora S/R:');
       ultraAnalysis.warnings.forEach(warning => console.log(`   ${warning}`));
       return false;
     }
-    
+
     console.log('✅ SIMULAÇÃO APROVADA pela análise ultra-conservadora S/R:');
     ultraAnalysis.reasons.forEach(reason => console.log(`   ${reason}`));
     console.log(`🛡️ Nível de Risco: ${ultraAnalysis.riskLevel}`);
-    
+
     // Validação adicional específica para S/R
     const levels = (decision as any).levels;
     if (levels && levels.length > 0) {
@@ -149,12 +153,12 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
         console.log('🧪 Esta seria uma excelente oportunidade S/R para trade real!');
       }
     }
-    
+
     // Atualizar decisão com análise ultra-conservadora
     decision.confidence = ultraAnalysis.confidence;
     (decision as any).ultraConservativeScore = ultraAnalysis.score;
     (decision as any).riskLevel = ultraAnalysis.riskLevel;
-    
+
     return true;
   }
 

@@ -3,12 +3,12 @@
  * Baseada em análise técnica e estatística dos dados históricos
  */
 
-import { UNIFIED_TRADING_CONFIG } from './unified-trading-config';
+import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 
 export const OPTIMIZED_TRADING_CONFIG = {
   // 💰 CONFIGURAÇÕES FINANCEIRAS OTIMIZADAS
   TRADE_AMOUNT_USD: 20,              // ↑ Aumentado de $15 para $20
-  MIN_CONFIDENCE: UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE,
+  MIN_CONFIDENCE: TradingConfigManager.getConfig().MIN_CONFIDENCE,
   MIN_RISK_REWARD_RATIO: 1.7,       // ↓ Reduzido de 2.0 para 1.7
   TRADE_COOLDOWN_MINUTES: 2,         // ↓ Reduzido de 5 para 2 minutos
 
@@ -38,7 +38,7 @@ export const OPTIMIZED_TRADING_CONFIG = {
     // Smart Bots (Moderadamente Agressivos)
     SMART_BUY: 25,                 // ↓ Threshold mais baixo
     SMART_SELL: 30,                // ↓ Threshold mais baixo
-    
+
     // Multi-Smart Bots (Seletivos mas Executáveis)
     MULTI_SMART_BUY: {
       BULL_MARKET: 25,             // ↓ de 45 para 25
@@ -46,7 +46,7 @@ export const OPTIMIZED_TRADING_CONFIG = {
       SIDEWAYS: 30,                // ↓ de 55 para 30
       DEFAULT: 32                  // ↓ de 60 para 32
     },
-    
+
     MULTI_SMART_SELL: {
       BULL_MARKET: 40,             // ↓ de 70 para 40
       BEAR_MARKET: 20,             // ↓ de 35 para 20
@@ -108,19 +108,19 @@ export const OPTIMIZED_TRADING_CONFIG = {
 // 🎯 CONFIGURAÇÕES ESPECÍFICAS POR BOT TYPE
 export const BOT_SPECIFIC_CONFIG = {
   SMART_BOTS: {
-    MIN_CONFIDENCE: UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE,
+    MIN_CONFIDENCE: TradingConfigManager.getConfig().MIN_CONFIDENCE,
     RISK_MULTIPLIER: 0.8,          // Risco reduzido
     BOOST_FACTOR: 1.2              // Boost moderado
   },
 
   MULTI_SMART_BOTS: {
-    MIN_CONFIDENCE: UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE,
+    MIN_CONFIDENCE: TradingConfigManager.getConfig().MEDIUM_CONFIDENCE,
     RISK_MULTIPLIER: 1.0,          // Risco padrão
     BOOST_FACTOR: 1.5              // Boost maior
   },
 
   SIMULATORS: {
-    MIN_CONFIDENCE: UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE,
+    MIN_CONFIDENCE: TradingConfigManager.getConfig().MIN_CONFIDENCE,
     RISK_MULTIPLIER: 0.7,          // Risco baixo
     BOOST_FACTOR: 1.1              // Boost mínimo
   }
@@ -137,7 +137,7 @@ export function applyOptimizedConfig() {
   console.log(`   📊 Timeframe: ${OPTIMIZED_TRADING_CONFIG.CHART.TIMEFRAME}`);
   console.log(`   🪙 Symbols: ${OPTIMIZED_TRADING_CONFIG.SYMBOLS.length} moedas`);
   console.log(`   🔥 Max Trades: ${OPTIMIZED_TRADING_CONFIG.LIMITS.MAX_ACTIVE_TRADES}`);
-  
+
   return OPTIMIZED_TRADING_CONFIG;
 }
 

@@ -7,7 +7,7 @@ import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { validateAdvancedSellStrength } from '../../utils/validation/advanced-sell-validator';
 import { AdvancedEmaAnalyzer } from '../../services/advanced-ema-analyzer';
 import { calculateSymbolVolatility } from '../../utils/risk/volatility-calculator';
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../../shared/validators/trend-validator';
 
@@ -22,7 +22,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     const config: BotConfig = {
       name: 'Multi-Smart Trading Bot Simulator SELL',
       isSimulation: true,
-      tradesFile: UNIFIED_TRADING_CONFIG.FILES.MULTI_SMART_SIMULATOR_SELL,
+      tradesFile: TradingConfigManager.getConfig().FILES.MULTI_SMART_SIMULATOR_SELL,
       requiresFiltering: true,
       requiresValidation: true,
       riskCalculationMethod: 'Real Market Method'
@@ -31,8 +31,8 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
     this.advancedEmaAnalyzer = new AdvancedEmaAnalyzer({
-      fastPeriod: UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD,
-      slowPeriod: UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD
+      fastPeriod: TradingConfigManager.getConfig().EMA.FAST_PERIOD,
+      slowPeriod: TradingConfigManager.getConfig().EMA.SLOW_PERIOD
     });
   }
 
@@ -66,8 +66,8 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     for (const symbol of symbols) {
       const klines = await this.getBinancePublic().getKlines(
         symbol,
-        UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME,
-        UNIFIED_TRADING_CONFIG.CHART.PERIODS
+        TradingConfigManager.getConfig().CHART.TIMEFRAME,
+        TradingConfigManager.getConfig().CHART.PERIODS
       );
 
       const prices = klines.map((k: any) => parseFloat(k[4]));
@@ -153,16 +153,16 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     // 4. Buscar dados históricos para análise técnica
     const klines = await this.getBinancePublic().getKlines(
       symbol,
-      UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME,
-      UNIFIED_TRADING_CONFIG.CHART.PERIODS
+      TradingConfigManager.getConfig().CHART.TIMEFRAME,
+      TradingConfigManager.getConfig().CHART.PERIODS
     );
 
     // 5. Calcular volatilidade do mercado
     const volatility = await calculateSymbolVolatility(
       this.getBinancePublic(),
       symbol,
-      UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME,
-      UNIFIED_TRADING_CONFIG.CHART.PERIODS
+      TradingConfigManager.getConfig().CHART.TIMEFRAME,
+      TradingConfigManager.getConfig().CHART.PERIODS
     );
 
     // 6. Validação completa com níveis técnicos
@@ -218,7 +218,7 @@ if (require.main === module) {
   logBotStartup(
     'Multi Smart Bot Simulator SELL',
     '🧪 Modo seguro - Apenas simulação, sem trades reais\n🔴 Análise multi-dimensional avançada - APENAS VENDAS',
-    UNIFIED_TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
+    TradingConfigManager.getConfig().SIMULATION.STARTUP_DELAY,
     true
   ).then(() => main());
 }

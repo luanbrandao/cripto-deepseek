@@ -3,7 +3,6 @@
  */
 
 import { spawn } from 'child_process';
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
 
 console.log('🚀 EXECUTANDO TODOS OS TESTES DO SISTEMA');
 console.log('📊 Testes unitários, validações e simuladores (sem APIs externas)');
@@ -41,7 +40,7 @@ const tests = [
     script: 'src/scripts/tests/test-calculations.ts',
     description: 'Testa cálculos gerais do sistema'
   },
-  
+
   // 🤖 Bot Validation Tests
   {
     name: 'Symbol Checker Tests',
@@ -63,7 +62,7 @@ const tests = [
     script: 'src/scripts/tests/test-all-simulators.ts',
     description: 'Testa todos os simuladores'
   },
-  
+
   // 🔌 Specific Bot Tests
   {
     name: 'Multi Smart Bot Buy Tests',

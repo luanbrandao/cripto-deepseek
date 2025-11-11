@@ -1,15 +1,13 @@
 import { BinancePublicClient } from '../../core/clients/binance-public-client';
 import { checkActiveSimulationTradesLimit } from '../../bots/utils/validation/simulation-limit-checker';
 import { hasActiveTradeForSymbol } from '../../bots/utils/validation/symbol-trade-checker';
-import { TRADING_CONFIG } from '../../bots/config/trading-config';
 import * as path from 'path';
 import { Trade, TradeStorage } from '../../core/utils/trade-storage';
-import { UNIFIED_TRADING_CONFIG } from '../../shared/config/unified-trading-config';
-import { calculateTargetAndStopPrices } from '../../bots/utils/risk/price-calculator';
+import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 
 // Função específica para manter consistência histórica do TradeSimulator
 function calculateTradeSimulatorPrices(currentPrice: number, confidence: number, action: 'BUY' | 'SELL') {
-  const riskPercent = confidence >= CONFIDENCE_LEVELS.HIGH ? UNIFIED_TRADING_CONFIG.RISK.BASE_PERCENT : confidence >= CONFIDENCE_LEVELS.MEDIUM ? 1.0 : UNIFIED_TRADING_CONFIG.RISK.MAX_PERCENT;
+  const riskPercent = confidence >= CONFIDENCE_LEVELS.HIGH ? TradingConfigManager.getConfig().RISK.BASE_PERCENT : confidence >= CONFIDENCE_LEVELS.MEDIUM ? 1.0 : TradingConfigManager.getConfig().RISK.MAX_PERCENT;
 
   let targetPrice: number;
   let stopPrice: number;
@@ -27,8 +25,8 @@ function calculateTradeSimulatorPrices(currentPrice: number, confidence: number,
 
 // Níveis de confiança para cálculo de risco
 const CONFIDENCE_LEVELS = {
-  HIGH: UNIFIED_TRADING_CONFIG.HIGH_CONFIDENCE,    // 90% (alta confiança)
-  MEDIUM: UNIFIED_TRADING_CONFIG.MEDIUM_CONFIDENCE,   // 85% (média confiança)
+  HIGH: TradingConfigManager.getConfig().HIGH_CONFIDENCE,    // 90% (alta confiança)
+  MEDIUM: TradingConfigManager.getConfig().MEDIUM_CONFIDENCE,   // 85% (média confiança)
 } as const;
 
 interface SymbolAnalysis {
@@ -61,12 +59,12 @@ export class TradeSimulator {
       winTrades: 0
     };
     this.binance = new BinancePublicClient();
-    this.symbol = symbols ? symbols[0] : UNIFIED_TRADING_CONFIG.DEFAULT_SYMBOL;
+    this.symbol = symbols ? symbols[0] : TradingConfigManager.getConfig().DEFAULT_SYMBOL;
     const analyzerName = analyzer.name || analyzer.constructor.name;
-    this.tradesFile = tradesFile || `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${analyzerName.toLowerCase()}Trades.json`;
+    this.tradesFile = tradesFile || `${TradingConfigManager.getConfig().PATHS.TRADES_DIR}/${analyzerName.toLowerCase()}Trades.json`;
   }
 
-  async simulate(symbols: string[] = UNIFIED_TRADING_CONFIG.SYMBOLS) {
+  async simulate(symbols: string[] = TradingConfigManager.getConfig().SYMBOLS) {
     console.log(`🎯 Iniciando simulação multi-moeda`);
     console.log(`💰 Saldo inicial: $${this.portfolio.balance}`);
     console.log(`🔍 Analisando ${symbols.length} moedas...\n`);
@@ -85,7 +83,7 @@ export class TradeSimulator {
 
       this.symbol = bestAnalysis.symbol;
 
-      const klines = await this.binance.getKlines(this.symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, UNIFIED_TRADING_CONFIG.CHART.PERIODS);
+      const klines = await this.binance.getKlines(this.symbol, TradingConfigManager.getConfig().CHART.TIMEFRAME, TradingConfigManager.getConfig().CHART.PERIODS);
       const currentPrice = parseFloat(klines[klines.length - 1][4]);
 
       this.executeTrade(bestAnalysis.analysis, currentPrice);
@@ -110,7 +108,7 @@ export class TradeSimulator {
 
         console.log(`\n📊 Analisando ${symbol}...`);
 
-        const klines = await this.binance.getKlines(symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, UNIFIED_TRADING_CONFIG.CHART.PERIODS);
+        const klines = await this.binance.getKlines(symbol, TradingConfigManager.getConfig().CHART.TIMEFRAME, TradingConfigManager.getConfig().CHART.PERIODS);
         const prices = klines.map((k: any) => parseFloat(k[4]));
         const currentPrice = prices[prices.length - 1];
 
@@ -191,7 +189,7 @@ export class TradeSimulator {
     }
 
     try {
-      const klines = await this.binance.getKlines(this.symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, UNIFIED_TRADING_CONFIG.CHART.PERIODS);
+      const klines = await this.binance.getKlines(this.symbol, TradingConfigManager.getConfig().CHART.TIMEFRAME, TradingConfigManager.getConfig().CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const currentPrice = prices[prices.length - 1];
 

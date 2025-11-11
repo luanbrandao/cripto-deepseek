@@ -1,7 +1,6 @@
 import { BinancePrivateClient } from '../../../core/clients/binance-private-client';
 import * as fs from 'fs';
-import * as path from 'path';
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 
 export async function hasActiveTradeForSymbol(
   binancePrivate: BinancePrivateClient | undefined,
@@ -30,7 +29,7 @@ export async function hasActiveTradeForSymbol(
 
 function hasActiveSimulationTradeForSymbol(symbol: string, simulationFile: string): boolean {
   try {
-    const tradesPath = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}/${simulationFile}`;
+    const tradesPath = `${TradingConfigManager.getConfig().PATHS.TRADES_DIR}/${simulationFile}`;
     if (!fs.existsSync(tradesPath)) {
       return false;
     }

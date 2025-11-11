@@ -6,7 +6,7 @@ import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
-import { ULTRA_CONSERVATIVE_CONFIG } from '../../../shared/config/ultra-conservative-config';
+import TradingConfigManager from '../../../shared/config/trading-config-manager';
 import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
 import { BaseTradingBot } from '../../core/base-trading-bot';
 
@@ -31,23 +31,27 @@ export class EmaTradingBot extends BaseTradingBot {
     };
 
     this.flowManager = new BotFlowManager(this, config);
+    const config = TradingConfigManager.getConfig();
     this.emaAnalyzer = new EmaAnalyzer({
-      fastPeriod: ULTRA_CONSERVATIVE_CONFIG.EMA.FAST_PERIOD,
-      slowPeriod: ULTRA_CONSERVATIVE_CONFIG.EMA.SLOW_PERIOD
+      fastPeriod: config.EMA.FAST_PERIOD,
+      slowPeriod: config.EMA.SLOW_PERIOD
     });
   }
 
   protected logBotInfo() {
-    logBotHeader('🛡️ ULTRA-CONSERVATIVE EMA BOT v4.0', `Win Rate Target: 75%+ | EMA ${ULTRA_CONSERVATIVE_CONFIG.EMA.FAST_PERIOD}/${ULTRA_CONSERVATIVE_CONFIG.EMA.SLOW_PERIOD} | Risk/Reward: 3:1`);
+    const config = TradingConfigManager.getConfig();
+    
+    logBotHeader('🛡️ ULTRA-CONSERVATIVE EMA BOT v4.0', `Win Rate Target: 75%+ | EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} | Risk/Reward: 3:1`);
     console.log('🎯 Configuração Ultra-Conservadora:');
-    console.log(`   📊 Confiança Mínima: ${ULTRA_CONSERVATIVE_CONFIG.MIN_CONFIDENCE}%`);
-    console.log(`   🛡️ Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
-    console.log(`   ⏰ Cooldown: ${ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS}h`);
-    console.log(`   🪙 Símbolos: ${ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.join(', ')}`);
+    console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
+    console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
+    console.log(`⏰ Cooldown: ${config.TRADE_COOLDOWN_MINUTES} minutos`);
+    console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')}`);
   }
 
   private async getMarketData(symbol: string): Promise<MarketData> {
-    const klines = await this.getBinancePublic().getKlines(symbol, ULTRA_CONSERVATIVE_CONFIG.CHART.TIMEFRAME, ULTRA_CONSERVATIVE_CONFIG.CHART.PERIODS);
+    const config = TradingConfigManager.getConfig();
+    const klines = await this.getBinancePublic().getKlines(symbol, config.CHART.TIMEFRAME, config.CHART.PERIODS);
     const prices = klines.map((k: any) => parseFloat(k[4]));
     const currentPrice = prices[prices.length - 1];
 
@@ -63,7 +67,8 @@ export class EmaTradingBot extends BaseTradingBot {
   }
 
   private analyzeWithEma(symbol: string, marketData: MarketData): TradeDecision {
-    console.log(`\n📊 Analisando mercado com EMA ${ULTRA_CONSERVATIVE_CONFIG.EMA.FAST_PERIOD}/${ULTRA_CONSERVATIVE_CONFIG.EMA.SLOW_PERIOD}...`);
+    const config = TradingConfigManager.getConfig();
+    console.log(`\n📊 Analisando mercado com EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD}...`);
 
     const analysis = this.emaAnalyzer.analyze(marketData);
 

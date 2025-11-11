@@ -1,17 +1,17 @@
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 
 export function logBotHeader(botName: string, strategy: string, isSimulation: boolean = false) {
   console.log(`🚀 ${botName}`);
-  
+
   if (isSimulation) {
     console.log('✅ MODO SIMULAÇÃO: Nenhuma ordem real será executada!');
   } else {
     console.log('⚠️  ATENÇÃO: Este bot executará ordens reais na Binance!');
   }
-  
-  console.log(`💵 Valor por trade: $${UNIFIED_TRADING_CONFIG.TRADE_AMOUNT_USD}`);
-  console.log(`📊 Confiança mínima: ${UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE}%`);
-  console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${UNIFIED_TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)`);
+
+  console.log(`💵 Valor por trade: $${TradingConfigManager.getConfig().TRADE_AMOUNT_USD}`);
+  console.log(`📊 Confiança mínima: ${TradingConfigManager.getConfig().MIN_CONFIDENCE}%`);
+  console.log(`🎯 Risk/Reward OBRIGATÓRIO: ${TradingConfigManager.getConfig().MIN_RISK_REWARD_RATIO}:1 (SEMPRE 2:1)`);
   console.log(`📈 Estratégia: ${strategy}\n`);
 }
 
@@ -23,7 +23,7 @@ export function logTradeSuccess(botType: string) {
 
 export function logRiskReward(riskPercent: number, rewardPercent: number) {
   console.log('🔍 Validação final de Risk/Reward 2:1 obrigatório...');
-  console.log(`📊 R/R calculado: ${(rewardPercent*100).toFixed(1)}%/${(riskPercent*100).toFixed(1)}% (${(rewardPercent/riskPercent).toFixed(1)}:1)`);
+  console.log(`📊 R/R calculado: ${(rewardPercent * 100).toFixed(1)}%/${(riskPercent * 100).toFixed(1)}% (${(rewardPercent / riskPercent).toFixed(1)}:1)`);
 }
 
 export function logBotStartup(botName: string, description: string, delay: number = 5000, isSimulation: boolean = false) {
@@ -32,9 +32,9 @@ export function logBotStartup(botName: string, description: string, delay: numbe
   } else {
     console.log(`⚠️  ATENÇÃO: ${botName} executará ordens REAIS na Binance!`);
   }
-  
+
   console.log(description);
-  
+
   if (isSimulation) {
     console.log('🧪 Iniciando simulação em 2 segundos...');
     return new Promise(resolve => setTimeout(resolve, 2000));

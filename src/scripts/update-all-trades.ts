@@ -1,9 +1,9 @@
 import { TradeMonitor } from '../monitor/trade-monitor';
 import * as fs from 'fs';
 import * as path from 'path';
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
+import { TradingConfigManager } from '../shared/config/trading-config-manager';
 
-const TRADES_DIR = `${UNIFIED_TRADING_CONFIG.PATHS.TRADES_DIR}`;
+const TRADES_DIR = `${TradingConfigManager.getConfig().PATHS.TRADES_DIR}`;
 
 async function updateAllTrades() {
   console.log('🔄 ATUALIZANDO TODOS OS ARQUIVOS DE TRADES\n');
