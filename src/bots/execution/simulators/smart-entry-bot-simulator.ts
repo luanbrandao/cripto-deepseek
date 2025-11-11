@@ -5,6 +5,8 @@ import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
 import TradingConfigManager from '../../../shared/config/trading-config-manager';
 import { BaseTradingBot } from '../../core/base-trading-bot';
+import { TradeStorage } from '../../../core/utils/trade-storage';
+import { DeepSeekHistoryLogger } from '../../../shared/utils/deepseek-history-logger';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -67,7 +69,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
 
   protected logBotInfo() {
     const config = TradingConfigManager.getConfig();
-    
+
     console.log('🎯 SMART ENTRY BOT SIMULATOR v1.0 - AGENDA TRADES NOS MELHORES PONTOS\n');
     logBotHeader('🎯 SMART ENTRY BOT v1.0', 'Agenda Trades nos Melhores Pontos de Entrada | Simulação', true);
     console.log('🎯 Funcionalidades Inovadoras:');
@@ -92,6 +94,28 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     const stats = await this.getBinancePublic().get24hrStats(symbol);
 
     logMarketInfo(symbol, price, stats);
+
+    // Análise DeepSeek AI para pontos de entrada
+    const startTime = Date.now();
+    const prompt = `Analyze ${symbol} for OPTIMAL ENTRY POINTS. Focus on support/resistance levels, RSI zones, and volume patterns. Current price: $${price.price}. Provide specific entry recommendations with confidence levels.`;
+
+    try {
+      if (this.deepseek) {
+        const marketData = {
+          symbol,
+          price: parseFloat(price.price),
+          change24h: parseFloat(stats.priceChangePercent),
+          volume24h: parseFloat(stats.volume),
+          klines: klines.slice(-20) // Últimas 20 velas
+        };
+
+        const aiResponse = await this.deepseek.analyzeMarket(marketData, prompt, 'smartEntryBot', symbol);
+
+        console.log(`🤖 DeepSeek AI análise para ${symbol} concluída e salva no histórico`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Erro na análise DeepSeek para ${symbol}:`, error);
+    }
 
     const prices = klines.map((k: any) => parseFloat(k[4]));
     const volumes = klines.map((k: any) => parseFloat(k[5]));
@@ -138,7 +162,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
 
   private findOptimalEntryPoint(analysis: MarketAnalysis): SmartEntryOrder | null {
     const { currentPrice, supportLevels, resistanceLevels, rsi, trend, strength } = analysis;
-    
+
     console.log('\n🎯 Procurando ponto de entrada ideal...');
     console.log(`📊 Preço atual: $${currentPrice.toFixed(2)}`);
     console.log(`📈 Tendência: ${trend} (força: ${(strength * 100).toFixed(2)}%)`);
@@ -150,18 +174,18 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     if (trend === 'UP' && rsi < 70 && supportLevels.length > 0) {
       const nearestSupport = supportLevels[0];
       const distanceToSupport = Math.abs(currentPrice - nearestSupport) / currentPrice;
-      
+
       // Se estamos próximos do suporte (dentro de 1%) ou abaixo dele
       if (distanceToSupport <= 0.01 || currentPrice <= nearestSupport * 1.005) {
         const targetEntryPrice = nearestSupport * 1.002; // Entrada ligeiramente acima do suporte
         const targetPrice = currentPrice * 1.03; // 3% de ganho
         const stopPrice = nearestSupport * 0.995; // Stop abaixo do suporte
-        
+
         const confidence = this.calculateConfidence(analysis, 'BUY', targetEntryPrice);
-        
+
         if (confidence >= TradingConfigManager.getConfig().MIN_CONFIDENCE) {
           console.log(`✅ Ponto de entrada BUY identificado: $${targetEntryPrice.toFixed(2)} (suporte: $${nearestSupport.toFixed(2)})`);
-          
+
           return {
             id: `SE_${Date.now()}`,
             timestamp: new Date().toISOString(),
@@ -190,17 +214,17 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     if (trend === 'DOWN' && rsi > 30 && resistanceLevels.length > 0) {
       const nearestResistance = resistanceLevels[0];
       const distanceToResistance = Math.abs(currentPrice - nearestResistance) / currentPrice;
-      
+
       if (distanceToResistance <= 0.01 || currentPrice >= nearestResistance * 0.995) {
         const targetEntryPrice = nearestResistance * 0.998; // Entrada ligeiramente abaixo da resistência
         const targetPrice = currentPrice * 0.97; // 3% de ganho
         const stopPrice = nearestResistance * 1.005; // Stop acima da resistência
-        
+
         const confidence = this.calculateConfidence(analysis, 'SELL', targetEntryPrice);
-        
+
         if (confidence >= TradingConfigManager.getConfig().MIN_CONFIDENCE) {
           console.log(`✅ Ponto de entrada SELL identificado: $${targetEntryPrice.toFixed(2)} (resistência: $${nearestResistance.toFixed(2)})`);
-          
+
           return {
             id: `SE_${Date.now()}`,
             timestamp: new Date().toISOString(),
@@ -231,56 +255,82 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
 
   private calculateConfidence(analysis: MarketAnalysis, action: 'BUY' | 'SELL', entryPrice: number): number {
     let confidence = 70;
-    
+
     // Bonus por alinhamento EMA
     if (action === 'BUY' && analysis.emaFast > analysis.emaSlow) confidence += 10;
     if (action === 'SELL' && analysis.emaFast < analysis.emaSlow) confidence += 10;
-    
+
     // Bonus por RSI em zona adequada
     if (action === 'BUY' && analysis.rsi < 70 && analysis.rsi > 30) confidence += 5;
     if (action === 'SELL' && analysis.rsi > 30 && analysis.rsi < 70) confidence += 5;
-    
+
     // Bonus por volume
     if (analysis.volume > analysis.avgVolume * 1.5) confidence += 5;
-    
+
     // Bonus por força da tendência
     if (analysis.strength > 0.01) confidence += 5;
-    
+
     return Math.min(confidence, 95);
   }
 
   private saveOrder(order: SmartEntryOrder) {
+    // Salvar no arquivo de ordens específico
     let orders: SmartEntryOrder[] = [];
-    
+
     if (fs.existsSync(this.ordersFile)) {
       orders = JSON.parse(fs.readFileSync(this.ordersFile, 'utf8'));
     }
-    
+
     orders.push(order);
-    
+
     // Manter apenas últimas 50 ordens
     if (orders.length > 50) {
       orders = orders.slice(-50);
     }
-    
+
     fs.writeFileSync(this.ordersFile, JSON.stringify(orders, null, 2));
-    console.log(`💾 Ordem agendada salva: ${order.id}`);
+
+    // Salvar também no histórico padrão usando TradeStorage
+    const tradeRecord = {
+      timestamp: order.timestamp,
+      symbol: order.symbol,
+      action: order.action,
+      price: order.currentPrice,
+      entryPrice: order.targetEntryPrice,
+      targetPrice: order.targetPrice,
+      stopPrice: order.stopPrice,
+      amount: TradingConfigManager.getConfig().TRADE_AMOUNT_USD,
+      balance: 1000, // Simulação
+      crypto: 0,
+      reason: order.reason,
+      confidence: order.confidence,
+      status: 'pending' as 'pending',
+      riskReturn: {
+        potentialGain: Math.abs(order.targetPrice - order.targetEntryPrice),
+        potentialLoss: Math.abs(order.stopPrice - order.targetEntryPrice),
+        riskRewardRatio: Math.abs(order.targetPrice - order.targetEntryPrice) / Math.abs(order.stopPrice - order.targetEntryPrice)
+      },
+      riskCalculationMethod: 'SmartEntryBot'
+    };
+
+    TradeStorage.saveTrades([tradeRecord], 'smartEntryBotSimulator.json');
+    console.log(`💾 Ordem agendada salva: ${order.id} (histórico + ordens)`);
   }
 
   private checkPendingOrders() {
     if (!fs.existsSync(this.ordersFile)) return;
-    
+
     const orders: SmartEntryOrder[] = JSON.parse(fs.readFileSync(this.ordersFile, 'utf8'));
     const pendingOrders = orders.filter(o => o.status === 'pending');
-    
+
     console.log(`\n🔍 Verificando ${pendingOrders.length} ordens pendentes...`);
-    
+
     // Aqui seria implementada a lógica para verificar se as condições de entrada foram atingidas
     // Por ser um simulador, apenas mostramos as ordens pendentes
     pendingOrders.forEach(order => {
       const timeLeft = new Date(order.validUntil).getTime() - Date.now();
       const hoursLeft = Math.max(0, timeLeft / (1000 * 60 * 60));
-      
+
       console.log(`📋 ${order.id}: ${order.action} ${order.symbol} @ $${order.targetEntryPrice.toFixed(2)} (${hoursLeft.toFixed(1)}h restantes)`);
     });
   }
@@ -288,33 +338,33 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
   // Métodos auxiliares de cálculo
   private calculateEMA(prices: number[], period: number): number {
     if (prices.length < period) return prices[prices.length - 1];
-    
+
     const multiplier = 2 / (period + 1);
     let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-    
+
     for (let i = period; i < prices.length; i++) {
       ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
     }
-    
+
     return ema;
   }
 
   private calculateRSI(prices: number[], period: number = 14): number {
     if (prices.length < period + 1) return 50;
-    
+
     const changes = [];
     for (let i = 1; i < prices.length; i++) {
       changes.push(prices[i] - prices[i - 1]);
     }
-    
+
     const gains = changes.map(change => change > 0 ? change : 0);
     const losses = changes.map(change => change < 0 ? Math.abs(change) : 0);
-    
+
     const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
     const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
-    
+
     if (avgLoss === 0) return 100;
-    
+
     const rs = avgGain / avgLoss;
     return 100 - (100 / (1 + rs));
   }
@@ -322,7 +372,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
   private findSupportLevels(lows: number[], currentPrice: number): number[] {
     const levels: number[] = [];
     const tolerance = currentPrice * 0.01; // 1% tolerância
-    
+
     for (let i = 1; i < lows.length - 1; i++) {
       if (lows[i] <= lows[i - 1] && lows[i] <= lows[i + 1]) {
         const level = lows[i];
@@ -331,14 +381,14 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
         }
       }
     }
-    
+
     return levels.sort((a, b) => b - a); // Mais próximos primeiro
   }
 
   private findResistanceLevels(highs: number[], currentPrice: number): number[] {
     const levels: number[] = [];
     const tolerance = currentPrice * 0.01; // 1% tolerância
-    
+
     for (let i = 1; i < highs.length - 1; i++) {
       if (highs[i] >= highs[i - 1] && highs[i] >= highs[i + 1]) {
         const level = highs[i];
@@ -347,34 +397,34 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
         }
       }
     }
-    
+
     return levels.sort((a, b) => a - b); // Mais próximos primeiro
   }
 
   async executeTrade() {
     this.logBotInfo();
-    
+
     try {
       // Verificar ordens pendentes primeiro
       this.checkPendingOrders();
-      
+
       // Analisar mercado para novas oportunidades
       const symbols = TradingConfigManager.getConfig().SYMBOLS;
-      
+
       for (const symbol of symbols) {
         console.log(`\n🔍 Analisando ${symbol} para pontos de entrada ideais...`);
-        
+
         const analysis = await this.analyzeMarket(symbol);
         const optimalEntry = this.findOptimalEntryPoint(analysis);
-        
+
         if (optimalEntry) {
           this.saveOrder(optimalEntry);
           console.log(`🎯 Nova ordem agendada para ${symbol}!`);
         }
       }
-      
+
       console.log('\n✅ Análise de pontos de entrada concluída!');
-      
+
     } catch (error) {
       console.error('❌ Erro no Smart Entry Bot:', error);
     }
