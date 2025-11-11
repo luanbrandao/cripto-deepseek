@@ -5,7 +5,8 @@ import { calculateRiskRewardDynamic, validateConfidence } from '../../utils/risk
 import { calculateTargetAndStopPrices } from '../../utils/risk/price-calculator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { ULTRA_CONSERVATIVE_CONFIG } from '../../../shared/config/ultra-conservative-config';
+import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
 import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../../shared/validators/trend-validator';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 
@@ -18,27 +19,31 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
     super(undefined, undefined, true);
 
     const config: BotConfig = {
-      name: 'Smart Trading Bot Simulator BUY',
+      name: 'Ultra-Conservative Smart Simulator BUY',
       isSimulation: true,
-      tradesFile: UNIFIED_TRADING_CONFIG.FILES.SMART_SIMULATOR_BUY,
+      tradesFile: 'ultraConservativeSmartSimulatorBuy.json',
       requiresFiltering: true,
       requiresValidation: true,
-      riskCalculationMethod: 'Basic Method'
+      riskCalculationMethod: 'Ultra-Conservative Method'
     };
 
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
     this.emaAnalyzer = new EmaAnalyzer({
-      fastPeriod: UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD,
-      slowPeriod: UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD
+      fastPeriod: ULTRA_CONSERVATIVE_CONFIG.EMA.FAST_PERIOD,
+      slowPeriod: ULTRA_CONSERVATIVE_CONFIG.EMA.SLOW_PERIOD
     });
   }
 
   protected logBotInfo() {
-    console.log('🚀 NÃO EXECUTA TRADE REAIS\n');
-    console.log('🚀 MULTI-SYMBOL SMART TRADING BOT SIMULATOR BUY');
-    console.log('✅ MODO SIMULAÇÃO - Nenhuma ordem real será executada');
-    logBotHeader('SIMULADOR MULTI-SYMBOL SMART BOT', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - SIMULAÇÃO', true);
+    console.log('🛡️ ULTRA-CONSERVATIVE SIMULATOR - NÃO EXECUTA TRADES REAIS\n');
+    logBotHeader('🛡️ ULTRA-CONSERVATIVE SMART SIMULATOR BUY v4.0', 'Win Rate Target: 80%+ | Máxima Segurança | Apenas Simulação', true);
+    console.log('🎯 Configuração Ultra-Conservadora:');
+    console.log(`   📊 Confiança Mínima: ${ULTRA_CONSERVATIVE_CONFIG.MIN_CONFIDENCE}%`);
+    console.log(`   🛡️ Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
+    console.log(`   ⏰ Cooldown: ${ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS}h`);
+    console.log(`   🪙 Símbolos: ${ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.join(', ')}`);
+    console.log('   🧪 MODO SIMULAÇÃO - Zero risco financeiro\n');
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
@@ -50,7 +55,7 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
 
     for (const symbol of symbols) {
       console.log(`\n📊 Analisando Tendência EMA: ${symbol}...`);
-      const klines = await this.getBinancePublic().getKlines(symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, UNIFIED_TRADING_CONFIG.CHART.PERIODS);
+      const klines = await this.getBinancePublic().getKlines(symbol, ULTRA_CONSERVATIVE_CONFIG.CHART.TIMEFRAME, ULTRA_CONSERVATIVE_CONFIG.CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const currentPrice = prices[prices.length - 1];
       const emaAnalysis = this.emaAnalyzer.analyze({ price24h: prices, currentPrice });
@@ -63,48 +68,30 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
     return validSymbols;
   }
 
-  private async validateSmartDecision(decision: any, symbol?: string): Promise<boolean> {
-    if (!symbol) return false;
-    // 1. Validar tendência EMA
-    const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: true })) return false;
-
-    // 2. Validar decisão DeepSeek
-    if (!validateDeepSeekDecision(decision, 'BUY')) return false;
-
-    // 3. Aplicar boost inteligente
-    const boostedDecision = boostConfidence(decision, { baseBoost: 5, maxBoost: 15, trendType: 'BUY' });
-
-    // 4. Validação de confiança mínima
-    console.log('🔍 Validação de confiança mínima...');
-    if (!validateConfidence(boostedDecision)) {
-      console.log('❌ Simulação cancelada - Confiança insuficiente');
+  private async validateSmartDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
+    if (!symbol || !marketData) return false;
+    
+    console.log('🛡️ VALIDAÇÃO ULTRA-CONSERVADORA PARA SIMULAÇÃO...');
+    
+    // 🚨 ANÁLISE ULTRA-RIGOROSA EM 5 CAMADAS
+    const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
+    
+    if (!ultraAnalysis.isValid) {
+      console.log('❌ SIMULAÇÃO REJEITADA pela análise ultra-conservadora:');
+      ultraAnalysis.warnings.forEach(warning => console.log(`   ${warning}`));
       return false;
     }
-
-    // 5. Validação de Risk/Reward
-    console.log('🔍 Validação final de Risk/Reward 2:1 para simulação...');
-
-    const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
-      boostedDecision.price,
-      boostedDecision.confidence,
-      boostedDecision.action
-    );
-
-    const riskRewardResult = calculateRiskRewardDynamic(
-      boostedDecision.price,
-      targetPrice,
-      stopPrice,
-      boostedDecision.action
-    );
-
-    if (!riskRewardResult.isValid) {
-      console.log('❌ Simulação cancelada - Risk/Reward insuficiente');
-      return false;
-    }
-
-    // Atualizar decisão com boost
-    Object.assign(decision, boostedDecision);
+    
+    console.log('✅ SIMULAÇÃO APROVADA pela análise ultra-conservadora:');
+    ultraAnalysis.reasons.forEach(reason => console.log(`   ${reason}`));
+    console.log(`🛡️ Nível de Risco: ${ultraAnalysis.riskLevel}`);
+    console.log('🧪 Esta seria uma excelente oportunidade para trade real!');
+    
+    // Atualizar decisão com análise ultra-conservadora
+    decision.confidence = ultraAnalysis.confidence;
+    decision.ultraConservativeScore = ultraAnalysis.score;
+    decision.riskLevel = ultraAnalysis.riskLevel;
+    
     return true;
   }
 
@@ -126,9 +113,9 @@ if (require.main === module) {
   }
 
   logBotStartup(
-    'Smart Bot Simulator Buy',
-    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise dupla: EMA + DeepSeek AI',
-    UNIFIED_TRADING_CONFIG.SIMULATION.STARTUP_DELAY,
+    'Ultra-Conservative Smart Simulator Buy',
+    '🛡️ Ultra-Conservador v4.0 - Win Rate Target: 80%+\n🧪 Modo seguro - Apenas simulação, sem trades reais',
+    5000,
     true
   ).then(() => main());
 }

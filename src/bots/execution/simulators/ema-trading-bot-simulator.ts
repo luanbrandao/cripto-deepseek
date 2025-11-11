@@ -1,10 +1,8 @@
 import * as dotenv from 'dotenv';
 import { BotFlowManager } from '../../utils/execution/bot-flow-manager';
 import { BotConfig, TradeDecision } from '../../core/types';
-import { validateTrade, calculateRiskReward } from '../../utils/risk/trade-validators';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
-import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
 import { ULTRA_CONSERVATIVE_CONFIG } from '../../../shared/config/ultra-conservative-config';
 import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
@@ -17,17 +15,17 @@ interface MarketData {
   currentPrice: number;
 }
 
-export class EmaTradingBot extends BaseTradingBot {
+export class EmaTradingBotSimulator extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private emaAnalyzer: EmaAnalyzer;
 
-  constructor(apiKey: string, apiSecret: string) {
-    super(apiKey, apiSecret, false);
+  constructor() {
+    super(undefined, undefined, true);
 
     const config: BotConfig = {
-      name: 'Ultra-Conservative EMA Trading Bot',
-      isSimulation: false,
-      tradesFile: 'ultraConservativeEmaBot.json'
+      name: 'Ultra-Conservative EMA Simulator',
+      isSimulation: true,
+      tradesFile: 'ultraConservativeEmaSimulator.json'
     };
 
     this.flowManager = new BotFlowManager(this, config);
@@ -38,12 +36,14 @@ export class EmaTradingBot extends BaseTradingBot {
   }
 
   protected logBotInfo() {
-    logBotHeader('🛡️ ULTRA-CONSERVATIVE EMA BOT v4.0', `Win Rate Target: 75%+ | EMA ${ULTRA_CONSERVATIVE_CONFIG.EMA.FAST_PERIOD}/${ULTRA_CONSERVATIVE_CONFIG.EMA.SLOW_PERIOD} | Risk/Reward: 3:1`);
+    console.log('🛡️ ULTRA-CONSERVATIVE EMA SIMULATOR - NÃO EXECUTA TRADES REAIS\n');
+    logBotHeader('🛡️ ULTRA-CONSERVATIVE EMA SIMULATOR v4.0', `Win Rate Target: 75%+ | EMA ${ULTRA_CONSERVATIVE_CONFIG.EMA.FAST_PERIOD}/${ULTRA_CONSERVATIVE_CONFIG.EMA.SLOW_PERIOD} | Apenas Simulação`, true);
     console.log('🎯 Configuração Ultra-Conservadora:');
     console.log(`   📊 Confiança Mínima: ${ULTRA_CONSERVATIVE_CONFIG.MIN_CONFIDENCE}%`);
     console.log(`   🛡️ Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
     console.log(`   ⏰ Cooldown: ${ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS}h`);
     console.log(`   🪙 Símbolos: ${ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.join(', ')}`);
+    console.log('   🧪 MODO SIMULAÇÃO - Zero risco financeiro\n');
   }
 
   private async getMarketData(symbol: string): Promise<MarketData> {
@@ -87,23 +87,26 @@ export class EmaTradingBot extends BaseTradingBot {
   private async validateEmaDecision(decision: TradeDecision, symbol?: string, marketData?: any): Promise<boolean> {
     if (!symbol || !marketData) return false;
     
-    console.log('🛡️ VALIDAÇÃO ULTRA-CONSERVADORA EMA...');
+    console.log('🛡️ VALIDAÇÃO ULTRA-CONSERVADORA EMA PARA SIMULAÇÃO...');
     
     // 🚨 ANÁLISE ULTRA-RIGOROSA EM 5 CAMADAS
     const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
     
     if (!ultraAnalysis.isValid) {
-      console.log('❌ REJEITADO pela análise ultra-conservadora EMA:');
+      console.log('❌ SIMULAÇÃO REJEITADA pela análise ultra-conservadora EMA:');
       ultraAnalysis.warnings.forEach(warning => console.log(`   ${warning}`));
       return false;
     }
     
-    console.log('✅ APROVADO pela análise ultra-conservadora EMA:');
+    console.log('✅ SIMULAÇÃO APROVADA pela análise ultra-conservadora EMA:');
     ultraAnalysis.reasons.forEach(reason => console.log(`   ${reason}`));
     console.log(`🛡️ Nível de Risco: ${ultraAnalysis.riskLevel}`);
+    console.log('🧪 Esta seria uma excelente oportunidade EMA para trade real!');
     
     // Atualizar decisão com análise ultra-conservadora
     decision.confidence = ultraAnalysis.confidence;
+    (decision as any).ultraConservativeScore = ultraAnalysis.score;
+    (decision as any).riskLevel = ultraAnalysis.riskLevel;
     
     return true;
   }
@@ -121,16 +124,14 @@ export class EmaTradingBot extends BaseTradingBot {
 // Só executa se for chamado diretamente (não importado)
 if (require.main === module) {
   const main = async () => {
-    const keys = validateBinanceKeys();
-    if (!keys) return;
-
-    const { apiKey, apiSecret } = keys;
-    const emaBot = new EmaTradingBot(apiKey, apiSecret);
-    await emaBot.executeTrade();
+    const emaSimulator = new EmaTradingBotSimulator();
+    await emaSimulator.executeTrade();
   }
 
   logBotStartup(
-    'EMA Bot',
-    '📊 Estratégia: Médias Móveis Exponenciais (EMA 12/26)'
+    'Ultra-Conservative EMA Simulator',
+    '🛡️ Ultra-Conservador v4.0 - Win Rate Target: 75%+\n🧪 Modo seguro - Apenas simulação EMA, sem trades reais',
+    5000,
+    true
   ).then(() => main());
 }

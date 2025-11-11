@@ -8,7 +8,8 @@ import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import * as dotenv from 'dotenv';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
-import { UNIFIED_TRADING_CONFIG } from '../../../shared/config/unified-trading-config';
+import { ULTRA_CONSERVATIVE_CONFIG } from '../../../shared/config/ultra-conservative-config';
+import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../../../shared/validators/trend-validator';
 
@@ -23,21 +24,26 @@ export class SmartTradingBotBuy extends BaseTradingBot {
     super(apiKey, apiSecret, true);
 
     const config: BotConfig = {
-      name: 'Smart Trading Bot BUY',
+      name: 'Ultra-Conservative Smart Bot BUY',
       isSimulation: false,
-      tradesFile: UNIFIED_TRADING_CONFIG.FILES.SMART_BOT_BUY
+      tradesFile: 'ultraConservativeSmartBotBuy.json'
     };
 
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
     this.emaAnalyzer = new EmaAnalyzer({
-      fastPeriod: UNIFIED_TRADING_CONFIG.EMA.FAST_PERIOD,
-      slowPeriod: UNIFIED_TRADING_CONFIG.EMA.SLOW_PERIOD
+      fastPeriod: ULTRA_CONSERVATIVE_CONFIG.EMA.FAST_PERIOD,
+      slowPeriod: ULTRA_CONSERVATIVE_CONFIG.EMA.SLOW_PERIOD
     });
   }
 
   protected logBotInfo() {
-    logBotHeader('MULTI-SYMBOL SMART TRADING BOT BUY v3.0 - REFATORADO', 'Análise Dupla (EMA + DeepSeek AI) + Múltiplas Moedas - APENAS COMPRAS');
+    logBotHeader('🛡️ ULTRA-CONSERVATIVE SMART BOT BUY v4.0', 'Win Rate Target: 80%+ | Risk/Reward: 3:1 | Confiança Min: 90%');
+    console.log('🎯 Configuração Ultra-Conservadora:');
+    console.log(`   📊 Confiança Mínima: ${ULTRA_CONSERVATIVE_CONFIG.MIN_CONFIDENCE}%`);
+    console.log(`   🛡️ Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
+    console.log(`   ⏰ Cooldown: ${ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS}h`);
+    console.log(`   🪙 Símbolos: ${ULTRA_CONSERVATIVE_CONFIG.SYMBOLS.join(', ')}`);
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
@@ -48,7 +54,7 @@ export class SmartTradingBotBuy extends BaseTradingBot {
     const validSymbols = [];
 
     for (const symbol of symbols) {
-      const klines = await this.getBinancePublic().getKlines(symbol, UNIFIED_TRADING_CONFIG.CHART.TIMEFRAME, UNIFIED_TRADING_CONFIG.CHART.PERIODS);
+      const klines = await this.getBinancePublic().getKlines(symbol, ULTRA_CONSERVATIVE_CONFIG.CHART.TIMEFRAME, ULTRA_CONSERVATIVE_CONFIG.CHART.PERIODS);
       const prices = klines.map((k: any) => parseFloat(k[4]));
       const currentPrice = prices[prices.length - 1];
       const emaAnalysis = this.emaAnalyzer.analyze({ price24h: prices, currentPrice });
@@ -61,48 +67,29 @@ export class SmartTradingBotBuy extends BaseTradingBot {
     return validSymbols;
   }
 
-  private async validateSmartDecision(decision: any, symbol?: string): Promise<boolean> {
-    if (!symbol) return false;
-    // 1. Validar tendência EMA
-    const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: false })) return false;
-
-    // 2. Validar decisão DeepSeek
-    if (!validateDeepSeekDecision(decision, 'BUY')) return false;
-
-    // 3. Aplicar boost inteligente
-    const boostedDecision = boostConfidence(decision, { baseBoost: 5, maxBoost: 15, trendType: 'BUY' });
-
-    // 4. Validação de confiança mínima (OBRIGATÓRIA)
-    console.log('🔍 Validação de confiança mínima...');
-    if (!validateConfidence(boostedDecision)) {
-      console.log('❌ Trade cancelado - Confiança insuficiente');
+  private async validateSmartDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
+    if (!symbol || !marketData) return false;
+    
+    console.log('🛡️ VALIDAÇÃO ULTRA-CONSERVADORA INICIADA...');
+    
+    // 🚨 ANÁLISE ULTRA-RIGOROSA EM 5 CAMADAS
+    const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
+    
+    if (!ultraAnalysis.isValid) {
+      console.log('❌ REJEITADO pela análise ultra-conservadora:');
+      ultraAnalysis.warnings.forEach(warning => console.log(`   ${warning}`));
       return false;
     }
-
-    // 5. Validação de Risk/Reward
-    console.log('🔍 Validação final de Risk/Reward antes da execução...');
-
-    const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
-      boostedDecision.price,
-      boostedDecision.confidence,
-      boostedDecision.action
-    );
-
-    const riskRewardResult = calculateRiskRewardDynamic(
-      boostedDecision.price,
-      targetPrice,
-      stopPrice,
-      boostedDecision.action
-    );
-
-    if (!riskRewardResult.isValid) {
-      console.log('❌ Trade cancelado - Risk/Reward insuficiente');
-      return false;
-    }
-
-    // Atualizar decisão com boost
-    Object.assign(decision, boostedDecision);
+    
+    console.log('✅ APROVADO pela análise ultra-conservadora:');
+    ultraAnalysis.reasons.forEach(reason => console.log(`   ${reason}`));
+    console.log(`🛡️ Nível de Risco: ${ultraAnalysis.riskLevel}`);
+    
+    // Atualizar decisão com análise ultra-conservadora
+    decision.confidence = ultraAnalysis.confidence;
+    decision.ultraConservativeScore = ultraAnalysis.score;
+    decision.riskLevel = ultraAnalysis.riskLevel;
+    
     return true;
   }
 
