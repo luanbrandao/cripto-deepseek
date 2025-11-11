@@ -4,20 +4,26 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 const simulators = [
-  // PATTERN SIMULATORS
+  // 🛡️ ULTRA-CONSERVATIVE SIMULATORS (v4.0 - Win Rate Target: 75-85%)
+  { name: 'Ultra-Conservative Smart Simulator', command: 'yarn ultra-conservative-smart-simulator' },
+  { name: 'Ultra-Conservative Real Simulator', command: 'yarn ultra-conservative-real-simulator' },
+  { name: 'Ultra-Conservative EMA Bot Simulator', command: 'yarn ultra-conservative-ema-bot-simulator' },
+  { name: 'Ultra-Conservative S/R Bot Simulator', command: 'yarn ultra-conservative-sr-bot-simulator' },
+
+  // 📊 PATTERN SIMULATORS (Legacy)
   { name: '123 Pattern Simulator', command: 'yarn simulate-123' },
   { name: 'EMA Pattern Simulator', command: 'yarn simulate-ema' },
   { name: 'Support/Resistance Simulator', command: 'yarn simulate-support' },
 
-  // NEUTRAL SIMULATORS (BUY/SELL/HOLD)
-  { name: 'Real Trading Bot Simulator', command: 'yarn real-trading-bot-simulator' },
+  // 🔄 NEUTRAL SIMULATORS (BUY/SELL/HOLD)
+  // { name: 'Real Trading Bot Simulator', command: 'yarn real-trading-bot-simulator' },
 
-  // BUY ONLY SIMULATORS (Long-Only)
+  // 📈 BUY ONLY SIMULATORS (Long-Only)
   { name: 'Smart Trading Bot BUY Simulator', command: 'yarn smart-trading-bot-buy-simulator' },
   { name: 'Multi-Smart Trading Bot BUY Simulator', command: 'yarn multi-smart-trading-bot-buy-simulator' },
   { name: 'Elite Trading Bot Simulator', command: 'yarn elite-trading-bot-simulator' },
 
-  // SELL ONLY SIMULATORS (Short-Only)
+  // 📉 SELL ONLY SIMULATORS (Short-Only)
   { name: 'Smart Trading Bot SELL Simulator', command: 'yarn smart-trading-bot-sell-simulator' },
   { name: 'Multi-Smart Trading Bot SELL Simulator', command: 'yarn multi-smart-trading-bot-sell-simulator' }
 ];

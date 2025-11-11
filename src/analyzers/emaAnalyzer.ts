@@ -1,5 +1,6 @@
 import { calculateEMA } from '../bots/utils/analysis/ema-calculator';
-import { UNIFIED_TRADING_CONFIG } from '../shared/config/unified-trading-config';
+import { UNIFIED_TRADING_CONFIG, BOT_SPECIFIC_CONFIG } from '../shared/config/unified-trading-config';
+import { ULTRA_CONSERVATIVE_CONFIG } from '../shared/config/ultra-conservative-config';
 
 interface MarketData {
   price24h: number[];
@@ -42,21 +43,25 @@ class EmaAnalyzer {
     let confidence = 50;
     let reason = "Mercado estável";
 
+    // Usar configurações dinâmicas baseadas no contexto
+    const minConfidence = ULTRA_CONSERVATIVE_CONFIG?.MIN_CONFIDENCE || UNIFIED_TRADING_CONFIG.MIN_CONFIDENCE || 70;
+    const emaConfig = BOT_SPECIFIC_CONFIG?.EMA_BOT;
+
     if (currentPrice > emaFast && emaFast > emaSlow && priceChange > 2) {
       action = "BUY";
-      confidence = 75;
+      confidence = minConfidence; // Usar configuração dinâmica
       reason = `Tendência de alta confirmada (EMA${this.fastPeriod} > EMA${this.slowPeriod})`;
     } else if (currentPrice < emaFast && emaFast < emaSlow && priceChange < -2) {
       action = "SELL";
-      confidence = 70;
+      confidence = Math.max(minConfidence - 10, 70); // Ligeiramente menor para SELL
       reason = `Tendência de baixa confirmada (EMA${this.fastPeriod} < EMA${this.slowPeriod})`;
     } else if (priceChange > 5) {
       action = "SELL";
-      confidence = 80;
+      confidence = Math.max(minConfidence - 5, 75); // Correção técnica
       reason = "Possível correção após alta";
     } else if (priceChange < -5) {
       action = "BUY";
-      confidence = 75;
+      confidence = Math.max(minConfidence - 10, 70); // Recuperação
       reason = "Possível recuperação após queda";
     }
 

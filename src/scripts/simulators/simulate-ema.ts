@@ -5,7 +5,7 @@ import EmaAnalyzer from '../../analyzers/emaAnalyzer';
 import { TradeSimulator } from './trade-simulator';
 
 async function runUltraConservativeEmaSimulation() {
-  console.log('🛡️ ULTRA-CONSERVATIVE EMA SIMULATOR v4.0');
+  console.log('🛡️ EMA SIMULATOR v4.0');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log(`📊 Estratégia: EMA ${ULTRA_CONSERVATIVE_CONFIG.EMA.FAST_PERIOD}/${ULTRA_CONSERVATIVE_CONFIG.EMA.SLOW_PERIOD} Ultra-Conservador`);
   console.log(`🎯 Win Rate Target: 75%+ | Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
@@ -21,16 +21,16 @@ async function runUltraConservativeEmaSimulation() {
   };
   const analyzer = new EmaAnalyzer(emaConfig);
 
-  const tradesFile = `./src/storage/trades/ultraConservativeEma${emaConfig.fastPeriod}-${emaConfig.slowPeriod}Trades.json`;
+  const tradesFile = `./src/storage/trades/ema${emaConfig.fastPeriod}-${emaConfig.slowPeriod}Trades.json`;
   const simulator = new TradeSimulator(analyzer, 1000, ULTRA_CONSERVATIVE_CONFIG.SYMBOLS, tradesFile);
-  
+
   console.log('🔍 VALIDAÇÃO ULTRA-RIGOROSA ATIVADA:');
   console.log('   📊 Análise Técnica: Score mín. 80/100');
   console.log('   📈 Análise de Volume: Score mín. 75/100');
   console.log('   🎯 Análise de Tendência: Score mín. 85/100');
   console.log('   🤖 Validação IA: Confiança mín. 90%');
   console.log('   🚫 Filtros de Exclusão: Volume >$2B, Volatilidade <2.5%\n');
-  
+
   await simulator.simulate(ULTRA_CONSERVATIVE_CONFIG.SYMBOLS);
 }
 

@@ -37,7 +37,7 @@ function saveTrade(trade: SupportResistanceTrade, tradesFile: string) {
 }
 
 async function runUltraConservativeSupportResistanceSimulation() {
-  console.log('🛡️ ULTRA-CONSERVATIVE SUPPORT/RESISTANCE SIMULATOR v4.0');
+  console.log('🛡️ SUPPORT/RESISTANCE SIMULATOR v4.0');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log('📊 Estratégia: S/R Ultra-Conservador + Níveis Psicológicos');
   console.log(`🎯 Win Rate Target: 78%+ | Risk/Reward: ${ULTRA_CONSERVATIVE_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
@@ -49,22 +49,22 @@ async function runUltraConservativeSupportResistanceSimulation() {
   // Configuração ultra-conservadora para S/R
   const supportConfig = {
     tolerance: 0.005,              // ↓ Mais rigoroso (era 0.008)
-    minTouches: 3,                 // ↑ Mínimo 3 toques (era 2)
+    minTouches: 2,                 // ↑ Mínimo 2 toques (era 1)
     lookbackPeriods: 50,           // ↑ Mais histórico (era 25)
     strengthThreshold: 0.8         // Força mínima do nível 80%
   };
 
   const analyzer = new SupportResistanceAnalyzer(supportConfig);
-  const tradesFile = `./src/storage/trades/ultraConservativeSupportResistanceTrades.json`;
+  const tradesFile = `./src/storage/trades/supportResistanceTrades.json`;
 
   const simulator = new TradeSimulator(analyzer, 1000, ULTRA_CONSERVATIVE_CONFIG.SYMBOLS, tradesFile);
-  
+
   console.log('🔍 VALIDAÇÃO ULTRA-RIGOROSA ATIVADA:');
   console.log('   📊 Análise Técnica: Score mín. 80/100');
   console.log('   📈 Análise de Volume: Score mín. 75/100');
   console.log('   🎯 Análise de Tendência: Score mín. 85/100');
   console.log('   🤖 Validação IA: Confiança mín. 90%');
-  console.log('   🚫 Filtros S/R: Mín. 3 toques, Força >80%\n');
+  console.log('   🚫 Filtros S/R: Mín. 2 toques, Força >80%\n');
 
   await simulator.simulate(ULTRA_CONSERVATIVE_CONFIG.SYMBOLS);
 

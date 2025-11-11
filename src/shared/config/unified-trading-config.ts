@@ -151,7 +151,7 @@ export const BOT_SPECIFIC_CONFIG = {
   },
 
   SUPPORT_RESISTANCE: {
-    MIN_TOUCHES: 2, // Mínimo 3 toques
+    MIN_TOUCHES: 2, // Mínimo 2 toques
     MAX_DISTANCE: 0.005, // Máximo 0.5% de distância
     RECENT_TEST: true,
     VOLUME_CONFIRMATION: true,
