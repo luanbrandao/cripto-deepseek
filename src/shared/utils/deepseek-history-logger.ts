@@ -4,7 +4,7 @@ import * as path from 'path';
 interface DeepSeekAnalysis {
   timestamp: string;
   symbol: string;
-  botType: 'realBot' | 'smartBot' | 'multiSmartBot';
+  botType: 'realBot' | 'smartBot' | 'multiSmartBot' | 'smartEntryBot';
   prompt: string;
   response: string;
   confidence?: number;
@@ -22,6 +22,7 @@ interface DeepSeekHistory {
   realBot: DeepSeekAnalysis[];
   smartBot: DeepSeekAnalysis[];
   multiSmartBot: DeepSeekAnalysis[];
+  smartEntryBot: DeepSeekAnalysis[];
   metadata: {
     created: string;
     lastUpdated: string;
@@ -30,6 +31,7 @@ interface DeepSeekHistory {
       realBot: number;
       smartBot: number;
       multiSmartBot: number;
+      smartEntryBot: number;
     };
   };
 }
@@ -51,6 +53,7 @@ export class DeepSeekHistoryLogger {
       realBot: [],
       smartBot: [],
       multiSmartBot: [],
+      smartEntryBot: [],
       metadata: {
         created: new Date().toISOString(),
         lastUpdated: new Date().toISOString(),
@@ -58,7 +61,8 @@ export class DeepSeekHistoryLogger {
         callsByBot: {
           realBot: 0,
           smartBot: 0,
-          multiSmartBot: 0
+          multiSmartBot: 0,
+          smartEntryBot: 0
         }
       }
     };
@@ -98,14 +102,14 @@ export class DeepSeekHistoryLogger {
     console.log(`📝 DeepSeek análise salva: ${analysis.botType} | ${analysis.symbol} | ${analysis.action || 'N/A'}`);
   }
 
-  static getHistory(botType?: 'realBot' | 'smartBot' | 'multiSmartBot'): DeepSeekHistory | DeepSeekAnalysis[] {
+  static getHistory(botType?: 'realBot' | 'smartBot' | 'multiSmartBot' | 'smartEntryBot'): DeepSeekHistory | DeepSeekAnalysis[] {
     const history = this.loadHistory();
     return botType ? history[botType] : history;
   }
 
   static getStats(): { totalCalls: number; callsByBot: Record<string, number>; lastCall?: string } {
     const history = this.loadHistory();
-    const allAnalyses = [...history.realBot, ...history.smartBot, ...history.multiSmartBot];
+    const allAnalyses = [...history.realBot, ...history.smartBot, ...history.multiSmartBot, ...history.smartEntryBot];
     const lastCall = allAnalyses.length > 0
       ? allAnalyses[allAnalyses.length - 1].timestamp
       : undefined;

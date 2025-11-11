@@ -9,7 +9,7 @@ export class DeepSeekService {
   }
 
   // Método para obter histórico por bot
-  static getHistory(botType?: 'realBot' | 'smartBot' | 'multiSmartBot') {
+  static getHistory(botType?: 'realBot' | 'smartBot' | 'multiSmartBot' | 'smartEntryBot') {
     return DeepSeekHistoryLogger.getHistory(botType);
   }
   private baseUrl: string;
@@ -20,7 +20,7 @@ export class DeepSeekService {
     this.apiKey = config.deepseek.apiKey;
   }
 
-  async analyzeMarket(marketData: any, prompt: string, botType?: 'realBot' | 'smartBot' | 'multiSmartBot', symbol?: string) {
+  async analyzeMarket(marketData: any, prompt: string, botType?: 'realBot' | 'smartBot' | 'multiSmartBot' | 'smartEntryBot', symbol?: string) {
     const startTime = Date.now();
     
     try {
