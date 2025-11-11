@@ -48,30 +48,60 @@ class EmaAnalyzer {
     const minConfidence = TradingConfigManager.getConfig().MIN_CONFIDENCE || 70;
     const emaConfig = BOT_SPECIFIC_CONFIG?.EMA_BOT;
 
+    // Verificar se a confiança atenderá o mínimo antes de gerar sinal
     if (currentPrice > emaFast && emaFast > emaSlow && priceChange > 2) {
-      action = "BUY";
-      confidence = minConfidence; // Usar configuração dinâmica
-      reason = `Tendência de alta confirmada (EMA${this.fastPeriod} > EMA${this.slowPeriod})`;
+      const potentialConfidence = minConfidence;
+      if (potentialConfidence >= minConfidence) {
+        action = "BUY";
+        confidence = potentialConfidence;
+        reason = `Tendência de alta confirmada (EMA${this.fastPeriod} > EMA${this.slowPeriod})`;
+      }
     } else if (currentPrice < emaFast && emaFast < emaSlow && priceChange < -2) {
-      action = "SELL";
-      confidence = Math.max(minConfidence - 10, 70); // Ligeiramente menor para SELL
-      reason = `Tendência de baixa confirmada (EMA${this.fastPeriod} < EMA${this.slowPeriod})`;
+      const potentialConfidence = Math.max(minConfidence - 5, minConfidence); // Redução mínima
+      if (potentialConfidence >= minConfidence) {
+        action = "SELL";
+        confidence = potentialConfidence;
+        reason = `Tendência de baixa confirmada (EMA${this.fastPeriod} < EMA${this.slowPeriod})`;
+      }
     } else if (priceChange > 5) {
-      action = "SELL";
-      confidence = Math.max(minConfidence - 5, 75); // Correção técnica
-      reason = "Possível correção após alta";
+      // Correção técnica - só se atender confiança mínima
+      const potentialConfidence = Math.max(minConfidence - 2, minConfidence);
+      if (potentialConfidence >= minConfidence) {
+        action = "SELL";
+        confidence = potentialConfidence;
+        reason = "Possível correção após alta";
+      }
     } else if (priceChange < -5) {
-      action = "BUY";
-      confidence = Math.max(minConfidence - 10, 70); // Recuperação
-      reason = "Possível recuperação após queda";
+      // Recuperação - só se atender confiança mínima  
+      const potentialConfidence = minConfidence; // Sem redução para recuperação
+      if (potentialConfidence >= minConfidence) {
+        action = "BUY";
+        confidence = potentialConfidence;
+        reason = "Possível recuperação após queda";
+      }
+    }
+    
+    // Se nenhum sinal atingiu a confiança mínima, manter HOLD
+    if (action !== "HOLD" && confidence < minConfidence) {
+      action = "HOLD";
+      confidence = 50;
+      reason = `Sinal EMA rejeitado - confiança ${confidence}% < ${minConfidence}% mínimo`;
     }
 
     console.log(reason);
+    
+    // Log adicional para debug
+    if (action !== "HOLD") {
+      console.log(`✅ EMA Signal: ${action} com ${confidence}% confiança (mínimo: ${minConfidence}%)`);
+    } else {
+      console.log(`⏸️ EMA Hold: ${reason}`);
+    }
+    
     return {
       action,
       confidence,
       reason,
-      suggested_amount: confidence > 70 ? 3 : 1
+      suggested_amount: confidence >= minConfidence ? 3 : 1
     };
   }
 

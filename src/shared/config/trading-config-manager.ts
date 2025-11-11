@@ -9,40 +9,40 @@ interface BaseTradingConfig {
   SYMBOLS: string[];
   DEFAULT_SYMBOL: string;
   TRADE_AMOUNT_USD: number;
-  
+
   // CONFIANÇA E TEMPO
   MIN_CONFIDENCE: number;
   HIGH_CONFIDENCE: number;
   MEDIUM_CONFIDENCE: number;
   TRADE_COOLDOWN_MINUTES: number;
-  
+
   // RISK/REWARD
   MIN_RISK_REWARD_RATIO: number;
-  
+
   // RISCO
   RISK: {
     BASE_PERCENT: number;
     MAX_PERCENT: number;
   };
-  
+
   // ANÁLISE
   CHART: {
     TIMEFRAME: string;
     PERIODS: number;
   };
-  
+
   EMA: {
     FAST_PERIOD: number;
     SLOW_PERIOD: number;
   };
-  
+
   // SIMULAÇÃO
   SIMULATION: {
     STARTUP_DELAY: number;
     INITIAL_BALANCE: number;
     MAX_ACTIVE_TRADES: number;
   };
-  
+
   // LIMITES
   LIMITS: {
     OPEN_ORDERS: number;
@@ -52,7 +52,7 @@ interface BaseTradingConfig {
     MAX_CONSECUTIVE_LOSSES: number;
     EMERGENCY_STOP_LOSS: number;
   };
-  
+
   // FILTROS DE MERCADO
   MARKET_FILTERS: {
     MIN_VOLATILITY: number;
@@ -61,7 +61,7 @@ interface BaseTradingConfig {
     MIN_VOLUME_MULTIPLIER: number;
     AVOID_WEEKENDS: boolean;
   };
-  
+
   // EMA AVANÇADO
   EMA_ADVANCED: {
     MIN_SEPARATION: number;
@@ -70,12 +70,12 @@ interface BaseTradingConfig {
     MIN_TREND_STRENGTH: number;
     MOMENTUM_CONFIRMATION: boolean;
   };
-  
+
   // CAMINHOS E ARQUIVOS
   PATHS: {
     TRADES_DIR: string;
   };
-  
+
   FILES: {
     REAL_BOT: string;
     REAL_BOT_SIMULATOR: string;
@@ -98,35 +98,35 @@ const BALANCED_CONFIG: BaseTradingConfig = {
   SYMBOLS: ['BTCUSDT', 'BNBUSDT', 'ETHUSDT', 'SOLUSDT'],
   DEFAULT_SYMBOL: 'BTCUSDT',
   TRADE_AMOUNT_USD: 15,
-  
+
   MIN_CONFIDENCE: 80,
   HIGH_CONFIDENCE: 90,
   MEDIUM_CONFIDENCE: 85,
   TRADE_COOLDOWN_MINUTES: 30,
-  
+
   MIN_RISK_REWARD_RATIO: 2.5,
-  
+
   RISK: {
     BASE_PERCENT: 0.25,
     MAX_PERCENT: 0.75
   },
-  
+
   CHART: {
     TIMEFRAME: '1h',
     PERIODS: 50
   },
-  
+
   EMA: {
     FAST_PERIOD: 12,
     SLOW_PERIOD: 26
   },
-  
+
   SIMULATION: {
     STARTUP_DELAY: 3000,
     INITIAL_BALANCE: 1000,
     MAX_ACTIVE_TRADES: 2
   },
-  
+
   LIMITS: {
     OPEN_ORDERS: 2,
     MAX_ACTIVE_TRADES: 2,
@@ -135,7 +135,7 @@ const BALANCED_CONFIG: BaseTradingConfig = {
     MAX_CONSECUTIVE_LOSSES: 2,
     EMERGENCY_STOP_LOSS: 100
   },
-  
+
   MARKET_FILTERS: {
     MIN_VOLATILITY: 0.5,
     MAX_VOLATILITY: 4.0,
@@ -143,7 +143,7 @@ const BALANCED_CONFIG: BaseTradingConfig = {
     MIN_VOLUME_MULTIPLIER: 2.0,
     AVOID_WEEKENDS: false
   },
-  
+
   EMA_ADVANCED: {
     MIN_SEPARATION: 0.005,
     MIN_EMA_SCORE: 10,
@@ -151,11 +151,11 @@ const BALANCED_CONFIG: BaseTradingConfig = {
     MIN_TREND_STRENGTH: 0.01,
     MOMENTUM_CONFIRMATION: true
   },
-  
+
   PATHS: {
     TRADES_DIR: './src/storage/trades'
   },
-  
+
   FILES: {
     REAL_BOT: 'realTradingBot.json',
     REAL_BOT_SIMULATOR: 'realTradingBotSimulator.json',
@@ -178,44 +178,44 @@ const ULTRA_CONSERVATIVE_CONFIG: BaseTradingConfig = {
   SYMBOLS: ['BTCUSDT', 'ETHUSDT'], // Apenas as mais estáveis
   DEFAULT_SYMBOL: 'BTCUSDT',
   TRADE_AMOUNT_USD: 10, // Menor exposição
-  
+
   MIN_CONFIDENCE: 90, // Muito rigoroso
   HIGH_CONFIDENCE: 95,
   MEDIUM_CONFIDENCE: 92,
   TRADE_COOLDOWN_MINUTES: 720, // 12 horas
-  
+
   MIN_RISK_REWARD_RATIO: 3.0, // Proteção máxima
-  
+
   RISK: {
     BASE_PERCENT: 0.15, // Muito conservador
     MAX_PERCENT: 0.5
   },
-  
+
   CHART: {
     TIMEFRAME: '4h', // Visão macro
     PERIODS: 168 // 1 semana de dados
   },
-  
+
   EMA: {
     FAST_PERIOD: 21, // Menos ruído
     SLOW_PERIOD: 50
   },
-  
+
   SIMULATION: {
     STARTUP_DELAY: 5000,
     INITIAL_BALANCE: 1000,
     MAX_ACTIVE_TRADES: 1 // Apenas 1 simulação
   },
-  
+
   LIMITS: {
-    OPEN_ORDERS: 1,
-    MAX_ACTIVE_TRADES: 1, // Apenas 1 trade ativo
+    OPEN_ORDERS: 2,
+    MAX_ACTIVE_TRADES: 2, // Apenas 1 trade ativo
     MAX_TRADES_PER_SYMBOL: 1,
-    MAX_DAILY_LOSS: 10, // Muito restritivo
-    MAX_CONSECUTIVE_LOSSES: 1, // Para após 1 perda
+    MAX_DAILY_LOSS: 100, // Muito restritivo
+    MAX_CONSECUTIVE_LOSSES: 10, // Para após 1 perda
     EMERGENCY_STOP_LOSS: 25
   },
-  
+
   MARKET_FILTERS: {
     MIN_VOLATILITY: 0.3,
     MAX_VOLATILITY: 2.5, // Máxima estabilidade
@@ -223,7 +223,7 @@ const ULTRA_CONSERVATIVE_CONFIG: BaseTradingConfig = {
     MIN_VOLUME_MULTIPLIER: 3.0, // Volume muito alto
     AVOID_WEEKENDS: true
   },
-  
+
   EMA_ADVANCED: {
     MIN_SEPARATION: 0.008, // Mais rigoroso
     MIN_EMA_SCORE: 16,
@@ -231,11 +231,11 @@ const ULTRA_CONSERVATIVE_CONFIG: BaseTradingConfig = {
     MIN_TREND_STRENGTH: 0.02,
     MOMENTUM_CONFIRMATION: true
   },
-  
+
   PATHS: {
     TRADES_DIR: './src/storage/trades'
   },
-  
+
   FILES: {
     REAL_BOT: '1-ultraConservativeRealTradingBot.json',
     REAL_BOT_SIMULATOR: '1-ultraConservativeRealTradingBotSimulator.json',
@@ -270,7 +270,7 @@ const BALANCED_BOT_CONFIG: BotSpecificConfig = {
     RISK_PERCENT: 0.5,
     REWARD_MULTIPLIER: 2.5
   },
-  
+
   REAL_BOT: {
     MIN_CONFIDENCE: 90,
     REQUIRE_EMA_CONFIRMATION: true,
@@ -278,7 +278,7 @@ const BALANCED_BOT_CONFIG: BotSpecificConfig = {
     STOP_LOSS_PERCENT: 1.0,
     MAX_LOSS_PER_TRADE: 5
   },
-  
+
   EMA_BOT: {
     MIN_SEPARATION: 0.01,
     VOLUME_CONFIRMATION: true,
@@ -287,7 +287,7 @@ const BALANCED_BOT_CONFIG: BotSpecificConfig = {
     MAX_VOLATILITY: 3.0,
     POSITION_SIZE: 75
   },
-  
+
   SUPPORT_RESISTANCE: {
     MIN_TOUCHES: 2,
     MAX_DISTANCE: 0.005,
@@ -307,7 +307,7 @@ const ULTRA_CONSERVATIVE_BOT_CONFIG: BotSpecificConfig = {
     RISK_PERCENT: 0.2,
     REWARD_MULTIPLIER: 4.0
   },
-  
+
   REAL_BOT: {
     MIN_CONFIDENCE: 95,
     REQUIRE_EMA_CONFIRMATION: true,
@@ -315,7 +315,7 @@ const ULTRA_CONSERVATIVE_BOT_CONFIG: BotSpecificConfig = {
     STOP_LOSS_PERCENT: 0.5,
     MAX_LOSS_PER_TRADE: 2
   },
-  
+
   EMA_BOT: {
     MIN_SEPARATION: 0.015,
     VOLUME_CONFIRMATION: true,
@@ -324,7 +324,7 @@ const ULTRA_CONSERVATIVE_BOT_CONFIG: BotSpecificConfig = {
     MAX_VOLATILITY: 2.0,
     POSITION_SIZE: 50
   },
-  
+
   SUPPORT_RESISTANCE: {
     MIN_TOUCHES: 3, // Mais rigoroso
     MAX_DISTANCE: 0.003,
@@ -340,28 +340,28 @@ type ConfigMode = 'BALANCED' | 'ULTRA_CONSERVATIVE';
 
 class TradingConfigManager {
   private static currentMode: ConfigMode = 'BALANCED';
-  
+
   static setMode(mode: ConfigMode): void {
     this.currentMode = mode;
     console.log(`🎛️ Modo de configuração alterado para: ${mode}`);
   }
-  
+
   static getMode(): ConfigMode {
     return this.currentMode;
   }
-  
+
   static getConfig(): BaseTradingConfig {
-    return this.currentMode === 'ULTRA_CONSERVATIVE' 
-      ? ULTRA_CONSERVATIVE_CONFIG 
+    return this.currentMode === 'ULTRA_CONSERVATIVE'
+      ? ULTRA_CONSERVATIVE_CONFIG
       : BALANCED_CONFIG;
   }
-  
+
   static getBotConfig(): BotSpecificConfig {
     return this.currentMode === 'ULTRA_CONSERVATIVE'
       ? ULTRA_CONSERVATIVE_BOT_CONFIG
       : BALANCED_BOT_CONFIG;
   }
-  
+
   // Funções auxiliares compatíveis
   static getMaxActiveTrades(isSimulation: boolean = false): number {
     const config = this.getConfig();
@@ -369,11 +369,11 @@ class TradingConfigManager {
       ? config.SIMULATION.MAX_ACTIVE_TRADES
       : config.LIMITS.MAX_ACTIVE_TRADES;
   }
-  
+
   static getMaxTradesPerSymbol(): number {
     return this.getConfig().LIMITS.MAX_TRADES_PER_SYMBOL;
   }
-  
+
   static canTrade(recentTrades: any[]): boolean {
     const config = this.getConfig();
     const today = new Date().toDateString();

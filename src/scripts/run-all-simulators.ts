@@ -9,6 +9,7 @@ const simulators = [
   { name: 'Ultra-Conservative Real Simulator', command: 'yarn ultra-conservative-real-simulator' },
   { name: 'Ultra-Conservative EMA Bot Simulator', command: 'yarn ultra-conservative-ema-bot-simulator' },
   { name: 'Ultra-Conservative S/R Bot Simulator', command: 'yarn ultra-conservative-sr-bot-simulator' },
+  { name: 'Smart Entry Bot Simulator', command: 'yarn smart-entry-bot-simulator' },
 
   // 📊 PATTERN SIMULATORS (Legacy)
   { name: '123 Pattern Simulator', command: 'yarn simulate-123' },
