@@ -5,6 +5,7 @@ import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
+import { DeepSeekHistoryLogger } from '../../../shared/utils/deepseek-history-logger';
 import * as dotenv from 'dotenv';
 
 // Ativar modo ultra-conservador
@@ -50,6 +51,45 @@ export class RealTradingBotSimulator extends BaseTradingBot {
     
     console.log('🛡️ VALIDAÇÃO ULTRA-CONSERVADORA REAL BOT SIMULATOR...');
     
+    // Calcular alvos e stops baseados nos níveis técnicos extraídos
+    const enhancedTargets = this.calculateEnhancedTargetsAndStops(decision, marketData.price);
+    
+    // Exibir dados extraídos do parser melhorado
+    if (decision.technicalLevels) {
+      console.log('📈 NÍVEIS TÉCNICOS DETECTADOS:');
+      
+      if (decision.technicalLevels.support?.length > 0) {
+        console.log(`   🟢 Suportes: ${decision.technicalLevels.support.map((s: number) => `$${s.toLocaleString()}`).join(', ')}`);
+      }
+      
+      if (decision.technicalLevels.resistance?.length > 0) {
+        console.log(`   🔴 Resistências: ${decision.technicalLevels.resistance.map((r: number) => `$${r.toLocaleString()}`).join(', ')}`);
+      }
+      
+      if (decision.technicalLevels.targets?.length > 0) {
+        console.log(`   🎯 Targets AI: ${decision.technicalLevels.targets.map((t: number) => `$${t.toLocaleString()}`).join(', ')}`);
+      }
+      
+      if (decision.technicalLevels.stopLoss?.length > 0) {
+        console.log(`   🛑 Stop Loss AI: ${decision.technicalLevels.stopLoss.map((sl: number) => `$${sl.toLocaleString()}`).join(', ')}`);
+      }
+    }
+    
+    // Exibir alvos e stops calculados
+    if (enhancedTargets) {
+      console.log('🎯 ALVOS E STOPS OTIMIZADOS:');
+      console.log(`   📈 Target Otimizado: $${enhancedTargets.target.toLocaleString()}`);
+      console.log(`   🛑 Stop Otimizado: $${enhancedTargets.stop.toLocaleString()}`);
+      console.log(`   📊 R/R Ratio: ${enhancedTargets.riskRewardRatio.toFixed(2)}:1`);
+      console.log(`   🔍 Método: ${enhancedTargets.method}`);
+      
+      // Atualizar decisão com alvos otimizados
+      decision.enhancedTarget = enhancedTargets.target;
+      decision.enhancedStop = enhancedTargets.stop;
+      decision.enhancedRiskReward = enhancedTargets.riskRewardRatio;
+      decision.calculationMethod = enhancedTargets.method;
+    }
+    
     // 🚨 ANÁLISE ULTRA-RIGOROSA EM 5 CAMADAS
     const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
     
@@ -64,12 +104,115 @@ export class RealTradingBotSimulator extends BaseTradingBot {
     console.log(`🛡️ Nível de Risco: ${ultraAnalysis.riskLevel}`);
     console.log('🧪 Esta seria uma excelente oportunidade para trade real!');
     
-    // Atualizar decisão com análise ultra-conservadora
+    // Atualizar decisão com análise ultra-conservadora e dados técnicos
     decision.confidence = ultraAnalysis.confidence;
     decision.ultraConservativeScore = ultraAnalysis.score;
     decision.riskLevel = ultraAnalysis.riskLevel;
     
+    // Salvar análise com níveis técnicos no histórico DeepSeek
+    if (decision.technicalLevels || enhancedTargets) {
+      console.log('💾 Salvando níveis técnicos no histórico DeepSeek...');
+      
+      DeepSeekHistoryLogger.logAnalysisWithTechnicals(
+        {
+          symbol: symbol!,
+          botType: 'realBot',
+          prompt: `Ultra-Conservative Analysis for ${symbol}`,
+          response: `Technical levels and enhanced targets calculated`,
+          confidence: decision.confidence,
+          action: decision.action,
+          reason: decision.reason,
+          marketData: {
+            price: parseFloat(marketData.price.price),
+            change24h: 0,
+            volume24h: 0
+          },
+          executionTime: 0
+        },
+        decision.technicalLevels,
+        enhancedTargets
+      );
+    }
+    
     return true;
+  }
+  
+  private calculateEnhancedTargetsAndStops(decision: any, currentPrice: number) {
+    const config = TradingConfigManager.getConfig();
+    const action = decision.action;
+    
+    if (!decision.technicalLevels) {
+      return null; // Sem níveis técnicos, usar cálculo padrão
+    }
+    
+    let target: number;
+    let stop: number;
+    let method: string;
+    
+    if (action === 'BUY') {
+      // Para BUY: Target = próxima resistência, Stop = suporte mais próximo
+      const nearestResistance = decision.technicalLevels.resistance?.find((r: number) => r > currentPrice);
+      const nearestSupport = decision.technicalLevels.support?.find((s: number) => s < currentPrice);
+      
+      if (nearestResistance && nearestSupport) {
+        target = nearestResistance;
+        stop = nearestSupport;
+        method = 'Níveis Técnicos AI (Resistência/Suporte)';
+      } else if (decision.technicalLevels.targets?.[0]) {
+        target = decision.technicalLevels.targets[0];
+        stop = decision.technicalLevels.stopLoss?.[0] || currentPrice * 0.98;
+        method = 'Targets AI Diretos';
+      } else {
+        // Fallback para cálculo percentual
+        target = currentPrice * 1.03; // 3% ganho
+        stop = currentPrice * 0.985; // 1.5% perda
+        method = 'Cálculo Percentual (Fallback)';
+      }
+    } else if (action === 'SELL') {
+      // Para SELL: Target = próximo suporte, Stop = resistência mais próxima
+      const nearestSupport = decision.technicalLevels.support?.find((s: number) => s < currentPrice);
+      const nearestResistance = decision.technicalLevels.resistance?.find((r: number) => r > currentPrice);
+      
+      if (nearestSupport && nearestResistance) {
+        target = nearestSupport;
+        stop = nearestResistance;
+        method = 'Níveis Técnicos AI (Suporte/Resistência)';
+      } else if (decision.technicalLevels.targets?.[0]) {
+        target = decision.technicalLevels.targets[0];
+        stop = decision.technicalLevels.stopLoss?.[0] || currentPrice * 1.02;
+        method = 'Targets AI Diretos';
+      } else {
+        // Fallback para cálculo percentual
+        target = currentPrice * 0.97; // 3% ganho
+        stop = currentPrice * 1.015; // 1.5% perda
+        method = 'Cálculo Percentual (Fallback)';
+      }
+    } else {
+      return null; // HOLD não precisa de targets
+    }
+    
+    // Calcular risk/reward ratio
+    const risk = Math.abs(currentPrice - stop);
+    const reward = Math.abs(target - currentPrice);
+    const riskRewardRatio = reward / risk;
+    
+    // Validar se atende ao mínimo de R/R
+    if (riskRewardRatio < config.MIN_RISK_REWARD_RATIO) {
+      // Ajustar target para atender R/R mínimo
+      if (action === 'BUY') {
+        target = currentPrice + (risk * config.MIN_RISK_REWARD_RATIO);
+      } else {
+        target = currentPrice - (risk * config.MIN_RISK_REWARD_RATIO);
+      }
+      method += ' (Ajustado para R/R mínimo)';
+    }
+    
+    return {
+      target,
+      stop,
+      riskRewardRatio: Math.abs(target - currentPrice) / Math.abs(currentPrice - stop),
+      method
+    };
   }
 
   async executeTrade() {

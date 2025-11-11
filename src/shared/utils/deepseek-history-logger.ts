@@ -16,6 +16,18 @@ interface DeepSeekAnalysis {
     volume24h: number;
   };
   executionTime: number;
+  technicalLevels?: {
+    support?: number[];
+    resistance?: number[];
+    targets?: number[];
+    stopLoss?: number[];
+  };
+  enhancedTargets?: {
+    target?: number;
+    stop?: number;
+    riskRewardRatio?: number;
+    method?: string;
+  };
 }
 
 interface DeepSeekHistory {
@@ -99,7 +111,41 @@ export class DeepSeekHistoryLogger {
 
     this.saveHistory(history);
 
-    console.log(`📝 DeepSeek análise salva: ${analysis.botType} | ${analysis.symbol} | ${analysis.action || 'N/A'}`);
+    // Log com informações técnicas se disponíveis
+    let logMessage = `📝 DeepSeek análise salva: ${analysis.botType} | ${analysis.symbol} | ${analysis.action || 'N/A'}`;
+    
+    if (analysis.technicalLevels) {
+      const levelsCount = [
+        analysis.technicalLevels.support?.length || 0,
+        analysis.technicalLevels.resistance?.length || 0,
+        analysis.technicalLevels.targets?.length || 0,
+        analysis.technicalLevels.stopLoss?.length || 0
+      ].reduce((a, b) => a + b, 0);
+      
+      if (levelsCount > 0) {
+        logMessage += ` | ${levelsCount} níveis técnicos`;
+      }
+    }
+    
+    if (analysis.enhancedTargets?.target) {
+      logMessage += ` | Target: $${analysis.enhancedTargets.target.toLocaleString()}`;
+    }
+    
+    console.log(logMessage);
+  }
+
+  static logAnalysisWithTechnicals(
+    analysis: Omit<DeepSeekAnalysis, 'timestamp'>,
+    technicalLevels?: any,
+    enhancedTargets?: any
+  ): void {
+    const enhancedAnalysis = {
+      ...analysis,
+      technicalLevels,
+      enhancedTargets
+    };
+    
+    this.logAnalysis(enhancedAnalysis);
   }
 
   static getHistory(botType?: 'realBot' | 'smartBot' | 'multiSmartBot' | 'smartEntryBot'): DeepSeekHistory | DeepSeekAnalysis[] {
