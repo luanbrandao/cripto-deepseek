@@ -53,20 +53,12 @@ export class DeepSeekService {
       // Log análise no histórico se botType e symbol fornecidos
       if (botType && symbol) {
         try {
-          // Tentar extrair dados da resposta
-          const confidenceMatch = analysisResponse.match(/confidence["']?\s*:\s*([0-9]+)/i) || 
-                                 analysisResponse.match(/confidence\s+level["']?\s*:\s*([0-9]+)/i) ||
-                                 analysisResponse.match(/([0-9]+)%\s+confidence/i);
-          const actionMatch = analysisResponse.match(/action["']?\s*:\s*["']?(BUY|SELL|HOLD)["']?/i) ||
-                             analysisResponse.match(/recommendation["']?\s*:\s*["']?(BUY|SELL|HOLD)["']?/i);
-          
           DeepSeekHistoryLogger.logAnalysis({
             symbol,
             botType,
             prompt,
             response: analysisResponse,
-            confidence: confidenceMatch ? parseInt(confidenceMatch[1]) : undefined,
-            action: actionMatch ? actionMatch[1] : undefined,
+            // Não extrair confidence/action aqui - deixar para o UnifiedAnalysisParser
             marketData: {
               price: marketData.price || marketData.currentPrice || 0,
               change24h: marketData.priceChangePercent || marketData.change24h || 0,

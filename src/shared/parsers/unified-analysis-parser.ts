@@ -325,7 +325,14 @@ export class UnifiedAnalysisParser {
     // Redução por incertezas
     if (analysisLower.includes('uncertain') || analysisLower.includes('mixed')) confidence -= 5;
     if (analysisLower.includes('weak') || analysisLower.includes('limited')) confidence -= 3;
-    if (analysisLower.includes('caution') || analysisLower.includes('risk')) confidence -= 2;
+    if (analysisLower.includes('caution')) confidence -= 2;
+    // Só penalizar 'risk' se não estiver em contexto positivo
+    if (analysisLower.includes('risk') && 
+        !analysisLower.includes('favorable') && 
+        !analysisLower.includes('good') && 
+        !analysisLower.includes('positive')) {
+      confidence -= 2;
+    }
     
     return confidence;
   }
