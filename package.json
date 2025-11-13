@@ -105,11 +105,12 @@
     "test-volume-momentum-analyzers": "ts-node src/scripts/test-volume-momentum-analyzers.ts",
     "test-all-ultra-conservative-simulators": "ts-node src/scripts/test-ultra-conservative-simulators.ts",
     "verify-all-configurations": "ts-node src/scripts/verify-ultra-conservative-setup.ts",
-    "_comment6": "=== UTILITIES ===",
+    "_comment6": "=== UTILITIES & MONITORING ===",
     "check-trades": "ts-node src/scripts/check-trades.ts",
     "update-all-trades": "ts-node src/scripts/update-all-trades.ts",
     "analyze-all-trades": "ts-node src/scripts/analyze-all-trades.ts",
-    "diagnose-400": "ts-node src/scripts/diagnostics/diagnose-400-error.ts"
+    "diagnose-400": "ts-node src/scripts/diagnostics/diagnose-400-error.ts",
+    "smart-entry-monitor": "ts-node src/scripts/smart-entry-monitor.ts"
   },
   "dependencies": {
     "axios": "^1.6.0",

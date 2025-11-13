@@ -15,9 +15,9 @@ async function updateAllTrades() {
       return;
     }
 
-    // Listar todos os arquivos JSON
+    // Listar todos os arquivos JSON (excluir smartEntryOrders.json - estrutura diferente)
     const tradeFiles = fs.readdirSync(TRADES_DIR)
-      .filter(file => file.endsWith('.json'))
+      .filter(file => file.endsWith('.json') && file !== 'smartEntryOrders.json')
       .map(file => path.join(TRADES_DIR, file));
 
     if (tradeFiles.length === 0) {
