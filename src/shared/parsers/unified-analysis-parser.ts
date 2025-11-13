@@ -316,16 +316,22 @@ export class UnifiedAnalysisParser {
   private static adjustConfidenceBySignals(analysisLower: string, baseConfidence: number): number {
     let confidence = baseConfidence;
     
-    // Boost por sinais fortes
-    if (analysisLower.includes('strong') || analysisLower.includes('clear')) confidence += 5;
-    if (analysisLower.includes('confirmed') || analysisLower.includes('decisive')) confidence += 5;
-    if (analysisLower.includes('multiple') || analysisLower.includes('confluence')) confidence += 3;
+    // Boost por sinais fortes (aplicar individualmente)
+    if (analysisLower.includes('strong')) confidence += 5;
+    if (analysisLower.includes('clear')) confidence += 5;
+    if (analysisLower.includes('confirmed')) confidence += 5;
+    if (analysisLower.includes('decisive')) confidence += 5;
+    if (analysisLower.includes('multiple')) confidence += 3;
+    if (analysisLower.includes('confluence')) confidence += 3;
     if (analysisLower.includes('volume') && analysisLower.includes('high')) confidence += 3;
     
     // Redução por incertezas
-    if (analysisLower.includes('uncertain') || analysisLower.includes('mixed')) confidence -= 5;
-    if (analysisLower.includes('weak') || analysisLower.includes('limited')) confidence -= 3;
+    if (analysisLower.includes('uncertain')) confidence -= 5;
+    if (analysisLower.includes('mixed')) confidence -= 5;
+    if (analysisLower.includes('weak')) confidence -= 3;
+    if (analysisLower.includes('limited')) confidence -= 3;
     if (analysisLower.includes('caution')) confidence -= 2;
+    
     // Só penalizar 'risk' se não estiver em contexto positivo
     if (analysisLower.includes('risk') && 
         !analysisLower.includes('favorable') && 
