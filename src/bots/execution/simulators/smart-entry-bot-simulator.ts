@@ -99,23 +99,23 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     const startTime = Date.now();
     const prompt = `Analyze ${symbol} for OPTIMAL ENTRY POINTS. Focus on support/resistance levels, RSI zones, and volume patterns. Current price: $${price.price}. Provide specific entry recommendations with confidence levels.`;
 
-    try {
-      if (this.deepseek) {
-        const marketData = {
-          symbol,
-          price: parseFloat(price.price),
-          change24h: parseFloat(stats.priceChangePercent),
-          volume24h: parseFloat(stats.volume),
-          klines: klines.slice(-20) // Últimas 20 velas
-        };
+    // try {
+    //   if (this.deepseek) {
+    //     const marketData = {
+    //       symbol,
+    //       price: parseFloat(price.price),
+    //       change24h: parseFloat(stats.priceChangePercent),
+    //       volume24h: parseFloat(stats.volume),
+    //       klines: klines.slice(-20) // Últimas 20 velas
+    //     };
 
-        const aiResponse = await this.deepseek.analyzeMarket(marketData, prompt, 'smartEntryBot', symbol);
+    //     const aiResponse = await this.deepseek.analyzeMarket(marketData, prompt, 'smartEntryBot', symbol);
 
-        console.log(`🤖 DeepSeek AI análise para ${symbol} concluída e salva no histórico`);
-      }
-    } catch (error) {
-      console.warn(`⚠️ Erro na análise DeepSeek para ${symbol}:`, error);
-    }
+    //     console.log(`🤖 DeepSeek AI análise para ${symbol} concluída e salva no histórico`);
+    //   }
+    // } catch (error) {
+    //   console.warn(`⚠️ Erro na análise DeepSeek para ${symbol}:`, error);
+    // }
 
     const prices = klines.map((k: any) => parseFloat(k[4]));
     const volumes = klines.map((k: any) => parseFloat(k[5]));
@@ -160,7 +160,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     };
   }
 
-  private findOptimalEntryPoint(analysis: MarketAnalysis): SmartEntryOrder | null {
+  private findOptimalEntryPoint(symbol: string, analysis: MarketAnalysis): SmartEntryOrder | null {
     const { currentPrice, supportLevels, resistanceLevels, rsi, trend, strength } = analysis;
 
     console.log('\n🎯 Procurando ponto de entrada ideal...');
@@ -189,7 +189,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
           return {
             id: `SE_${Date.now()}`,
             timestamp: new Date().toISOString(),
-            symbol: 'ETHUSDT', // Exemplo
+            symbol: symbol, // Usar o símbolo correto
             action: 'BUY',
             currentPrice,
             targetEntryPrice,
@@ -228,7 +228,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
           return {
             id: `SE_${Date.now()}`,
             timestamp: new Date().toISOString(),
-            symbol: 'ETHUSDT', // Exemplo
+            symbol: symbol, // Usar o símbolo correto
             action: 'SELL',
             currentPrice,
             targetEntryPrice,
@@ -275,11 +275,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
 
   private saveOrder(order: SmartEntryOrder) {
     // Salvar no arquivo de ordens específico
-    let orders: SmartEntryOrder[] = [];
-
-    if (fs.existsSync(this.ordersFile)) {
-      orders = JSON.parse(fs.readFileSync(this.ordersFile, 'utf8'));
-    }
+    let orders: SmartEntryOrder[] = this.loadExistingOrders();
 
     orders.push(order);
 
@@ -317,10 +313,13 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     console.log(`💾 Ordem agendada salva: ${order.id} (histórico + ordens)`);
   }
 
-  private checkPendingOrders() {
-    if (!fs.existsSync(this.ordersFile)) return;
+  private loadExistingOrders(): SmartEntryOrder[] {
+    if (!fs.existsSync(this.ordersFile)) return [];
+    return JSON.parse(fs.readFileSync(this.ordersFile, 'utf8'));
+  }
 
-    const orders: SmartEntryOrder[] = JSON.parse(fs.readFileSync(this.ordersFile, 'utf8'));
+  private checkPendingOrders() {
+    const orders = this.loadExistingOrders();
     const pendingOrders = orders.filter(o => o.status === 'pending');
 
     console.log(`\n🔍 Verificando ${pendingOrders.length} ordens pendentes...`);
@@ -408,14 +407,27 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
       // Verificar ordens pendentes primeiro
       this.checkPendingOrders();
 
+      // Carregar ordens existentes para verificar duplicatas
+      const existingOrders = this.loadExistingOrders();
+
       // Analisar mercado para novas oportunidades
       const symbols = TradingConfigManager.getConfig().SYMBOLS;
 
       for (const symbol of symbols) {
+        // Verificar se já existe ordem pendente para este símbolo
+        const hasPendingOrder = existingOrders.some(order => 
+          order.symbol === symbol && order.status === 'pending'
+        );
+
+        if (hasPendingOrder) {
+          console.log(`⏸️ ${symbol}: Ordem pendente já existe - pulando análise`);
+          continue;
+        }
+
         console.log(`\n🔍 Analisando ${symbol} para pontos de entrada ideais...`);
 
         const analysis = await this.analyzeMarket(symbol);
-        const optimalEntry = this.findOptimalEntryPoint(analysis);
+        const optimalEntry = this.findOptimalEntryPoint(symbol, analysis);
 
         if (optimalEntry) {
           this.saveOrder(optimalEntry);
