@@ -309,7 +309,8 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
       riskCalculationMethod: 'SmartEntryBot'
     };
 
-    TradeStorage.saveTrades([tradeRecord], 'smartEntryBotSimulator.json');
+
+    TradeStorage.saveTrades([tradeRecord], this.ordersFile);
     console.log(`💾 Ordem agendada salva: ${order.id} (histórico + ordens)`);
   }
 
@@ -415,7 +416,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
 
       for (const symbol of symbols) {
         // Verificar se já existe ordem pendente para este símbolo
-        const hasPendingOrder = existingOrders.some(order => 
+        const hasPendingOrder = existingOrders.some(order =>
           order.symbol === symbol && order.status === 'pending'
         );
 

@@ -36,8 +36,14 @@ export class PerformanceAnalyzer {
     const tradesFiles = [
       { file: 'realTradingBotSimulator.json', name: 'Real Trading Bot Simulator' },
       { file: 'smartTradingBotSimulatorBuy.json', name: 'Smart Trading Bot Simulator BUY' },
+      { file: 'smartTradingBotSimulatorSell.json', name: 'Smart Trading Bot Simulator SELL' },
       { file: 'ema12-26Trades.json', name: 'EMA 12-26 Trading Bot' },
-      { file: 'supportResistanceTrades.json', name: 'Support Resistance Bot' }
+      { file: '1-ultraConservativeSupportResistanceTrades.json', name: '1-ultraConservativeSupportResistanceTrades' },
+
+      { file: 'supportResistanceTrades.json', name: 'Support Resistance Bot' },
+      { file: 'ema21-50Trades.json', name: 'ema21-50Trades' },
+      { file: 'multiSmartTradingBotSimulatorSell.json', name: 'multiSmartTradingBotSimulatorSell' },
+      { file: 'smartEntryOrders.json', name: 'smartEntryOrders' },
     ];
 
     const analyses: TradeAnalysis[] = [];

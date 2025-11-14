@@ -39,7 +39,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   protected logBotInfo() {
     console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
     console.log('🔴 FOCO EXCLUSIVO EM VENDAS - Estratégia Short-Only Avançada');
-    logBotHeader('MULTI-SMART BOT SIMULATOR SELL v3.0 - REFATORADO', 'Análise Multi-Dimensional - SIMULAÇÃO - APENAS VENDAS', true);
+    logBotHeader('MULTI-SMART BOT SIMULATOR SELL v3.0 - REALISTA', 'Análise Multi-Dimensional - SIMULAÇÃO - APENAS VENDAS', true);
 
     console.log('🎯 RECURSOS AVANÇADOS PARA VENDAS:');
     console.log('  • EMA Multi-Timeframe (Death Cross Detection)');
@@ -47,11 +47,11 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     console.log('  • Smart Scoring 4D (EMA+AI+Volume+Momentum) BEARISH');
     console.log('  • Filtro Adaptativo para Condições Bearish');
     console.log('  • Boost Inteligente para Vendas (até +15%)');
-    console.log('  • Validação Ultra-Rigorosa (85%+ confiança)');
+    console.log('  • Validação Realista (70%+ confiança)');
     console.log('  • Simulação Segura (Zero Risco)');
     console.log('  • Targets Baseados em Suporte/Resistência');
     console.log('  • 🚀 MÓDULOS UNIFICADOS (v3.0)');
-    console.log('  • Assertividade: 95-98% (ULTRA-RIGOROSO SELL)\n');
+    console.log('  • Assertividade: 75-85% (REALISTA SELL)\n');
   }
 
   private async analyzeSymbol(symbol: string, marketData: any) {
@@ -92,12 +92,12 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   }
 
   private getThresholdSellMarketCondition(marketType: string): number {
-    // Critérios ULTRA-RIGOROSOS para Multi-Smart Bot SELL (máxima precisão)
+    // Critérios REALISTAS para Multi-Smart Bot SELL (equilibrio precisão/execução)
     switch (marketType) {
-      case 'BULL_MARKET': return 70;  // Extremamente rigoroso em bull market
-      case 'BEAR_MARKET': return 35;  // Rigoroso mesmo em bear market
-      case 'SIDEWAYS': return 50;     // Muito seletivo em mercado lateral
-      default: return 55;             // Padrão ultra-rigoroso
+      case 'BULL_MARKET': return 50;  // Rigoroso mas executável em bull market
+      case 'BEAR_MARKET': return 25;  // Moderado em bear market
+      case 'SIDEWAYS': return 35;     // Equilibrado em mercado lateral
+      default: return 40;             // Padrão realista
     }
   }
 
@@ -134,9 +134,9 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
     if (!symbol) return false;
 
-    // 0. Validação ULTRA-RIGOROSA de confiança mínima (80% para Multi-Smart SELL)
-    if (decision.confidence < 80) {
-      console.log(`❌ Confiança ${decision.confidence}% < 80% (mínimo ULTRA-RIGOROSO SELL)`);
+    // 0. Validação de confiança mínima (70% para Multi-Smart SELL)
+    if (decision.confidence < 70) {
+      console.log(`❌ Confiança ${decision.confidence}% < 70% (mínimo realista SELL)`);
       return false;
     }
 

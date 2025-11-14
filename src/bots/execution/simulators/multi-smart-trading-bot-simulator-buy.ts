@@ -38,7 +38,7 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
 
   protected logBotInfo() {
     console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
-    logBotHeader('MULTI-SMART BOT SIMULATOR BUY v3.0 - REFATORADO', 'Análise Multi-Dimensional - SIMULAÇÃO - APENAS COMPRAS', true);
+    logBotHeader('MULTI-SMART BOT SIMULATOR BUY v3.0 - REALISTA', 'Análise Multi-Dimensional - SIMULAÇÃO - APENAS COMPRAS', true);
 
     console.log('🎯 RECURSOS AVANÇADOS:');
     console.log('  • EMA Multi-Timeframe (12/26/50/100/200)');
@@ -101,21 +101,21 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   // }
 
   private getThresholdBuyMarketCondition(marketType: string): number {
-    // Critérios ULTRA-RIGOROSOS para Multi-Smart Bot BUY (máxima precisão)
+    // Critérios REALISTAS para Multi-Smart Bot BUY (equilibrio precisão/execução)
     switch (marketType) {
-      case 'BULL_MARKET': return 45; // Muito seletivo mesmo em bull market
-      case 'BEAR_MARKET': return 65; // Extremamente rigoroso em bear market  
-      case 'SIDEWAYS': return 55;    // Ultra-rigoroso em mercado lateral
-      default: return 60;            // Padrão ultra-rigoroso para máxima precisão
+      case 'BULL_MARKET': return 30; // Seletivo mas executável em bull market
+      case 'BEAR_MARKET': return 45; // Rigoroso em bear market  
+      case 'SIDEWAYS': return 35;    // Moderado em mercado lateral
+      default: return 40;            // Padrão realista para boa precisão
     }
   }
 
   private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
     if (!symbol) return false;
 
-    // 0. Validação ULTRA-RIGOROSA de confiança mínima (80% para Multi-Smart)
-    if (decision.confidence < 80) {
-      console.log(`❌ Confiança ${decision.confidence}% < 80% (mínimo ULTRA-RIGOROSO)`);
+    // 0. Validação de confiança mínima (70% para Multi-Smart)
+    if (decision.confidence < 70) {
+      console.log(`❌ Confiança ${decision.confidence}% < 70% (mínimo realista)`);
       return false;
     }
 

@@ -42,11 +42,11 @@ async function runUltraConservativeSupportResistanceSimulation() {
   const config = TradingConfigManager.getConfig();
   const botConfig = TradingConfigManager.getBotConfig();
   
-  console.log('🛡️ SUPPORT/RESISTANCE SIMULATOR v5.0');
+  console.log('🛡️ SUPPORT/RESISTANCE SIMULATOR v6.0 - REALISTA CORRIGIDO');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log(`🎯 Modo: ${TradingConfigManager.getMode()}`);
-  console.log('📊 Estratégia: S/R Ultra-Conservador + Níveis Psicológicos');
-  console.log(`🎯 Win Rate Target: 78%+ | Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
+  console.log('📊 Estratégia: S/R Realista + Níveis Psicológicos');
+  console.log(`🎯 Win Rate Target: 70%+ | Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
   console.log(`🛡️ Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
   console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')} (apenas os mais estáveis)`);
   console.log(`⏰ Cooldown: ${config.TRADE_COOLDOWN_MINUTES} minutos entre trades`);
@@ -57,7 +57,7 @@ async function runUltraConservativeSupportResistanceSimulation() {
     tolerance: botConfig.SUPPORT_RESISTANCE.MAX_DISTANCE,
     minTouches: botConfig.SUPPORT_RESISTANCE.MIN_TOUCHES,
     lookbackPeriods: config.CHART.PERIODS,
-    strengthThreshold: 0.8
+    strengthThreshold: 0.65  // Mais realista (era 0.8)
   };
 
   const analyzer = new SupportResistanceAnalyzer(supportConfig);
@@ -65,12 +65,12 @@ async function runUltraConservativeSupportResistanceSimulation() {
 
   const simulator = new TradeSimulator(analyzer, config.SIMULATION.INITIAL_BALANCE, config.SYMBOLS, tradesFile);
 
-  console.log('🔍 VALIDAÇÃO ULTRA-RIGOROSA ATIVADA:');
-  console.log('   📊 Análise Técnica: Score mín. 80/100');
-  console.log('   📈 Análise de Volume: Score mín. 75/100');
-  console.log('   🎯 Análise de Tendência: Score mín. 85/100');
-  console.log('   🤖 Validação IA: Confiança mín. 90%');
-  console.log(`   🚫 Filtros S/R: Mín. ${botConfig.SUPPORT_RESISTANCE.MIN_TOUCHES} toques, Força >80%\n`);
+  console.log('🔍 VALIDAÇÕES REAIS IMPLEMENTADAS:');
+  console.log(`   📊 S/R Toques Mín: ${botConfig.SUPPORT_RESISTANCE.MIN_TOUCHES} (aplicado)`);
+  console.log(`   📈 Confiança Mín: ${config.MIN_CONFIDENCE}% (aplicada)`);
+  console.log(`   🎯 Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1 (garantido)`);
+  console.log(`   🛡️ Tolerância Máx: ${(botConfig.SUPPORT_RESISTANCE.MAX_DISTANCE * 100).toFixed(1)}%`);
+  console.log(`   🚫 APENAS SIMULAÇÃO - Trades reais bloqueados\n`);
 
   await simulator.simulate(config.SYMBOLS);
 

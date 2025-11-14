@@ -61,18 +61,28 @@ export class UnifiedAnalysisParser {
     // 2. EXTRAIR NÍVEL DE CONFIANÇA
     let confidence = 50;
     const confidencePatterns = [
-      /confidence\s*level[:\s]*(?:high|medium-high|strong)\s*\(?([0-9]+)%?\)?/i,
-      /confidence[:\s]*([0-9]+)%/i,
+      /confidence\s*level[:\s*]*([0-9]+)%/i,
+      /confidence[:\s*]*([0-9]+)%/i,
       /([0-9]+)%\s*confidence/i,
-      /medium\s*\(?([0-9]+)%?\)?/i,
-      /high\s*\(?([0-9]+)%?\)?/i,
-      /low\s*\(?([0-9]+)%?\)?/i
+      /confidence\s*level[:\s*]*medium-high/i,
+      /confidence\s*level[:\s*]*medium/i,
+      /confidence\s*level[:\s*]*high/i,
+      /confidence\s*level[:\s*]*low/i
     ];
     
     for (const pattern of confidencePatterns) {
       const match = analysis.match(pattern);
       if (match) {
-        confidence = parseInt(match[1]) || confidence;
+        if (match[1] && !isNaN(parseInt(match[1]))) {
+          confidence = parseInt(match[1]);
+        } else {
+          // Mapear níveis textuais para valores numéricos
+          const levelText = match[0].toLowerCase();
+          if (levelText.includes('medium-high')) confidence = 75;
+          else if (levelText.includes('high')) confidence = 85;
+          else if (levelText.includes('medium')) confidence = 65;
+          else if (levelText.includes('low')) confidence = 45;
+        }
         break;
       }
     }
@@ -108,7 +118,7 @@ export class UnifiedAnalysisParser {
     
     return {
       action: action as 'BUY' | 'SELL' | 'HOLD',
-      confidence: Math.min(95, Math.max(30, confidence)),
+      confidence: Math.max(30, Math.min(confidence, 95)),
       reason: reason || `DeepSeek AI: ${action?.toLowerCase() || 'análise'}`,
       symbol,
       price,
@@ -314,31 +324,15 @@ export class UnifiedAnalysisParser {
   }
   
   private static adjustConfidenceBySignals(analysisLower: string, baseConfidence: number): number {
+    // Priorizar confiança explícita da IA - ajustes mínimos apenas
     let confidence = baseConfidence;
     
-    // Boost por sinais fortes (aplicar individualmente)
-    if (analysisLower.includes('strong')) confidence += 5;
-    if (analysisLower.includes('clear')) confidence += 5;
-    if (analysisLower.includes('confirmed')) confidence += 5;
-    if (analysisLower.includes('decisive')) confidence += 5;
-    if (analysisLower.includes('multiple')) confidence += 3;
-    if (analysisLower.includes('confluence')) confidence += 3;
-    if (analysisLower.includes('volume') && analysisLower.includes('high')) confidence += 3;
+    // Boost apenas por sinais muito fortes
+    if (analysisLower.includes('strong buy') || analysisLower.includes('strong sell')) confidence += 3;
+    if (analysisLower.includes('confirmed breakout')) confidence += 2;
     
-    // Redução por incertezas
-    if (analysisLower.includes('uncertain')) confidence -= 5;
-    if (analysisLower.includes('mixed')) confidence -= 5;
-    if (analysisLower.includes('weak')) confidence -= 3;
-    if (analysisLower.includes('limited')) confidence -= 3;
-    if (analysisLower.includes('caution')) confidence -= 2;
-    
-    // Só penalizar 'risk' se não estiver em contexto positivo
-    if (analysisLower.includes('risk') && 
-        !analysisLower.includes('favorable') && 
-        !analysisLower.includes('good') && 
-        !analysisLower.includes('positive')) {
-      confidence -= 2;
-    }
+    // Redução apenas por incertezas explícitas
+    if (analysisLower.includes('uncertain') || analysisLower.includes('unclear')) confidence -= 3;
     
     return confidence;
   }

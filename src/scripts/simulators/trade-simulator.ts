@@ -241,13 +241,11 @@ export class TradeSimulator {
       this.portfolio.totalTrades++;
       tradeAmount = amount;
       console.log(`🟢 COMPRA: $${amount} (${cryptoAmount.toFixed(6)} crypto)`);
-    } else if (analysis.action === 'SELL' && this.portfolio.crypto > 0) {
-      const sellValue = this.portfolio.crypto * currentPrice;
-      this.portfolio.balance += sellValue;
-      tradeAmount = sellValue;
-      this.portfolio.crypto = 0;
+    } else if (analysis.action === 'SELL') {
+      // Simulação: permite SELL mesmo sem crypto (short position)
+      tradeAmount = amount;
       this.portfolio.totalTrades++;
-      console.log(`🔴 VENDA: $${sellValue.toFixed(2)}`);
+      console.log(`🔴 VENDA SIMULADA: $${amount} (short position)`);
     } else {
       console.log(`⏸️ HOLD: Mantendo posição`);
       console.log(`📊 Preço atual: $${currentPrice.toFixed(2)}`);

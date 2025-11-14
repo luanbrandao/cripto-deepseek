@@ -182,7 +182,8 @@ export default class SupportResistanceAnalyzer {
 
   private identifyPsychologicalLevels(currentPrice: number): SupportResistanceLevel[] {
     const levels: SupportResistanceLevel[] = [];
-    const range = currentPrice * 0.1; // 10% range around current price
+    const config = TradingConfigManager.getConfig();
+    const range = currentPrice * (config.MARKET_FILTERS.MIN_VOLATILITY / 100); // Range baseado na volatilidade mínima
 
     // Identificar números redondos próximos
     const roundNumbers = [];
@@ -191,25 +192,25 @@ export default class SupportResistanceAnalyzer {
     if (currentPrice >= 1000) {
       // Para preços altos, usar centenas
       const base = Math.floor(currentPrice / 100) * 100;
-      for (let i = -5; i <= 5; i++) {
+      for (let i = -3; i <= 3; i++) {
         roundNumbers.push(base + (i * 100));
       }
     } else if (currentPrice >= 100) {
       // Para preços médios, usar dezenas
       const base = Math.floor(currentPrice / 10) * 10;
-      for (let i = -5; i <= 5; i++) {
+      for (let i = -3; i <= 3; i++) {
         roundNumbers.push(base + (i * 10));
       }
     } else if (currentPrice >= 1) {
       // Para preços baixos, usar unidades
       const base = Math.floor(currentPrice);
-      for (let i = -5; i <= 5; i++) {
+      for (let i = -3; i <= 3; i++) {
         roundNumbers.push(base + i);
       }
     } else {
       // Para preços muito baixos, usar décimos
       const base = Math.floor(currentPrice * 10) / 10;
-      for (let i = -5; i <= 5; i++) {
+      for (let i = -3; i <= 3; i++) {
         roundNumbers.push(base + (i * 0.1));
       }
     }
@@ -218,8 +219,8 @@ export default class SupportResistanceAnalyzer {
       if (price > 0 && Math.abs(price - currentPrice) <= range) {
         levels.push({
           price,
-          touches: 1, // Níveis psicológicos têm força inerente
-          strength: 0.6, // Força moderada
+          touches: this.minTouches, // Mínimo baseado na configuração
+          strength: 0.7, // Força maior para níveis psicológicos
           type: price > currentPrice ? 'resistance' : 'support',
           isZone: false
         });
@@ -233,14 +234,19 @@ export default class SupportResistanceAnalyzer {
     let strength = 0;
 
     // Força baseada no número de toques
-    strength += Math.min(touches * 0.2, 0.8);
+    strength += Math.min(touches * 0.25, 0.8);
 
     // Força baseada na idade dos toques (mais recente = mais forte)
-    const now = Date.now();
-    const avgAge = prices.reduce((sum, p) => sum + (now - p.timestamp), 0) / prices.length;
-    const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 dias
-    const ageScore = Math.max(0, 1 - (avgAge / maxAge));
-    strength += ageScore * 0.2;
+    if (prices.length > 0 && prices[0].timestamp) {
+      const now = Date.now();
+      const avgAge = prices.reduce((sum, p) => sum + (now - (p.timestamp || now)), 0) / prices.length;
+      const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 dias
+      const ageScore = Math.max(0, 1 - (avgAge / maxAge));
+      strength += ageScore * 0.2;
+    } else {
+      // Para níveis sem timestamp (psicológicos), força base
+      strength += 0.15;
+    }
 
     return Math.min(strength, 1);
   }
@@ -254,8 +260,8 @@ export default class SupportResistanceAnalyzer {
 
     // Encontrar níveis próximos que atendem ao mínimo de toques
     const nearbyLevels = levels.filter(level =>
-      Math.abs(level.price - currentPrice) <= tolerance * 2 &&
-      level.touches >= this.minTouches
+      Math.abs(level.price - currentPrice) <= tolerance * 3 && // Tolerância maior
+      level.touches >= Math.min(this.minTouches, 2) // Aceita 2+ toques
     );
 
     if (nearbyLevels.length === 0) {
@@ -282,13 +288,15 @@ export default class SupportResistanceAnalyzer {
     if (strongestLevel.type === 'support' && currentPrice <= strongestLevel.price + tolerance) {
       if (trend === 'down' || trend === 'sideways') {
         action = 'BUY';
-        confidence = Math.min(minConfidence + (strongestLevel.strength * 10), highConfidence);
+        const baseConfidence = minConfidence + (strongestLevel.strength * 25) + (strongestLevel.touches * 2);
+        confidence = Math.min(highConfidence, baseConfidence);
         reason = `Preço próximo ao suporte forte em $${strongestLevel.price.toFixed(4)} (${strongestLevel.touches} toques)`;
       }
     } else if (strongestLevel.type === 'resistance' && currentPrice >= strongestLevel.price - tolerance) {
       if (trend === 'up' || trend === 'sideways') {
         action = 'SELL';
-        confidence = Math.min(minConfidence + (strongestLevel.strength * 10), highConfidence);
+        const baseConfidence = minConfidence + (strongestLevel.strength * 25) + (strongestLevel.touches * 2);
+        confidence = Math.min(highConfidence, baseConfidence);
         reason = `Preço próximo à resistência forte em $${strongestLevel.price.toFixed(4)} (${strongestLevel.touches} toques)`;
       }
     }
@@ -299,23 +307,34 @@ export default class SupportResistanceAnalyzer {
 
     // Filtrar apenas níveis com mínimo de toques para rompimentos
     const validLevels = levels.filter(level => level.touches >= this.minTouches).slice(0, 3);
-    
+
     for (const level of validLevels) {
       if (level.type === 'resistance' &&
         prevCandle.close <= level.price &&
         lastCandle.close > level.price) {
         action = 'BUY';
-        confidence = Math.min(minConfidence + (level.strength * 20), highConfidence);
+        const baseConfidence = minConfidence + (level.strength * 20) + (level.touches * 2);
+        confidence = Math.min(highConfidence, baseConfidence);
         reason = `Rompimento de resistência em $${level.price.toFixed(4)} - sinal de alta`;
         break;
       } else if (level.type === 'support' &&
         prevCandle.close >= level.price &&
         lastCandle.close < level.price) {
         action = 'SELL';
-        confidence = Math.min(minConfidence + (level.strength * 20), highConfidence);
+        const baseConfidence = minConfidence + (level.strength * 20) + (level.touches * 2);
+        confidence = Math.min(highConfidence, baseConfidence);
         reason = `Rompimento de suporte em $${level.price.toFixed(4)} - sinal de baixa`;
         break;
       }
+    }
+
+    // VALIDAÇÃO FINAL ULTRA-CONSERVADORA: Confiança mínima
+    if (action !== 'HOLD' && confidence < minConfidence) {
+      return {
+        action: 'HOLD',
+        confidence: 50,
+        reason: `Sinal S/R rejeitado - confiança ${confidence.toFixed(0)}% < ${minConfidence}% mínimo ultra-conservador`
+      };
     }
 
     return { action, confidence, reason };
@@ -328,7 +347,8 @@ export default class SupportResistanceAnalyzer {
     const last = candles[candles.length - 1].close;
     const change = (last - first) / first;
 
-    const trendThreshold = 0.02;
+    const config = TradingConfigManager.getConfig();
+    const trendThreshold = config.EMA_ADVANCED.MIN_TREND_STRENGTH;
     if (change > trendThreshold) return 'up';
     if (change < -trendThreshold) return 'down';
     return 'sideways';

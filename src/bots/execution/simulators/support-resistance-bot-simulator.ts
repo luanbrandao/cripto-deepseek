@@ -63,13 +63,13 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
     
     console.log('🛡️ ULTRA-CONSERVATIVE S/R SIMULATOR v5.0 - MELHORADO - NÃO EXECUTA TRADES REAIS\n');
     logBotHeader('🛡️ S/R SIMULATOR v5.0 - MELHORADO', 'Win Rate Target: 78%+ | S/R + Filtros Avançados | Apenas Simulação', true);
-    console.log('🎯 Melhorias Implementadas (baseadas na análise para 78%+ win rate):');
-    console.log('   ✅ Qualidade dos Níveis S/R (força ≥80%, 3+ toques)');
-    console.log('   ✅ Distância Ideal (0.2-0.8% do nível)');
-    console.log('   ✅ Volume S/R Confirmado (1.8x média mínimo)');
-    console.log('   ✅ Momentum Adequado (0.5 mínimo)');
+    console.log('🎯 Melhorias Implementadas (baseadas na análise para 75%+ win rate):');
+    console.log('   ✅ Qualidade dos Níveis S/R (força ≥65%, 2+ toques)');
+    console.log('   ✅ Distância Realista (0.1-1.5% do nível)');
+    console.log('   ✅ Volume S/R Adequado (1.2x média mínimo)');
+    console.log('   ✅ Momentum Realista (0.08 mínimo)');
     console.log('   ✅ Volatilidade Controlada (0.8-4%)');
-    console.log('   ✅ Score mínimo: 18/25 pontos (ultra-rigoroso)\n');
+    console.log('   ✅ Score mínimo: 15/25 pontos (60% - realista)\n');
     console.log('🎯 Configuração Ultra-Conservadora:');
     console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
     console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
@@ -176,23 +176,33 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
     const levels = basicAnalysis.levels || [];
     
     // 1. Validação de Qualidade dos Níveis S/R (8 pontos)
-    const strongLevels = levels.filter((level: any) => level.strength >= 0.8 && level.touches >= 3);
-    if (strongLevels.length >= 1) {
+    const strongLevels = levels.filter((level: any) => level.strength >= 0.65 && level.touches >= 2);
+    const ultraStrongLevels = levels.filter((level: any) => level.strength >= 0.8 && level.touches >= 3);
+    
+    if (ultraStrongLevels.length >= 1) {
       validation.score += 8;
-      validation.reasons.push(`✅ Níveis S/R ultra-fortes: ${strongLevels.length} (força ≥80%, 3+ toques)`);
+      validation.reasons.push(`✅ Níveis S/R ultra-fortes: ${ultraStrongLevels.length} (força ≥80%, 3+ toques)`);
+    } else if (strongLevels.length >= 1) {
+      validation.score += 5;
+      validation.reasons.push(`✅ Níveis S/R fortes: ${strongLevels.length} (força ≥65%, 2+ toques)`);
     } else {
-      validation.warnings.push('❌ Nenhum nível S/R ultra-forte encontrado (força <80% ou <3 toques)');
+      validation.warnings.push('❌ Nenhum nível S/R forte encontrado (força <65% ou <2 toques)');
     }
     
     // 2. Validação de Proximidade Ideal (6 pontos)
     const nearestLevel = this.findNearestLevel(levels, currentPrice);
     if (nearestLevel) {
       const distance = Math.abs(currentPrice - nearestLevel.price) / currentPrice;
-      if (distance >= 0.002 && distance <= 0.008) { // 0.2% a 0.8%
-        validation.score += 6;
-        validation.reasons.push(`✅ Distância ideal do S/R: ${(distance * 100).toFixed(2)}%`);
+      if (distance >= 0.001 && distance <= 0.015) { // 0.1% a 1.5% (mais realista)
+        if (distance <= 0.008) {
+          validation.score += 6; // Distância ótima
+          validation.reasons.push(`✅ Distância ótima do S/R: ${(distance * 100).toFixed(2)}%`);
+        } else {
+          validation.score += 4; // Distância boa
+          validation.reasons.push(`✅ Distância boa do S/R: ${(distance * 100).toFixed(2)}%`);
+        }
       } else {
-        validation.warnings.push(`❌ Distância inadequada do S/R: ${(distance * 100).toFixed(2)}% (0.2-0.8% requerido)`);
+        validation.warnings.push(`❌ Distância inadequada do S/R: ${(distance * 100).toFixed(2)}% (0.1-1.5% requerido)`);
       }
     } else {
       validation.warnings.push('❌ Nenhum nível S/R próximo encontrado');
@@ -203,20 +213,26 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
     const recentVolume = volumes.slice(-3).reduce((a, b) => a + b, 0) / 3;
     const volumeRatio = recentVolume / avgVolume;
     
-    if (volumeRatio >= 1.8) { // Mais rigoroso para S/R
+    if (volumeRatio >= 1.5) { // Volume forte
       validation.score += 5;
-      validation.reasons.push(`✅ Volume S/R confirmado: ${volumeRatio.toFixed(1)}x média`);
+      validation.reasons.push(`✅ Volume S/R forte: ${volumeRatio.toFixed(1)}x média`);
+    } else if (volumeRatio >= 1.2) { // Volume adequado
+      validation.score += 3;
+      validation.reasons.push(`✅ Volume S/R adequado: ${volumeRatio.toFixed(1)}x média`);
     } else {
-      validation.warnings.push(`❌ Volume S/R insuficiente: ${volumeRatio.toFixed(1)}x < 1.8x`);
+      validation.warnings.push(`❌ Volume S/R insuficiente: ${volumeRatio.toFixed(1)}x < 1.2x`);
     }
     
     // 4. Validação de Momentum (3 pontos)
     const momentum = this.calculateMomentum(price24h);
-    if (Math.abs(momentum) >= 0.5) { // Momentum mínimo
+    if (Math.abs(momentum) >= 0.15) { // Momentum forte
       validation.score += 3;
-      validation.reasons.push(`✅ Momentum adequado: ${momentum.toFixed(2)}`);
+      validation.reasons.push(`✅ Momentum forte: ${momentum.toFixed(3)}`);
+    } else if (Math.abs(momentum) >= 0.08) { // Momentum adequado
+      validation.score += 2;
+      validation.reasons.push(`✅ Momentum adequado: ${momentum.toFixed(3)}`);
     } else {
-      validation.warnings.push(`❌ Momentum insuficiente: ${momentum.toFixed(2)} (0.5 mínimo)`);
+      validation.warnings.push(`❌ Momentum insuficiente: ${momentum.toFixed(3)} (0.08 mínimo)`);
     }
     
     // 5. Validação de Volatilidade Controlada (3 pontos)
@@ -228,10 +244,10 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
       validation.warnings.push(`❌ Volatilidade S/R inadequada: ${volatility.toFixed(1)}% (0.8-4% requerido)`);
     }
     
-    // Critério de aprovação: mínimo 18/25 pontos (mais rigoroso que EMA)
-    validation.isValid = validation.score >= 18;
+    // Critério de aprovação: mínimo 15/25 pontos (60% - mais realista)
+    validation.isValid = validation.score >= 15;
     
-    console.log(`🔍 Score de validação S/R: ${validation.score}/25 (mínimo: 18)`);
+    console.log(`🔍 Score de validação S/R: ${validation.score}/25 (mínimo: 15)`);
     
     return validation;
   }

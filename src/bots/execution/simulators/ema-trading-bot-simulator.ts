@@ -55,12 +55,12 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
     console.log('🛡️ ULTRA-CONSERVATIVE EMA SIMULATOR v5.0 - MELHORADO - NÃO EXECUTA TRADES REAIS\n');
     logBotHeader('🛡️ EMA SIMULATOR v5.0 - MELHORADO', `Win Rate Target: 75%+ | EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} + Filtros Avançados`, true);
     console.log('🎯 Melhorias Implementadas (baseadas na análise de 33% → 75%+ win rate):');
-    console.log('   ✅ Filtro de Volume (1.5x média mínimo)');
-    console.log('   ✅ Validação de Força da Tendência (1% mínimo)');
-    console.log('   ✅ Filtro RSI (zona 30-70)');
-    console.log('   ✅ Posicionamento de Preço (0.2% acima EMA21)');
+    console.log('   ✅ Volume Adequado (1.0x média mínimo)');
+    console.log('   ✅ Força da Tendência (0.2% mínimo)');
+    console.log('   ✅ Filtro RSI (zona 25-75)');
+    console.log('   ✅ Posicionamento Inteligente (baseado na ação)');
     console.log('   ✅ Controle de Volatilidade (1-5%)');
-    console.log('   ✅ Score mínimo: 15/20 pontos para aprovação\n');
+    console.log('   ✅ Score mínimo: 12/20 pontos para aprovação\n');
     console.log('🎯 Configuração Ultra-Conservadora:');
     console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
     console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
@@ -145,11 +145,17 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
     const recentVolume = volumes.slice(-3).reduce((a, b) => a + b, 0) / 3;
     const volumeRatio = recentVolume / avgVolume;
     
-    if (volumeRatio >= 1.5) {
+    const config = TradingConfigManager.getConfig();
+    const minVolumeMultiplier = config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER;
+    
+    if (volumeRatio >= minVolumeMultiplier * 1.3) { // Volume forte
       validation.score += 5;
-      validation.reasons.push(`✅ Volume confirmado: ${volumeRatio.toFixed(1)}x média`);
+      validation.reasons.push(`✅ Volume forte: ${volumeRatio.toFixed(1)}x média`);
+    } else if (volumeRatio >= minVolumeMultiplier) { // Volume adequado
+      validation.score += 3;
+      validation.reasons.push(`✅ Volume adequado: ${volumeRatio.toFixed(1)}x média`);
     } else {
-      validation.warnings.push(`❌ Volume insuficiente: ${volumeRatio.toFixed(1)}x < 1.5x`);
+      validation.warnings.push(`❌ Volume insuficiente: ${volumeRatio.toFixed(1)}x < ${minVolumeMultiplier}x`);
     }
     
     // 2. Validação de Força da Tendência (5 pontos)
@@ -157,43 +163,69 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
     const ema50 = this.calculateEMA(price24h, 50);
     const trendStrength = Math.abs(ema21 - ema50) / ema50;
     
-    if (trendStrength >= 0.01) { // 1% mínimo
+    const minTrendStrength = config.EMA_ADVANCED.MIN_TREND_STRENGTH;
+    
+    if (trendStrength >= minTrendStrength * 2.5) { // Forte
       validation.score += 5;
       validation.reasons.push(`✅ Tendência forte: ${(trendStrength * 100).toFixed(2)}%`);
+    } else if (trendStrength >= minTrendStrength) { // Adequada
+      validation.score += 3;
+      validation.reasons.push(`✅ Tendência adequada: ${(trendStrength * 100).toFixed(2)}%`);
     } else {
-      validation.warnings.push(`❌ Tendência fraca: ${(trendStrength * 100).toFixed(2)}% < 1%`);
+      validation.warnings.push(`❌ Tendência fraca: ${(trendStrength * 100).toFixed(2)}% < ${(minTrendStrength * 100).toFixed(1)}%`);
     }
     
     // 3. Validação de RSI (5 pontos)
     const rsi = this.calculateRSI(price24h);
-    if (rsi > 30 && rsi < 70) {
-      validation.score += 5;
-      validation.reasons.push(`✅ RSI em zona segura: ${rsi.toFixed(1)}`);
+    const rsiMin = 30;
+    const rsiMax = 70;
+    const rsiOptimalMin = 40;
+    const rsiOptimalMax = 60;
+    
+    if (rsi >= rsiMin && rsi <= rsiMax) {
+      if (rsi >= rsiOptimalMin && rsi <= rsiOptimalMax) {
+        validation.score += 5;
+        validation.reasons.push(`✅ RSI em zona ótima: ${rsi.toFixed(1)}`);
+      } else {
+        validation.score += 3;
+        validation.reasons.push(`✅ RSI em zona boa: ${rsi.toFixed(1)}`);
+      }
     } else {
-      validation.warnings.push(`❌ RSI em zona perigosa: ${rsi.toFixed(1)} (30-70 requerido)`);
+      validation.warnings.push(`❌ RSI em zona extrema: ${rsi.toFixed(1)} (${rsiMin}-${rsiMax} requerido)`);
     }
     
     // 4. Validação de Posição do Preço (3 pontos)
-    if (currentPrice > ema21 * 1.002) { // 0.2% acima da EMA21
+    const ema21Distance = Math.abs(currentPrice - ema21) / ema21;
+    if (basicAnalysis.action === 'BUY' && currentPrice > ema21) {
       validation.score += 3;
-      validation.reasons.push('✅ Preço bem posicionado acima EMA21');
+      validation.reasons.push('✅ Preço acima EMA21 para compra');
+    } else if (basicAnalysis.action === 'SELL' && currentPrice < ema21) {
+      validation.score += 3;
+      validation.reasons.push('✅ Preço abaixo EMA21 para venda');
+    } else if (ema21Distance <= config.EMA_ADVANCED.MIN_SEPARATION) {
+      validation.score += 2;
+      validation.reasons.push('✅ Preço próximo da EMA21 (crossover)');
     } else {
-      validation.warnings.push('❌ Preço muito próximo da EMA21');
+      validation.warnings.push('❌ Posição do preço inadequada para EMA');
     }
     
     // 5. Validação de Volatilidade (2 pontos)
     const volatility = Math.abs(parseFloat(stats.priceChangePercent));
-    if (volatility >= 1.0 && volatility <= 5.0) {
+    const minVol = config.MARKET_FILTERS.MIN_VOLATILITY;
+    const maxVol = config.MARKET_FILTERS.MAX_VOLATILITY;
+    
+    if (volatility >= minVol && volatility <= maxVol) {
       validation.score += 2;
       validation.reasons.push(`✅ Volatilidade adequada: ${volatility.toFixed(1)}%`);
     } else {
-      validation.warnings.push(`❌ Volatilidade inadequada: ${volatility.toFixed(1)}% (1-5% requerido)`);
+      validation.warnings.push(`❌ Volatilidade inadequada: ${volatility.toFixed(1)}% (${minVol}-${maxVol}% requerido)`);
     }
     
-    // Critério de aprovação: mínimo 15/20 pontos
-    validation.isValid = validation.score >= 15;
+    // Critério de aprovação baseado na configuração
+    const minScore = Math.floor(config.EMA_ADVANCED.MIN_EMA_SCORE * 1.2); // 20% mais rigoroso
+    validation.isValid = validation.score >= minScore;
     
-    console.log(`🔍 Score de validação EMA: ${validation.score}/20 (mínimo: 15)`);
+    console.log(`🔍 Score de validação EMA: ${validation.score}/20 (mínimo: ${minScore})`);
     
     return validation;
   }

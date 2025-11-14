@@ -99,12 +99,12 @@ const BALANCED_CONFIG: BaseTradingConfig = {
   DEFAULT_SYMBOL: 'BTCUSDT',
   TRADE_AMOUNT_USD: 15,
 
-  MIN_CONFIDENCE: 80,
-  HIGH_CONFIDENCE: 90,
-  MEDIUM_CONFIDENCE: 85,
+  MIN_CONFIDENCE: 75,
+  HIGH_CONFIDENCE: 80,
+  MEDIUM_CONFIDENCE: 78,
   TRADE_COOLDOWN_MINUTES: 30,
 
-  MIN_RISK_REWARD_RATIO: 2.5,
+  MIN_RISK_REWARD_RATIO: 2.0,
 
   RISK: {
     BASE_PERCENT: 0.25,
@@ -179,9 +179,9 @@ const ULTRA_CONSERVATIVE_CONFIG: BaseTradingConfig = {
   DEFAULT_SYMBOL: 'BTCUSDT',
   TRADE_AMOUNT_USD: 10, // Menor exposição
 
-  MIN_CONFIDENCE: 90, // Muito rigoroso
-  HIGH_CONFIDENCE: 95,
-  MEDIUM_CONFIDENCE: 92,
+  MIN_CONFIDENCE: 75, // Muito rigoroso
+  HIGH_CONFIDENCE: 80,
+  MEDIUM_CONFIDENCE: 78,
   TRADE_COOLDOWN_MINUTES: 720, // 12 horas
 
   MIN_RISK_REWARD_RATIO: 3.0, // Proteção máxima
@@ -192,8 +192,8 @@ const ULTRA_CONSERVATIVE_CONFIG: BaseTradingConfig = {
   },
 
   CHART: {
-    TIMEFRAME: '4h', // Visão macro
-    PERIODS: 168 // 1 semana de dados
+    TIMEFRAME: '1h', // Para testes
+    PERIODS: 50 // Dados para testes
   },
 
   EMA: {
