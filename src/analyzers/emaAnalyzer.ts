@@ -130,16 +130,7 @@ class EmaAnalyzer {
     };
   }
 
-  private calculateEMA(prices: number[], period: number): number {
-    const multiplier = 2 / (period + 1);
-    let ema = prices[0];
 
-    for (let i = 1; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-
-    return ema;
-  }
 
   private validateEmaStrength(prices: number[]): { isValid: boolean; reason: string; score: number } {
     if (prices.length < 26) {
@@ -147,8 +138,8 @@ class EmaAnalyzer {
     }
 
     // Calcular EMAs
-    const ema12 = this.calculateEMA(prices, 12);
-    const ema26 = this.calculateEMA(prices, 26);
+    const ema12 = calculateEMA(prices, 12);
+    const ema26 = calculateEMA(prices, 26);
     const currentPrice = prices[prices.length - 1];
 
     // Verificar separação mínima usando configuração

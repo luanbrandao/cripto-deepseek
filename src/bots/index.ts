@@ -18,11 +18,9 @@ export { RiskManager } from './services/risk-manager';
 export { TradeExecutor } from './services/trade-executor';
 export { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 
-// === UTILS (Consolidated) ===
-export * from './utils/market-analyzer';
-export * from './utils/trade-validator';
-export * from './utils/bot-logger';
-export * from './utils/flow-manager';
-
-// === CONFIGURATION ===
-export { TRADING_CONFIG } from './config/trading-config';
+// === UTILS (Direct Exports) ===
+export * from './utils/logging/bot-logger';
+export * from './utils/execution/bot-flow-manager';
+export * from './utils/risk/trade-validators';
+export * from './utils/analysis/ema-calculator';
+export * from './utils/analysis/support-resistance-calculator';
