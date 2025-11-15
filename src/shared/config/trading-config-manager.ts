@@ -130,7 +130,7 @@ const BALANCED_CONFIG: BaseTradingConfig = {
   LIMITS: {
     OPEN_ORDERS: 2,
     MAX_ACTIVE_TRADES: 2,
-    MAX_TRADES_PER_SYMBOL: 1,
+    MAX_TRADES_PER_SYMBOL: 2,
     MAX_DAILY_LOSS: 50,
     MAX_CONSECUTIVE_LOSSES: 2,
     EMERGENCY_STOP_LOSS: 100
@@ -204,13 +204,13 @@ const ULTRA_CONSERVATIVE_CONFIG: BaseTradingConfig = {
   SIMULATION: {
     STARTUP_DELAY: 5000,
     INITIAL_BALANCE: 1000,
-    MAX_ACTIVE_TRADES: 1 // Apenas 1 simulação
+    MAX_ACTIVE_TRADES: 2 // Apenas 1 simulação
   },
 
   LIMITS: {
     OPEN_ORDERS: 2,
     MAX_ACTIVE_TRADES: 2, // Apenas 1 trade ativo
-    MAX_TRADES_PER_SYMBOL: 1,
+    MAX_TRADES_PER_SYMBOL: 2,
     MAX_DAILY_LOSS: 100, // Muito restritivo
     MAX_CONSECUTIVE_LOSSES: 10, // Para após 1 perda
     EMERGENCY_STOP_LOSS: 25

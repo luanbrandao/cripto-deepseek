@@ -6,6 +6,7 @@ import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
+import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 
 dotenv.config();
 
@@ -32,10 +33,44 @@ export class RealTradingBot extends BaseTradingBot {
     return await UnifiedDeepSeekAnalyzer.analyzeRealTrade(this.deepseek!, symbol, marketData);
   }
 
+  private async validateRealTradingDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
+    if (!symbol || !marketData) return false;
+
+    console.log('🛡️ SMART PRÉ-VALIDAÇÃO REAL TRADING BOT...');
+
+    const smartValidation = await SmartPreValidationService
+      .createBuilder()
+      .usePreset('RealBot')
+      .build()
+      .validate(symbol, marketData, decision, this.getBinancePublic());
+
+    if (!smartValidation.isValid) {
+      console.log('❌ SMART PRÉ-VALIDAÇÃO FALHOU:');
+      smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
+      return false;
+    }
+
+    console.log('✅ SMART PRÉ-VALIDAÇÃO APROVADA:');
+    smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
+    console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
+    console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
+    console.log(`🔍 Camadas Ativas: ${smartValidation.activeLayers.join(', ')}`);
+
+    decision.confidence = smartValidation.confidence || decision.confidence;
+    decision.validationScore = smartValidation.totalScore;
+    decision.riskLevel = smartValidation.riskLevel;
+    decision.smartValidationPassed = true;
+    decision.activeLayers = smartValidation.activeLayers;
+
+    return true;
+  }
+
   async executeTrade() {
     this.logBotInfo();
     return await this.flowManager.executeStandardFlow(
-      this.analyzeWithRealTradeLogic.bind(this)
+      this.analyzeWithRealTradeLogic.bind(this),
+      undefined,
+      this.validateRealTradingDecision.bind(this)
     );
   }
 }

@@ -12,6 +12,9 @@ export interface TradeDecision {
   symbol: string;
   price: number;
   technicalLevels?: TechnicalLevels;
+  validationScore?: number;
+  activeLayers?: string[];
+  riskLevel?: string;
 }
 
 export interface RiskRewardCalculation {

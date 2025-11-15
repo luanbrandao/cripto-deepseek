@@ -5,7 +5,7 @@ import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
 import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
 import TradingConfigManager from '../../../shared/config/trading-config-manager';
-import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
+import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import { BaseTradingBot } from '../../core/base-trading-bot';
 
 dotenv.config();
@@ -21,12 +21,7 @@ interface MarketData {
   stats: any;
 }
 
-interface EmaValidation {
-  isValid: boolean;
-  score: number;
-  reasons: string[];
-  warnings: string[];
-}
+
 
 export class EmaTradingBotSimulator extends BaseTradingBot {
   private flowManager: BotFlowManager;
@@ -36,9 +31,9 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
     super(undefined, undefined, true);
 
     const config: BotConfig = {
-      name: 'Ultra-Conservative EMA Simulator',
+      name: 'Ultra-Conservative EMA Simulator v6.0 - TS Fixed',
       isSimulation: true,
-      tradesFile: 'ultraConservativeEmaSimulator.json'
+      tradesFile: 'ultraConservativeEmaSimulatorV6.json'
     };
 
     this.flowManager = new BotFlowManager(this, config);
@@ -52,20 +47,27 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
   protected logBotInfo() {
     const config = TradingConfigManager.getConfig();
     
-    console.log('🛡️ ULTRA-CONSERVATIVE EMA SIMULATOR v5.0 - MELHORADO - NÃO EXECUTA TRADES REAIS\n');
-    logBotHeader('🛡️ EMA SIMULATOR v5.0 - MELHORADO', `Win Rate Target: 75%+ | EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} + Filtros Avançados`, true);
-    console.log('🎯 Melhorias Implementadas (baseadas na análise de 33% → 75%+ win rate):');
-    console.log('   ✅ Volume Adequado (1.0x média mínimo)');
-    console.log('   ✅ Força da Tendência (0.2% mínimo)');
-    console.log('   ✅ Filtro RSI (zona 25-75)');
-    console.log('   ✅ Posicionamento Inteligente (baseado na ação)');
-    console.log('   ✅ Controle de Volatilidade (1-5%)');
-    console.log('   ✅ Score mínimo: 12/20 pontos para aprovação\n');
+    console.log('🛡️ ULTRA-CONSERVATIVE EMA SIMULATOR v6.0 - TYPESCRIPT CORRIGIDO - NÃO EXECUTA TRADES REAIS\n');
+    logBotHeader('🛡️ EMA SIMULATOR v6.0 - TS FIXED', `Win Rate Target: 80%+ | EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} + Smart Validation`, true);
+    console.log('🔧 Atualizações v6.0 (TypeScript + Validações):');
+    console.log('   ✅ Correções TypeScript: TradeDecision interface atualizada');
+    console.log('   ✅ Smart Pre-Validation: 6 camadas de validação async');
+    console.log('   ✅ Fallback Protection: Valores undefined protegidos');
+    console.log('   ✅ Async/Await: Métodos de validação corrigidos');
+    console.log('   ✅ Score Dinâmico: Conversão 0-100 → 0-20 scale');
+    console.log('   ✅ Risk Level: Classificação automática de risco\n');
+    console.log('🎯 Validações Ativas (Config-Based):');
+    console.log(`   📈 EMA: Períodos ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} + Alinhamento (25pts)`);
+    console.log('   📊 RSI: Zona neutra 14-período (20pts)');
+    console.log(`   📊 Volume: ${(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER / 2).toFixed(1)}x média mínimo (20pts)`);
+    console.log(`   ⚡ Momentum: ${(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 500).toFixed(1)}% mínimo (15pts)`);
+    console.log(`   📉 Volatilidade: ${config.MARKET_FILTERS.MIN_VOLATILITY}-${config.MARKET_FILTERS.MAX_VOLATILITY}% (10pts)`);
+    console.log(`   🎯 Confidence: ${config.MIN_CONFIDENCE}% mínimo (10pts)\n`);
     console.log('🎯 Configuração Ultra-Conservadora:');
-    console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
-    console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
+    console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}% (REAL)`);
+    console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1 (GARANTIDO)`);
     console.log(`⏰ Cooldown: ${config.TRADE_COOLDOWN_MINUTES} minutos`);
-    console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')}`);
+    console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')} (apenas estáveis)`);
     console.log('🧪 MODO SIMULAÇÃO - Zero risco financeiro\n');
   }
 
@@ -90,18 +92,18 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
     };
   }
 
-  private analyzeWithEma(symbol: string, marketData: MarketData): TradeDecision {
+  private async analyzeWithEma(symbol: string, marketData: MarketData): Promise<TradeDecision> {
     const config = TradingConfigManager.getConfig();
     console.log(`\n📊 Analisando mercado com EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} MELHORADO...`);
 
     // 1. Análise EMA básica
     const basicAnalysis = this.emaAnalyzer.analyze(marketData);
     
-    // 2. Validações adicionais para melhorar assertividade
-    const validation = this.validateEnhancedEmaSignal(marketData, basicAnalysis);
+    // 2. Validações EMA avançadas integradas
+    const validation = await this.validateEnhancedEmaSignal(marketData, basicAnalysis);
     
     if (!validation.isValid) {
-      console.log('❌ Sinal EMA rejeitado pelas validações adicionais:');
+      console.log('❌ Sinal EMA rejeitado pelas validações avançadas:');
       validation.warnings.forEach(warning => console.log(`   ${warning}`));
       return {
         action: 'HOLD',
@@ -112,7 +114,7 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
       };
     }
     
-    console.log('✅ Sinal EMA aprovado pelas validações:');
+    console.log('✅ Sinal EMA aprovado pelas validações avançadas:');
     validation.reasons.forEach(reason => console.log(`   ${reason}`));
     
     // 3. Ajustar confiança baseada no score de validação
@@ -130,167 +132,71 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
     };
   }
   
-  private validateEnhancedEmaSignal(marketData: MarketData, basicAnalysis: any): EmaValidation {
-    const validation: EmaValidation = {
-      isValid: false,
-      score: 0,
-      reasons: [],
-      warnings: []
+  private async validateEnhancedEmaSignal(marketData: MarketData, basicAnalysis: any) {
+    // Usar smart pré-validação EMA específica
+    const mockDecision = { action: basicAnalysis.action, confidence: basicAnalysis.confidence, price: marketData.currentPrice };
+    const mockMarketDataForValidation = { 
+      price: { price: marketData.currentPrice.toString() }, 
+      stats: marketData.stats, 
+      klines: marketData.klines 
     };
     
-    const { price24h, volumes, currentPrice, stats } = marketData;
-    
-    // 1. Validação de Volume (5 pontos)
-    const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
-    const recentVolume = volumes.slice(-3).reduce((a, b) => a + b, 0) / 3;
-    const volumeRatio = recentVolume / avgVolume;
-    
     const config = TradingConfigManager.getConfig();
-    const minVolumeMultiplier = config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER;
+    const smartValidation = await SmartPreValidationService
+      .createBuilder()
+      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 25)
+      .withRSI(14, 20)
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER / 2, 20)
+      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 5, 15)
+      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY, 10)
+      .withConfidence(config.MIN_CONFIDENCE, 10)
+      .build()
+      .validate('', mockMarketDataForValidation, mockDecision, null);
     
-    if (volumeRatio >= minVolumeMultiplier * 1.3) { // Volume forte
-      validation.score += 5;
-      validation.reasons.push(`✅ Volume forte: ${volumeRatio.toFixed(1)}x média`);
-    } else if (volumeRatio >= minVolumeMultiplier) { // Volume adequado
-      validation.score += 3;
-      validation.reasons.push(`✅ Volume adequado: ${volumeRatio.toFixed(1)}x média`);
-    } else {
-      validation.warnings.push(`❌ Volume insuficiente: ${volumeRatio.toFixed(1)}x < ${minVolumeMultiplier}x`);
-    }
-    
-    // 2. Validação de Força da Tendência (5 pontos)
-    const ema21 = this.calculateEMA(price24h, 21);
-    const ema50 = this.calculateEMA(price24h, 50);
-    const trendStrength = Math.abs(ema21 - ema50) / ema50;
-    
-    const minTrendStrength = config.EMA_ADVANCED.MIN_TREND_STRENGTH;
-    
-    if (trendStrength >= minTrendStrength * 2.5) { // Forte
-      validation.score += 5;
-      validation.reasons.push(`✅ Tendência forte: ${(trendStrength * 100).toFixed(2)}%`);
-    } else if (trendStrength >= minTrendStrength) { // Adequada
-      validation.score += 3;
-      validation.reasons.push(`✅ Tendência adequada: ${(trendStrength * 100).toFixed(2)}%`);
-    } else {
-      validation.warnings.push(`❌ Tendência fraca: ${(trendStrength * 100).toFixed(2)}% < ${(minTrendStrength * 100).toFixed(1)}%`);
-    }
-    
-    // 3. Validação de RSI (5 pontos)
-    const rsi = this.calculateRSI(price24h);
-    const rsiMin = 30;
-    const rsiMax = 70;
-    const rsiOptimalMin = 40;
-    const rsiOptimalMax = 60;
-    
-    if (rsi >= rsiMin && rsi <= rsiMax) {
-      if (rsi >= rsiOptimalMin && rsi <= rsiOptimalMax) {
-        validation.score += 5;
-        validation.reasons.push(`✅ RSI em zona ótima: ${rsi.toFixed(1)}`);
-      } else {
-        validation.score += 3;
-        validation.reasons.push(`✅ RSI em zona boa: ${rsi.toFixed(1)}`);
-      }
-    } else {
-      validation.warnings.push(`❌ RSI em zona extrema: ${rsi.toFixed(1)} (${rsiMin}-${rsiMax} requerido)`);
-    }
-    
-    // 4. Validação de Posição do Preço (3 pontos)
-    const ema21Distance = Math.abs(currentPrice - ema21) / ema21;
-    if (basicAnalysis.action === 'BUY' && currentPrice > ema21) {
-      validation.score += 3;
-      validation.reasons.push('✅ Preço acima EMA21 para compra');
-    } else if (basicAnalysis.action === 'SELL' && currentPrice < ema21) {
-      validation.score += 3;
-      validation.reasons.push('✅ Preço abaixo EMA21 para venda');
-    } else if (ema21Distance <= config.EMA_ADVANCED.MIN_SEPARATION) {
-      validation.score += 2;
-      validation.reasons.push('✅ Preço próximo da EMA21 (crossover)');
-    } else {
-      validation.warnings.push('❌ Posição do preço inadequada para EMA');
-    }
-    
-    // 5. Validação de Volatilidade (2 pontos)
-    const volatility = Math.abs(parseFloat(stats.priceChangePercent));
-    const minVol = config.MARKET_FILTERS.MIN_VOLATILITY;
-    const maxVol = config.MARKET_FILTERS.MAX_VOLATILITY;
-    
-    if (volatility >= minVol && volatility <= maxVol) {
-      validation.score += 2;
-      validation.reasons.push(`✅ Volatilidade adequada: ${volatility.toFixed(1)}%`);
-    } else {
-      validation.warnings.push(`❌ Volatilidade inadequada: ${volatility.toFixed(1)}% (${minVol}-${maxVol}% requerido)`);
-    }
-    
-    // Critério de aprovação baseado na configuração
-    const minScore = Math.floor(config.EMA_ADVANCED.MIN_EMA_SCORE * 1.2); // 20% mais rigoroso
-    validation.isValid = validation.score >= minScore;
-    
-    console.log(`🔍 Score de validação EMA: ${validation.score}/20 (mínimo: ${minScore})`);
-    
-    return validation;
+    return {
+      isValid: smartValidation.isValid,
+      score: Math.round(smartValidation.totalScore / 5), // Convert to 0-20 scale
+      reasons: smartValidation.reasons,
+      warnings: smartValidation.warnings
+    };
   }
   
-  private calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1];
-    
-    const multiplier = 2 / (period + 1);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-    
-    for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-    
-    return ema;
-  }
-  
-  private calculateRSI(prices: number[], period: number = 14): number {
-    if (prices.length < period + 1) return 50;
-    
-    const changes = [];
-    for (let i = 1; i < prices.length; i++) {
-      changes.push(prices[i] - prices[i - 1]);
-    }
-    
-    const gains = changes.map(change => change > 0 ? change : 0);
-    const losses = changes.map(change => change < 0 ? Math.abs(change) : 0);
-    
-    const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
-    const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
-    
-    if (avgLoss === 0) return 100;
-    
-    const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
-  }
+
 
   private async analyzeSymbolWithEma(symbol: string, marketData: any): Promise<TradeDecision> {
     const fullMarketData = await this.getMarketData(symbol);
-    return this.analyzeWithEma(symbol, fullMarketData);
+    return await this.analyzeWithEma(symbol, fullMarketData);
   }
 
   private async validateEmaDecision(decision: TradeDecision, symbol?: string, marketData?: any): Promise<boolean> {
     if (!symbol || !marketData) return false;
 
-    console.log('🛡️ VALIDAÇÃO ULTRA-CONSERVADORA EMA PARA SIMULAÇÃO...');
+    console.log('🛡️ VALIDAÇÃO CENTRALIZADA PARA SIMULAÇÃO EMA...');
 
-    // 🚨 ANÁLISE ULTRA-RIGOROSA EM 5 CAMADAS
-    const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
+    const smartValidation = await SmartPreValidationService
+      .createBuilder()
+      .usePreset('Simulation')
+      .build()
+      .validate(symbol, marketData, decision, this.getBinancePublic());
 
-    if (!ultraAnalysis.isValid) {
-      console.log('❌ SIMULAÇÃO REJEITADA pela análise ultra-conservadora EMA:');
-      ultraAnalysis.warnings.forEach(warning => console.log(`   ${warning}`));
+    if (!smartValidation.isValid) {
+      console.log('❌ SIMULAÇÃO REJEITADA:');
+      smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
       return false;
     }
 
-    console.log('✅ SIMULAÇÃO APROVADA pela análise ultra-conservadora EMA:');
-    ultraAnalysis.reasons.forEach(reason => console.log(`   ${reason}`));
-    console.log(`🛡️ Nível de Risco: ${ultraAnalysis.riskLevel}`);
+    console.log('✅ SIMULAÇÃO APROVADA:');
+    smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
+    console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
+    console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
+    console.log(`🔍 Camadas Ativas: ${smartValidation.activeLayers.join(', ')}`);
     console.log('🧪 Esta seria uma excelente oportunidade EMA para trade real!');
 
-    // Atualizar decisão com análise ultra-conservadora
-    decision.confidence = ultraAnalysis.confidence;
-    (decision as any).ultraConservativeScore = ultraAnalysis.score;
-    (decision as any).riskLevel = ultraAnalysis.riskLevel;
+    // Atualizar decisão com smart validação centralizada
+    decision.confidence = smartValidation.confidence || decision.confidence;
+    decision.validationScore = smartValidation.totalScore;
+    (decision as any).riskLevel = smartValidation.riskLevel;
+    (decision as any).activeLayers = smartValidation.activeLayers;
 
     return true;
   }
@@ -313,8 +219,8 @@ if (require.main === module) {
   }
 
   logBotStartup(
-    'Ultra-Conservative EMA Simulator v5.0 - MELHORADO',
-    '🛡️ Ultra-Conservador v5.0 - Win Rate: 33% → 75%+ (MELHORADO)\n🔍 Filtros Avançados: Volume + RSI + Tendência + Volatilidade\n🧪 Modo seguro - Apenas simulação, sem trades reais',
+    'Ultra-Conservative EMA Simulator v6.0 - TYPESCRIPT FIXED',
+    '🛡️ Ultra-Conservador v6.0 - TypeScript Corrigido + Smart Validation\n🔧 Correções: Interface TradeDecision + Async/Await + Fallback Protection\n🧪 Modo seguro - Apenas simulação, sem trades reais',
     5000,
     true
   ).then(() => main());

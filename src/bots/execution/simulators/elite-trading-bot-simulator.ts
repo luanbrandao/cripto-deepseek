@@ -6,6 +6,7 @@ import { getMarketData } from '../../utils/data/market-data-fetcher';
 import { EliteAnalyzer } from '../../../shared/analyzers/elite-analyzer';
 import { EliteRiskManager } from '../../services/elite-risk-manager';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
+import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -47,7 +48,35 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
   }
 
   protected logBotInfo() {
-    logBotHeader('ELITE TRADING BOT SIMULATOR', 'Sistema de Trading de Alta Performance - Simulação', true);
+    const config = TradingConfigManager.getConfig();
+    
+    console.log('🏆 ELITE TRADING BOT SIMULATOR v6.0 - TYPESCRIPT CORRIGIDO - NÃO EXECUTA TRADES REAIS\n');
+    logBotHeader('🏆 ELITE SIMULATOR v6.0 - TS FIXED', 'Win Rate Target: 95%+ | 7-Layer Smart Validation | TypeScript Corrigido', true);
+    console.log('🔧 Atualizações v6.0 (TypeScript + Elite Validation):');
+    console.log('   ✅ Correções TypeScript: TradeDecision.validationScore + activeLayers');
+    console.log('   ✅ Smart Pre-Validation: 7 camadas ultra-rigorosas');
+    console.log('   ✅ Elite Scoring: Sistema de pontuação 0-125 (pre-val + IA)');
+    console.log('   ✅ AI Integration: DeepSeek só após pré-validação 60+/100');
+    console.log('   ✅ Risk Classification: Classificação automática de risco');
+    console.log('   ✅ Fallback Protection: Valores undefined protegidos\n');
+    console.log('🎯 Elite Validation Layers (7 Camadas Config-Based):');
+    const eliteConfig = TradingConfigManager.getConfig();
+    console.log(`   📈 EMA: Alinhamento 8>${eliteConfig.EMA.FAST_PERIOD}>55>200 + Inclinação (20pts)`);
+    console.log('   📊 RSI: Zona neutra 14-período (15pts)');
+    console.log(`   📊 Volume: ${(eliteConfig.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 0.6).toFixed(1)}x média mínimo (15pts)`);
+    console.log(`   🎯 Support/Resistance: Proximidade ${(eliteConfig.EMA_ADVANCED.MIN_SEPARATION * 6000).toFixed(1)}% (20pts)`);
+    console.log(`   ⚡ Momentum: ${(eliteConfig.EMA_ADVANCED.MIN_TREND_STRENGTH * 150).toFixed(1)}% mínimo (15pts)`);
+    console.log(`   📉 Volatilidade: ${eliteConfig.MARKET_FILTERS.MAX_VOLATILITY}% máximo (10pts)`);
+    console.log(`   🎯 Confidence: ${ELITE_CONFIG.MIN_CONFIDENCE}% mínimo (25pts)`);
+    console.log('   🤖 AI Analysis: DeepSeek BUY + EMA forte (25pts)\n');
+    console.log('🎯 Critérios Elite Ultra-Rigorosos:');
+    console.log(`   📊 Pré-Validação Mínima: ${ELITE_CONFIG.PRE_VALIDATION_MIN}/100`);
+    console.log(`   🎯 Score Total Mínimo: ${ELITE_CONFIG.MIN_SCORE}/125`);
+    console.log(`   🤖 Confiança IA Mínima: ${ELITE_CONFIG.MIN_CONFIDENCE}%`);
+    console.log(`   ⚖️ Risk/Reward Mínimo: ${ELITE_CONFIG.MIN_RR}:1`);
+    console.log(`   ⏰ Cooldown Elite: ${ELITE_CONFIG.COOLDOWN_HOURS}h entre trades`);
+    console.log(`   🪙 Símbolos Elite: ${ELITE_CONFIG.SYMBOLS.join(', ')}`);
+    console.log('🧪 MODO SIMULAÇÃO ELITE - Zero risco financeiro\n');
   }
 
   async executeTrade() {
@@ -163,31 +192,48 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
   private async performEliteAnalysis(symbol: string, marketData: any) {
     console.log(`   🔍 Iniciando análise das 5 camadas de validação...`);
 
-    // PRÉ-VALIDAÇÃO: Verificar condições básicas antes da IA
-    const preValidation = this.performPreValidation(marketData);
-    console.log(`   🛡️ Pré-validação: ${preValidation.score}/75`);
+    // SMART PRÉ-VALIDAÇÃO ELITE: Sistema de 7 camadas inteligentes
+    const config = TradingConfigManager.getConfig();
+    const smartValidation = await SmartPreValidationService
+      .createBuilder()
+      .withEma(8, config.EMA.FAST_PERIOD, 20)
+      .withRSI(14, 15)
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 0.6, 15)
+      .withSupportResistance(config.EMA_ADVANCED.MIN_SEPARATION * 60, 20)
+      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 1.5, 15)
+      .withVolatility(config.MARKET_FILTERS.MAX_VOLATILITY, 10)
+      .withConfidence(ELITE_CONFIG.MIN_CONFIDENCE, 25)
+      .build()
+      .validate(symbol, marketData, { action: 'BUY', confidence: 0 }, this.getBinancePublic());
 
-    if (preValidation.score < ELITE_CONFIG.PRE_VALIDATION_MIN) {
-      console.log(`   ❌ Mercado não atende critérios mínimos (${preValidation.score}/${ELITE_CONFIG.PRE_VALIDATION_MIN}) - Pulando IA`);
+    console.log(`   🛡️ Smart Pré-validação: ${smartValidation.totalScore}/100`);
+
+    if (!smartValidation.isValid || smartValidation.totalScore < ELITE_CONFIG.PRE_VALIDATION_MIN) {
+      console.log(`   ❌ Mercado não atende critérios mínimos (${smartValidation.totalScore}/${ELITE_CONFIG.PRE_VALIDATION_MIN}) - Pulando IA`);
+      if (smartValidation.warnings && smartValidation.warnings.length > 0) {
+        smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
+      }
       return {
-        emaScore: preValidation.emaScore,
-        srScore: preValidation.srScore,
-        candleScore: preValidation.candleScore,
-        volumeScore: preValidation.volumeScore,
+        emaScore: smartValidation.layerScores.ema || 0,
+        srScore: smartValidation.layerScores.supportResistance || 0,
+        candleScore: 0,
+        volumeScore: smartValidation.layerScores.volume || 0,
         aiScore: 0,
-        totalScore: preValidation.score,
+        totalScore: smartValidation.totalScore,
         aiDecision: {
           action: 'HOLD',
           confidence: 0,
-          reason: `Pré-validação insuficiente: ${preValidation.score}/${ELITE_CONFIG.PRE_VALIDATION_MIN}`,
-          price: parseFloat(marketData.price.price)
+          reason: `Smart pré-validação insuficiente: ${smartValidation.totalScore}/${ELITE_CONFIG.PRE_VALIDATION_MIN}`,
+          price: parseFloat(marketData.price.price),
+          validationScore: smartValidation.totalScore
         }
       };
     }
 
-    console.log(`   ✅ Pré-validação aprovada - Consultando IA...`);
+    console.log(`   ✅ Smart pré-validação aprovada - Consultando IA...`);
+    console.log(`   🔍 Camadas ativas: ${smartValidation.activeLayers.join(', ')}`);
 
-    // Camada 5: AI Analysis (25 pontos) - Só se passou na pré-validação
+    // Camada Final: AI Analysis - Só se passou na smart pré-validação
     const aiDecision = await UnifiedDeepSeekAnalyzer.analyzeRealTrade(
       this.deepseek!,
       symbol,
@@ -197,14 +243,15 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     // Validar se é BUY em tendência de alta com critérios rigorosos
     let aiScore = 0;
     const minEmaForBuy = 12; // Mínimo 60% do score EMA (12/20)
+    const emaScore = smartValidation.layerScores.ema || 0;
 
     if (aiDecision.confidence >= ELITE_CONFIG.MIN_CONFIDENCE) {
       if (aiDecision.action === 'BUY') {
-        if (preValidation.emaScore >= minEmaForBuy) {
+        if (emaScore >= minEmaForBuy) {
           aiScore = 25;
-          console.log(`   ✅ IA aprovou BUY com EMA forte (${preValidation.emaScore}/20)`);
+          console.log(`   ✅ IA aprovou BUY com EMA forte (${emaScore}/20)`);
         } else {
-          console.log(`   ❌ IA recomenda BUY mas EMA insuficiente (${preValidation.emaScore}/${minEmaForBuy})`);
+          console.log(`   ❌ IA recomenda BUY mas EMA insuficiente (${emaScore}/${minEmaForBuy})`);
         }
       } else {
         console.log(`   ❌ IA não recomenda BUY (${aiDecision.action})`);
@@ -215,22 +262,34 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
     console.log(`   🧠 AI Score: ${aiScore}/25 (${aiDecision.confidence}% confiança, ${aiDecision.action})`);
 
-    const totalScore = preValidation.score + aiScore;
+    const totalScore = smartValidation.totalScore + aiScore;
 
     if (totalScore >= ELITE_CONFIG.MIN_SCORE) {
-      console.log(`   ✅ Score Total: ${totalScore}/100 - SETUP ELITE APROVADO!`);
+      console.log(`   ✅ Score Total: ${totalScore}/125 - SETUP ELITE APROVADO!`);
     } else {
-      console.log(`   ❌ Score Total: ${totalScore}/100 - Abaixo do mínimo (${ELITE_CONFIG.MIN_SCORE})`);
+      console.log(`   ❌ Score Total: ${totalScore}/125 - Abaixo do mínimo (${ELITE_CONFIG.MIN_SCORE})`);
+    }
+
+    // Update aiDecision with validation score
+    aiDecision.validationScore = smartValidation.totalScore;
+    aiDecision.activeLayers = smartValidation.activeLayers;
+    aiDecision.riskLevel = smartValidation.riskLevel;
+
+    // Handle warnings properly
+    if (smartValidation.warnings && smartValidation.warnings.length > 0) {
+      console.log('⚠️ Smart validation warnings:');
+      smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
     }
 
     return {
-      emaScore: preValidation.emaScore,
-      srScore: preValidation.srScore,
-      candleScore: preValidation.candleScore,
-      volumeScore: preValidation.volumeScore,
+      emaScore: smartValidation.layerScores.ema || 0,
+      srScore: smartValidation.layerScores.supportResistance || 0,
+      candleScore: 0,
+      volumeScore: smartValidation.layerScores.volume || 0,
       aiScore,
       totalScore,
-      aiDecision
+      aiDecision,
+      smartValidation
     };
   }
 
@@ -303,7 +362,8 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     // 3. Separação adequada (4 pontos)
     const sep1 = Math.abs(ema8 - ema21) / ema21;
     const sep2 = Math.abs(ema21 - ema55) / ema55;
-    if (sep1 > 0.005 && sep2 > 0.005) {
+    const minSeparation = TradingConfigManager.getConfig().EMA_ADVANCED.MIN_SEPARATION;
+    if (sep1 > minSeparation && sep2 > minSeparation) {
       score += 4;
       details.push('✅ Separação adequada');
     } else {
@@ -344,10 +404,12 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
       const distancePercent = (distance * 100).toFixed(2);
 
       // 1. Proximidade ideal ao suporte (10 pontos)
-      if (distance >= 0.002 && distance <= 0.008) {
+      const minDistance = TradingConfigManager.getConfig().EMA_ADVANCED.MIN_SEPARATION * 0.4;
+      const maxDistance = TradingConfigManager.getConfig().EMA_ADVANCED.MIN_SEPARATION * 1.6;
+      if (distance >= minDistance && distance <= maxDistance) {
         score += 10;
         details.push(`✅ Proximidade ideal (${distancePercent}%)`);
-      } else if (distance <= 0.015) {
+      } else if (distance <= TradingConfigManager.getConfig().EMA_ADVANCED.MIN_SEPARATION * 3) {
         score += 5;
         details.push(`⚠️ Proximidade aceitável (${distancePercent}%)`);
       } else {
@@ -502,7 +564,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
   private findSupportLevels(lows: number[], currentPrice: number) {
     const levels = [];
-    const tolerance = currentPrice * 0.01;
+    const tolerance = currentPrice * (TradingConfigManager.getConfig().EMA_ADVANCED.MIN_SEPARATION * 2);
 
     for (let i = 1; i < lows.length - 1; i++) {
       if (lows[i] <= lows[i - 1] && lows[i] <= lows[i + 1]) {
@@ -789,8 +851,8 @@ if (require.main === module) {
   };
 
   logBotStartup(
-    'Elite Trading Bot Simulator',
-    '🏆 Sistema de Trading de Alta Performance - Simulação Segura',
+    'Elite Trading Bot Simulator v6.0 - TYPESCRIPT FIXED',
+    '🏆 Elite v6.0 - TypeScript Corrigido + 7-Layer Smart Validation\n🔧 Correções: TradeDecision Interface + AI Integration + Fallback Protection\n🧪 Modo elite - Apenas simulação ultra-rigorosa, sem trades reais',
     3000,
     true
   ).then(() => main());

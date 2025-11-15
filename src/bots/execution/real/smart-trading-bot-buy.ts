@@ -9,7 +9,7 @@ import * as dotenv from 'dotenv';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
 import TradingConfigManager from '../../../shared/config/trading-config-manager';
-import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
+import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../../../shared/validators/trend-validator';
 
@@ -31,10 +31,10 @@ export class SmartTradingBotBuy extends BaseTradingBot {
 
     this.flowManager = new BotFlowManager(this, config);
     this.trendAnalyzer = new MarketTrendAnalyzer();
-    const config = TradingConfigManager.getConfig();
+    const tradingConfig = TradingConfigManager.getConfig();
     this.emaAnalyzer = new EmaAnalyzer({
-      fastPeriod: config.EMA.FAST_PERIOD,
-      slowPeriod: config.EMA.SLOW_PERIOD
+      fastPeriod: tradingConfig.EMA.FAST_PERIOD,
+      slowPeriod: tradingConfig.EMA.SLOW_PERIOD
     });
   }
 
@@ -74,25 +74,73 @@ export class SmartTradingBotBuy extends BaseTradingBot {
   private async validateSmartDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
     if (!symbol || !marketData) return false;
     
-    console.log('🛡️ VALIDAÇÃO ULTRA-CONSERVADORA INICIADA...');
+    console.log('🛡️ PRÉ-VALIDAÇÃO ULTRA-CONSERVADORA...');
     
-    // 🚨 ANÁLISE ULTRA-RIGOROSA EM 5 CAMADAS
-    const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
+    // 1. SMART PRÉ-VALIDAÇÃO ULTRA-CONSERVADORA
+    const smartValidation = await SmartPreValidationService
+      .createBuilder()
+      .usePreset('UltraConservative')
+      .build()
+      .validate(symbol, marketData, decision, this.getBinancePublic());
     
-    if (!ultraAnalysis.isValid) {
-      console.log('❌ REJEITADO pela análise ultra-conservadora:');
-      ultraAnalysis.warnings.forEach(warning => console.log(`   ${warning}`));
+    if (!smartValidation.isValid) {
+      console.log('❌ SMART PRÉ-VALIDAÇÃO FALHOU:');
+      smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
       return false;
     }
     
-    console.log('✅ APROVADO pela análise ultra-conservadora:');
-    ultraAnalysis.reasons.forEach(reason => console.log(`   ${reason}`));
-    console.log(`🛡️ Nível de Risco: ${ultraAnalysis.riskLevel}`);
+    console.log('✅ SMART PRÉ-VALIDAÇÃO APROVADA:');
+    smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
+    console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
+    console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
+    console.log(`🔍 Camadas Ativas: ${smartValidation.activeLayers.join(', ')}`);
     
-    // Atualizar decisão com análise ultra-conservadora
-    decision.confidence = ultraAnalysis.confidence;
-    decision.ultraConservativeScore = ultraAnalysis.score;
-    decision.riskLevel = ultraAnalysis.riskLevel;
+    // 2. VALIDAÇÕES ESPECÍFICAS SMART BOT
+    console.log('🔍 Validações específicas Smart Bot...');
+    
+    // Validar tendência EMA para alta
+    const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
+    if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: false })) {
+      console.log('❌ Tendência EMA não favorável para compra');
+      return false;
+    }
+
+    // Validar decisão DeepSeek para BUY
+    if (!validateDeepSeekDecision(decision, 'BUY')) {
+      console.log('❌ DeepSeek não recomenda BUY');
+      return false;
+    }
+
+    // 3. BOOST INTELIGENTE DE CONFIANÇA
+    const boostedDecision = boostConfidence(decision, { baseBoost: 5, maxBoost: 15, trendType: 'BUY' });
+    console.log(`🚀 Confiança após boost: ${boostedDecision.confidence}%`);
+
+    // 4. VALIDAÇÃO FINAL DE RISK/REWARD
+    const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
+      boostedDecision.price,
+      boostedDecision.confidence,
+      boostedDecision.action
+    );
+
+    const riskRewardResult = calculateRiskRewardDynamic(
+      boostedDecision.price,
+      targetPrice,
+      stopPrice,
+      boostedDecision.action
+    );
+
+    if (!riskRewardResult.isValid) {
+      console.log('❌ Risk/Reward insuficiente para trade real');
+      return false;
+    }
+    
+    // Atualizar decisão com smart pré-validação e boost
+    decision.confidence = smartValidation.confidence || boostedDecision.confidence;
+    decision.validationScore = smartValidation.totalScore;
+    decision.riskLevel = smartValidation.riskLevel;
+    decision.smartValidationPassed = true;
+    decision.activeLayers = smartValidation.activeLayers;
+    Object.assign(decision, boostedDecision);
     
     return true;
   }

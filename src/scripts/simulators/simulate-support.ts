@@ -1,5 +1,6 @@
 import { TradingConfigManager } from '../../shared/config/trading-config-manager';
 import SupportResistanceAnalyzer from '../../analyzers/supportResistanceAnalyzer';
+import { PreValidationService } from '../../shared/services/pre-validation-service';
 import * as fs from 'fs';
 import * as path from 'path';
 import { TradeSimulator } from './trade-simulator';
@@ -42,10 +43,10 @@ async function runUltraConservativeSupportResistanceSimulation() {
   const config = TradingConfigManager.getConfig();
   const botConfig = TradingConfigManager.getBotConfig();
   
-  console.log('🛡️ SUPPORT/RESISTANCE SIMULATOR v6.0 - REALISTA CORRIGIDO');
+  console.log('🛡️ SUPPORT/RESISTANCE SIMULATOR v7.0 - VALIDAÇÃO CENTRALIZADA');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log(`🎯 Modo: ${TradingConfigManager.getMode()}`);
-  console.log('📊 Estratégia: S/R Realista + Níveis Psicológicos');
+  console.log('📊 Estratégia: S/R + Níveis Psicológicos (Validação Centralizada)');
   console.log(`🎯 Win Rate Target: 70%+ | Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
   console.log(`🛡️ Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
   console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')} (apenas os mais estáveis)`);
@@ -63,13 +64,15 @@ async function runUltraConservativeSupportResistanceSimulation() {
   const analyzer = new SupportResistanceAnalyzer(supportConfig);
   const tradesFile = `./src/storage/trades/${config.FILES.SUPPORT_RESISTANCE}`;
 
+  // Criar simulador com validação centralizada (analyzer já usa PreValidationService)
   const simulator = new TradeSimulator(analyzer, config.SIMULATION.INITIAL_BALANCE, config.SYMBOLS, tradesFile);
 
-  console.log('🔍 VALIDAÇÕES REAIS IMPLEMENTADAS:');
+  console.log('🔍 VALIDAÇÕES CENTRALIZADAS IMPLEMENTADAS:');
   console.log(`   📊 S/R Toques Mín: ${botConfig.SUPPORT_RESISTANCE.MIN_TOUCHES} (aplicado)`);
   console.log(`   📈 Confiança Mín: ${config.MIN_CONFIDENCE}% (aplicada)`);
   console.log(`   🎯 Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1 (garantido)`);
   console.log(`   🛡️ Tolerância Máx: ${(botConfig.SUPPORT_RESISTANCE.MAX_DISTANCE * 100).toFixed(1)}%`);
+  console.log(`   🔧 Validação: SupportResistanceAnalyzer usa PreValidationService`);
   console.log(`   🚫 APENAS SIMULAÇÃO - Trades reais bloqueados\n`);
 
   await simulator.simulate(config.SYMBOLS);

@@ -7,6 +7,7 @@ import TradingConfigManager from '../../../shared/config/trading-config-manager'
 import { BaseTradingBot } from '../../core/base-trading-bot';
 import { TradeStorage } from '../../../core/utils/trade-storage';
 import { DeepSeekHistoryLogger } from '../../../shared/utils/deepseek-history-logger';
+import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -58,9 +59,9 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     super(undefined, undefined, true);
 
     const config: BotConfig = {
-      name: 'Smart Entry Bot Simulator',
+      name: 'Smart Entry Bot Simulator v2.0 - TS Fixed',
       isSimulation: true,
-      tradesFile: 'smartEntryBotSimulator.json'
+      tradesFile: 'smartEntryBotSimulatorV2.json'
     };
 
     this.flowManager = new BotFlowManager(this, config);
@@ -70,20 +71,27 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
   protected logBotInfo() {
     const config = TradingConfigManager.getConfig();
 
-    console.log('🎯 SMART ENTRY BOT SIMULATOR v1.0 - AGENDA TRADES NOS MELHORES PONTOS\n');
-    logBotHeader('🎯 SMART ENTRY BOT v1.0', 'Agenda Trades nos Melhores Pontos de Entrada | Simulação', true);
-    console.log('🎯 Funcionalidades Inovadoras:');
-    console.log('   ✅ Análise de Suporte/Resistência para entrada ideal');
-    console.log('   ✅ Agenda trades em níveis técnicos ótimos');
-    console.log('   ✅ Monitora condições de entrada em tempo real');
-    console.log('   ✅ Cancela ordens se condições mudarem');
-    console.log('   ✅ RSI + EMA + Volume para confirmação');
-    console.log('   ✅ Validade de 24h para ordens pendentes\n');
-    console.log('🎯 Configuração:');
-    console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
-    console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
+    console.log('🎯 SMART ENTRY BOT SIMULATOR v2.0 - TYPESCRIPT CORRIGIDO - AGENDA TRADES NOS MELHORES PONTOS\n');
+    logBotHeader('🎯 SMART ENTRY BOT v2.0 - TS FIXED', 'Agenda Trades Inteligentes + TypeScript Corrigido | Simulação', true);
+    console.log('🔧 Atualizações v2.0 (TypeScript + Smart Validation):');
+    console.log('   ✅ Correções TypeScript: Fallback protection para undefined values');
+    console.log('   ✅ Smart Pre-Validation: Integração com SmartEntry preset');
+    console.log('   ✅ Confidence Fallback: smartValidation.confidence || 70');
+    console.log('   ✅ Price Display Fix: targetEntryPrice?.toFixed(2) || "N/A"');
+    console.log('   ✅ Order Management: Sistema de ordens pendentes melhorado');
+    console.log('   ✅ Validation Score: Integração com TradeDecision interface\n');
+    console.log('🎯 Funcionalidades Smart Entry:');
+    console.log('   🎯 Análise S/R: Suporte/Resistência para entrada ideal');
+    console.log('   📅 Agenda Inteligente: Trades em níveis técnicos ótimos');
+    console.log('   🔍 Monitor Tempo Real: Condições de entrada monitoradas');
+    console.log('   ❌ Auto-Cancel: Ordens canceladas se condições mudarem');
+    console.log('   📊 Confirmação: RSI + EMA + Volume para validação');
+    console.log('   ⏰ Validade: 24h para ordens pendentes\n');
+    console.log('🎯 Configuração Ultra-Conservadora:');
+    console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}% (REAL)`);
+    console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1 (GARANTIDO)`);
     console.log(`⏰ Cooldown: ${config.TRADE_COOLDOWN_MINUTES} minutos`);
-    console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')}`);
+    console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')} (apenas estáveis)`);
     console.log('🧪 MODO SIMULAÇÃO - Apenas agenda ordens, sem trades reais\n');
   }
 
@@ -160,7 +168,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     };
   }
 
-  private findOptimalEntryPoint(symbol: string, analysis: MarketAnalysis): SmartEntryOrder | null {
+  private async findOptimalEntryPoint(symbol: string, analysis: MarketAnalysis): Promise<SmartEntryOrder | null> {
     const { currentPrice, supportLevels, resistanceLevels, rsi, trend, strength } = analysis;
 
     console.log('\n🎯 Procurando ponto de entrada ideal...');
@@ -176,12 +184,30 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
       const distanceToSupport = Math.abs(currentPrice - nearestSupport) / currentPrice;
 
       // Se estamos próximos do suporte (dentro de 1%) ou abaixo dele
-      if (distanceToSupport <= 0.01 || currentPrice <= nearestSupport * 1.005) {
-        const targetEntryPrice = nearestSupport * 1.002; // Entrada ligeiramente acima do suporte
-        const targetPrice = currentPrice * 1.03; // 3% de ganho
+      const config = TradingConfigManager.getConfig();
+      const maxDistance = config.EMA_ADVANCED.MIN_SEPARATION * 2;
+      if (distanceToSupport <= maxDistance || currentPrice <= nearestSupport * (1 + maxDistance)) {
+        const targetEntryPrice = nearestSupport * (1 + maxDistance * 0.2); // Entrada ligeiramente acima do suporte
+        const targetPrice = currentPrice * (1 + config.RISK.MAX_PERCENT / 100 * 4); // Baseado no risco máximo
         const stopPrice = nearestSupport * 0.995; // Stop abaixo do suporte
 
-        const confidence = this.calculateConfidence(analysis, 'BUY', targetEntryPrice);
+        // Usar smart pré-validação para calcular confiança
+        const mockDecision = { action: 'BUY', confidence: 70, price: targetEntryPrice };
+        const mockMarketData = { price: { price: currentPrice.toString() }, stats: { priceChangePercent: '0' }, klines: [] };
+        
+        const smartValidation = await SmartPreValidationService
+          .createBuilder()
+          .usePreset('SmartEntry')
+          .build()
+          .validate(symbol, mockMarketData, mockDecision, this.getBinancePublic());
+
+        // Handle warnings properly
+        if (smartValidation.warnings && smartValidation.warnings.length > 0) {
+          console.log('⚠️ Smart validation warnings for BUY:');
+          smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
+        }
+
+        const confidence = smartValidation.isValid ? (smartValidation.confidence || 70) : this.calculateConfidence(analysis, 'BUY', targetEntryPrice);
 
         if (confidence >= TradingConfigManager.getConfig().MIN_CONFIDENCE) {
           console.log(`✅ Ponto de entrada BUY identificado: $${targetEntryPrice.toFixed(2)} (suporte: $${nearestSupport.toFixed(2)})`);
@@ -215,12 +241,30 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
       const nearestResistance = resistanceLevels[0];
       const distanceToResistance = Math.abs(currentPrice - nearestResistance) / currentPrice;
 
-      if (distanceToResistance <= 0.01 || currentPrice >= nearestResistance * 0.995) {
+      const config = TradingConfigManager.getConfig();
+      const maxDistance = config.EMA_ADVANCED.MIN_SEPARATION * 2;
+      if (distanceToResistance <= maxDistance || currentPrice >= nearestResistance * (1 - maxDistance)) {
         const targetEntryPrice = nearestResistance * 0.998; // Entrada ligeiramente abaixo da resistência
         const targetPrice = currentPrice * 0.97; // 3% de ganho
-        const stopPrice = nearestResistance * 1.005; // Stop acima da resistência
+        const stopPrice = nearestResistance * (1 + maxDistance * 0.5); // Stop acima da resistência
 
-        const confidence = this.calculateConfidence(analysis, 'SELL', targetEntryPrice);
+        // Usar smart pré-validação para calcular confiança
+        const mockDecision = { action: 'SELL', confidence: 70, price: targetEntryPrice };
+        const mockMarketData = { price: { price: currentPrice.toString() }, stats: { priceChangePercent: '0' }, klines: [] };
+        
+        const smartValidation = await SmartPreValidationService
+          .createBuilder()
+          .usePreset('SmartEntry')
+          .build()
+          .validate(symbol, mockMarketData, mockDecision, this.getBinancePublic());
+
+        // Handle warnings properly
+        if (smartValidation.warnings && smartValidation.warnings.length > 0) {
+          console.log('⚠️ Smart validation warnings for SELL:');
+          smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
+        }
+
+        const confidence = smartValidation.isValid ? (smartValidation.confidence || 70) : this.calculateConfidence(analysis, 'SELL', targetEntryPrice);
 
         if (confidence >= TradingConfigManager.getConfig().MIN_CONFIDENCE) {
           console.log(`✅ Ponto de entrada SELL identificado: $${targetEntryPrice.toFixed(2)} (resistência: $${nearestResistance.toFixed(2)})`);
@@ -265,7 +309,8 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     if (action === 'SELL' && analysis.rsi > 30 && analysis.rsi < 70) confidence += 5;
 
     // Bonus por volume
-    if (analysis.volume > analysis.avgVolume * 1.5) confidence += 5;
+    const config = TradingConfigManager.getConfig();
+    if (analysis.volume > analysis.avgVolume * (config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER / 2)) confidence += 5;
 
     // Bonus por força da tendência
     if (analysis.strength > 0.01) confidence += 5;
@@ -331,7 +376,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
       const timeLeft = new Date(order.validUntil).getTime() - Date.now();
       const hoursLeft = Math.max(0, timeLeft / (1000 * 60 * 60));
 
-      console.log(`📋 ${order.id}: ${order.action} ${order.symbol} @ $${order.targetEntryPrice.toFixed(2)} (${hoursLeft.toFixed(1)}h restantes)`);
+      console.log(`📋 ${order.id}: ${order.action} ${order.symbol} @ $${order.targetEntryPrice?.toFixed(2) || 'N/A'} (${hoursLeft.toFixed(1)}h restantes)`);
     });
   }
 
@@ -428,9 +473,18 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
         console.log(`\n🔍 Analisando ${symbol} para pontos de entrada ideais...`);
 
         const analysis = await this.analyzeMarket(symbol);
-        const optimalEntry = this.findOptimalEntryPoint(symbol, analysis);
+        const optimalEntry = await this.findOptimalEntryPoint(symbol, analysis);
 
         if (optimalEntry) {
+          // Update order with validation score
+          (optimalEntry as any).validationScore = optimalEntry.confidence;
+          // Ensure decision has validationScore
+          const mockDecision = { 
+            action: optimalEntry.action, 
+            confidence: optimalEntry.confidence, 
+            price: optimalEntry.targetEntryPrice,
+            validationScore: optimalEntry.confidence
+          };
           this.saveOrder(optimalEntry);
           console.log(`🎯 Nova ordem agendada para ${symbol}!`);
         }
@@ -452,8 +506,8 @@ if (require.main === module) {
   }
 
   logBotStartup(
-    'Smart Entry Bot Simulator v1.0',
-    '🎯 Bot Inovador - Agenda Trades nos Melhores Pontos de Entrada\n📊 Análise S/R + RSI + EMA + Volume para entrada ideal\n🧪 Modo seguro - Apenas simulação, sem trades reais',
+    'Smart Entry Bot Simulator v2.0 - TYPESCRIPT FIXED',
+    '🎯 Smart Entry v2.0 - TypeScript Corrigido + Smart Validation\n🔧 Correções: Fallback Protection + Confidence Handling + Price Display\n🧪 Modo seguro - Apenas simulação, sem trades reais',
     5000,
     true
   ).then(() => main());

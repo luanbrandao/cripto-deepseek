@@ -10,6 +10,8 @@ import { calculateSymbolVolatility } from '../../utils/risk/volatility-calculato
 import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../../shared/validators/trend-validator';
+import { PreValidationService } from '../../../shared/services/pre-validation-service';
+import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 
 export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
@@ -38,7 +40,7 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
 
   protected logBotInfo() {
     console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
-    logBotHeader('MULTI-SMART BOT SIMULATOR BUY v3.0 - REALISTA', 'Análise Multi-Dimensional - SIMULAÇÃO - APENAS COMPRAS', true);
+    logBotHeader('MULTI-SMART BOT SIMULATOR BUY v5.0 - PRÉ-VALIDAÇÃO INTELIGENTE', 'Análise Multi-Dimensional + Pré-Validação Inteligente - SIMULAÇÃO', true);
 
     console.log('🎯 RECURSOS AVANÇADOS:');
     console.log('  • EMA Multi-Timeframe (12/26/50/100/200)');
@@ -48,7 +50,10 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     console.log('  • Boost Inteligente de Confiança');
     console.log('  • Simulação Segura (Zero Risco)');
     console.log('  • Targets Baseados em Suporte/Resistência');
-    console.log('  • 🚀 MÓDULOS UNIFICADOS (v3.0)');
+    console.log('  • 🚀 MÓDULOS UNIFICADOS (v5.0)');
+    console.log('  • 🧠 Pré-Validação Inteligente (API Fluente)');
+    console.log('  • 🔧 Camadas Customizáveis: EMA+RSI+Volume+S/R+Momentum+Confiança');
+    console.log('  • 🔍 Validações Específicas Multi-Smart');
   }
 
   private async analyzeSymbol(symbol: string, marketData: any) {
@@ -110,33 +115,58 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     }
   }
 
-  private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
-    if (!symbol) return false;
+  private async validateMultiSmartDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
+    if (!symbol || !marketData) return false;
 
-    // 0. Validação de confiança mínima (70% para Multi-Smart)
-    if (decision.confidence < 70) {
-      console.log(`❌ Confiança ${decision.confidence}% < 70% (mínimo realista)`);
+    console.log('🛡️ PRÉ-VALIDAÇÃO INTELIGENTE MULTI-SMART SIMULATOR...');
+
+    // 1. SMART PRÉ-VALIDAÇÃO INTELIGENTE COM CAMADAS CUSTOMIZADAS
+    const config = TradingConfigManager.getConfig();
+    const smartValidation = await SmartPreValidationService
+      .createBuilder()
+      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 25)
+      .withRSI(14, 20)
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER / 2, 20)
+      .withSupportResistance(config.EMA_ADVANCED.MIN_SEPARATION * 2, 15)
+      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH / 2, 10)
+      .withConfidence(config.MIN_CONFIDENCE, 10)
+      .build()
+      .validate(symbol, marketData, decision, this.getBinancePublic());
+
+    if (!smartValidation.isValid) {
+      console.log('❌ SMART PRÉ-VALIDAÇÃO INTELIGENTE FALHOU:');
+      smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
       return false;
     }
 
-    // 1. Validar tendência EMA para alta (módulo unificado)
+    console.log('✅ SMART PRÉ-VALIDAÇÃO INTELIGENTE APROVADA:');
+    smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
+    console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
+    console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
+    console.log(`🔍 Camadas Ativas: ${smartValidation.activeLayers.join(', ')}`);
+    console.log(`🎯 Confiança Calculada: ${smartValidation.confidence}%`);
+
+    // 2. VALIDAÇÕES ESPECÍFICAS MULTI-SMART
+    console.log('🔍 Validações específicas Multi-Smart...');
+    
+    // Validar tendência EMA para alta
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: true })) return false;
+    if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: true })) {
+      console.log('❌ Tendência EMA não favorável para compra');
+      return false;
+    }
 
-    // 2. Validar decisão DeepSeek para BUY (módulo unificado)
-    if (!validateDeepSeekDecision(decision, 'BUY')) return false;
+    // Validar decisão DeepSeek para BUY
+    if (!validateDeepSeekDecision(decision, 'BUY')) {
+      console.log('❌ DeepSeek não recomenda BUY');
+      return false;
+    }
 
-    // 3. Aplicar boost inteligente (módulo unificado)
+    // 3. BOOST INTELIGENTE DE CONFIANÇA
     const boostedDecision = boostConfidence(decision, { baseBoost: 8, maxBoost: 15, trendType: 'BUY' });
+    console.log(`🚀 Confiança após boost: ${boostedDecision.confidence}%`);
 
-    // 4. Buscar dados históricos para análise técnica
-    const klines = await this.getBinancePublic().getKlines(
-      symbol,
-      TradingConfigManager.getConfig().CHART.TIMEFRAME,
-      TradingConfigManager.getConfig().CHART.PERIODS
-    );
-
-    // 5. Calcular volatilidade do mercado
+    // 4. CÁLCULO DE VOLATILIDADE E TARGETS
     const volatility = await calculateSymbolVolatility(
       this.getBinancePublic(),
       symbol,
@@ -144,8 +174,6 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
       TradingConfigManager.getConfig().CHART.PERIODS
     );
 
-    // 6. Validação completa com níveis técnicos
-    console.log('🔍 Validação final com Suporte/Resistência + Volatilidade...');
     console.log(`📊 Volatilidade ${symbol}: ${volatility.toFixed(2)}%`);
 
     const priceResult = calculateTargetAndStopPricesRealMarket(
@@ -158,22 +186,29 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
     console.log(`🎯 Target: ${priceResult.targetPrice.toFixed(2)} (Real Market Method)`);
     console.log(`🛑 Stop: ${priceResult.stopPrice.toFixed(2)} (Real Market Method)`);
 
-    const { targetPrice, stopPrice } = priceResult;
-
+    // 5. VALIDAÇÃO FINAL DE RISK/REWARD
     const riskRewardResult = calculateRiskRewardDynamic(
       boostedDecision.price,
-      targetPrice,
-      stopPrice,
+      priceResult.targetPrice,
+      priceResult.stopPrice,
       boostedDecision.action
     );
 
     if (!riskRewardResult.isValid) {
-      console.log('❌ Validações falharam - Risk/Reward insuficiente');
+      console.log('❌ Risk/Reward insuficiente para simulação');
       return false;
     }
 
-    // Atualizar decisão com boost
+    console.log('🧪 SIMULAÇÃO MULTI-SMART APROVADA - Excelente oportunidade!');
+
+    // Atualizar decisão com smart pré-validação inteligente e boost
+    decision.confidence = smartValidation.confidence || boostedDecision.confidence;
+    decision.validationScore = smartValidation.totalScore;
+    (decision as any).riskLevel = smartValidation.riskLevel;
+    (decision as any).activeLayers = smartValidation.activeLayers;
+    (decision as any).smartPreValidationPassed = true;
     Object.assign(decision, boostedDecision);
+
     return true;
   }
 
@@ -197,8 +232,8 @@ if (require.main === module) {
   };
 
   logBotStartup(
-    'Multi Smart Bot Simulator BUY',
-    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise multi-dimensional avançada',
+    'Multi Smart Bot Simulator BUY v4.1',
+    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🧠 Análise multi-dimensional + Pré-validação otimizada',
     TradingConfigManager.getConfig().SIMULATION.STARTUP_DELAY,
     true
   ).then(() => main());

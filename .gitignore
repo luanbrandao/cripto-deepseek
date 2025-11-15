@@ -7,3 +7,6 @@ src/trades
 bots/trades/
 src/bots/trades/*
 frontend
+src-old/
+trades-old
+src/storage

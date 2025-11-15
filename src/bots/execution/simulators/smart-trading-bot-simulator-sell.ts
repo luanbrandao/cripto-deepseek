@@ -8,6 +8,7 @@ import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
 import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../../shared/validators/trend-validator';
+import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 
 export class SmartTradingBotSimulatorSell extends BaseTradingBot {
   private flowManager: BotFlowManager;
@@ -66,29 +67,46 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
 
 
 
-  private async validateSmartDecision(decision: any, symbol?: string): Promise<boolean> {
-    if (!symbol) return false;
+  private async validateSmartDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
+    if (!symbol || !marketData) return false;
 
-    // 1. Validar tendência EMA para baixa
-    const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    if (!validateTrendAnalysis(trendAnalysis, { direction: 'DOWN', isSimulation: true })) return false;
+    console.log('🛡️ PRÉ-VALIDAÇÃO SMART SELL SIMULATOR...');
 
-    // 2. Validar decisão DeepSeek para SELL
-    if (!validateDeepSeekDecision(decision, 'SELL')) return false;
+    // 1. SMART PRÉ-VALIDAÇÃO PARA VENDAS
+    const config = TradingConfigManager.getConfig();
+    const smartValidation = await SmartPreValidationService
+      .createBuilder()
+      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 20)
+      .withRSI(14, 15)
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 0.4, 15)
+      .withMomentum(-config.EMA_ADVANCED.MIN_TREND_STRENGTH / 2, 15)
+      .withConfidence(config.MIN_CONFIDENCE, 15)
+      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY, 20)
+      .build()
+      .validate(symbol, marketData, decision, this.getBinancePublic());
 
-    // 3. Aplicar boost inteligente para vendas
-    const boostedDecision = boostConfidence(decision, { baseBoost: 5, maxBoost: 15, trendType: 'SELL' });
-
-    // 4. Validação de confiança mínima
-    console.log('🔍 Validação de confiança mínima...');
-    if (!validateConfidence(boostedDecision)) {
-      console.log('❌ Simulação cancelada - Confiança insuficiente');
+    if (!smartValidation.isValid) {
+      console.log('❌ SMART PRÉ-VALIDAÇÃO FALHOU:');
+      smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
       return false;
     }
 
-    // 5. Validação de Risk/Reward
-    console.log('🔍 Validação final de Risk/Reward 2:1 para simulação...');
+    console.log('✅ SMART PRÉ-VALIDAÇÃO APROVADA:');
+    smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
+    console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
+    console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
+    console.log(`🔴 Camadas SELL: ${smartValidation.activeLayers.join(', ')}`);
 
+    // 2. VALIDAÇÕES ESPECÍFICAS SMART SELL
+    const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
+    if (!validateTrendAnalysis(trendAnalysis, { direction: 'DOWN', isSimulation: true })) return false;
+
+    if (!validateDeepSeekDecision(decision, 'SELL')) return false;
+
+    // 3. BOOST INTELIGENTE PARA VENDAS
+    const boostedDecision = boostConfidence(decision, { baseBoost: 5, maxBoost: 15, trendType: 'SELL' });
+
+    // 4. VALIDAÇÃO FINAL DE RISK/REWARD
     const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
       boostedDecision.price,
       boostedDecision.confidence,
@@ -103,12 +121,18 @@ export class SmartTradingBotSimulatorSell extends BaseTradingBot {
     );
 
     if (!riskRewardResult.isValid) {
-      console.log('❌ Simulação cancelada - Risk/Reward insuficiente');
+      console.log('❌ Risk/Reward insuficiente para simulação SELL');
       return false;
     }
 
-    // Atualizar decisão com boost
+    // Atualizar decisão com smart pré-validação e boost
+    decision.confidence = smartValidation.confidence || boostedDecision.confidence;
+    decision.validationScore = smartValidation.totalScore;
+    decision.riskLevel = smartValidation.riskLevel;
+    decision.smartValidationPassed = true;
+    decision.activeLayers = smartValidation.activeLayers;
     Object.assign(decision, boostedDecision);
+
     return true;
   }
 

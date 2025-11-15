@@ -6,6 +6,7 @@ import { TradingConfigManager } from '../../../shared/config/trading-config-mana
 import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { DeepSeekHistoryLogger } from '../../../shared/utils/deepseek-history-logger';
+import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import * as dotenv from 'dotenv';
 
 // Ativar modo ultra-conservador
@@ -49,9 +50,28 @@ export class RealTradingBotSimulator extends BaseTradingBot {
   private async validateUltraConservativeDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
     if (!symbol || !marketData) return false;
     
-    console.log('🛡️ VALIDAÇÃO ULTRA-CONSERVADORA REAL BOT SIMULATOR...');
+    console.log('🛡️ PRÉ-VALIDAÇÃO ULTRA-CONSERVADORA REAL BOT SIMULATOR...');
     
-    // Calcular alvos e stops baseados nos níveis técnicos extraídos
+    // 1. SMART PRÉ-VALIDAÇÃO ULTRA-CONSERVADORA
+    const smartValidation = await SmartPreValidationService
+      .createBuilder()
+      .usePreset('Simulation')
+      .build()
+      .validate(symbol, marketData, decision, this.getBinancePublic());
+
+    if (!smartValidation.isValid) {
+      console.log('❌ SMART PRÉ-VALIDAÇÃO FALHOU:');
+      smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
+      return false;
+    }
+
+    console.log('✅ SMART PRÉ-VALIDAÇÃO APROVADA:');
+    smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
+    console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
+    console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
+    console.log(`🔍 Camadas Ativas: ${smartValidation.activeLayers.join(', ')}`);
+    
+    // 2. CÁLCULO DE ALVOS E STOPS TÉCNICOS
     const enhancedTargets = this.calculateEnhancedTargetsAndStops(decision, marketData.price);
     
     // Exibir dados extraídos do parser melhorado
@@ -104,10 +124,13 @@ export class RealTradingBotSimulator extends BaseTradingBot {
     console.log(`🛡️ Nível de Risco: ${ultraAnalysis.riskLevel}`);
     console.log('🧪 Esta seria uma excelente oportunidade para trade real!');
     
-    // Atualizar decisão com análise ultra-conservadora e dados técnicos
-    decision.confidence = ultraAnalysis.confidence;
+    // Atualizar decisão com smart pré-validação e análise ultra-conservadora
+    decision.confidence = smartValidation.confidence || ultraAnalysis.confidence;
+    decision.validationScore = smartValidation.totalScore;
     decision.ultraConservativeScore = ultraAnalysis.score;
-    decision.riskLevel = ultraAnalysis.riskLevel;
+    decision.riskLevel = smartValidation.riskLevel || ultraAnalysis.riskLevel;
+    decision.smartValidationPassed = true;
+    decision.activeLayers = smartValidation.activeLayers;
     
     // Salvar análise com níveis técnicos no histórico DeepSeek
     if (decision.technicalLevels || enhancedTargets) {

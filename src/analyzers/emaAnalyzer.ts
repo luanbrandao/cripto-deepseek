@@ -1,6 +1,7 @@
 import { calculateEMA } from '../bots/utils/analysis/ema-calculator';
 import { UNIFIED_TRADING_CONFIG, BOT_SPECIFIC_CONFIG } from '../shared/config/unified-trading-config';
 import { TradingConfigManager } from '../shared/config/trading-config-manager';
+import { PreValidationService } from '../shared/services/pre-validation-service';
 
 
 interface MarketData {
@@ -115,9 +116,18 @@ class EmaAnalyzer {
     };
   }
 
-  // Método público para validação EMA avançada
-  public validateEmaStrengthPublic(prices: number[]): { isValid: boolean; reason: string; score: number } {
-    return this.validateEmaStrength(prices);
+  // Método público para validação EMA avançada usando serviço centralizado
+  public validateEmaStrengthPublic(prices: number[], currentPrice: number): { isValid: boolean; reason: string; score: number } {
+    const validation = PreValidationService.validateEmaSignal(
+      { price24h: prices, currentPrice },
+      { action: 'BUY', confidence: 75 }
+    );
+    
+    return {
+      isValid: validation.isValid,
+      reason: validation.reasons.join(', ') || validation.warnings.join(', '),
+      score: validation.score
+    };
   }
 
   private calculateEMA(prices: number[], period: number): number {

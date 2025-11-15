@@ -10,6 +10,7 @@ import { AdvancedEmaAnalyzer } from '../../services/advanced-ema-analyzer';
 import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../../../shared/validators/trend-validator';
+import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 
 export class MultiSmartTradingBotBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
@@ -104,21 +105,45 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
         this.advancedEmaAnalyzer.isModerateUptrend(analysis));
   }
 
-  private async validateMultiSmartDecision(decision: any, symbol?: string): Promise<boolean> {
-    if (!symbol) return false;
-    // 1. Validar tendência EMA
+  private async validateMultiSmartDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
+    if (!symbol || !marketData) return false;
+
+    console.log('🛡️ PRÉ-VALIDAÇÃO MULTI-SMART REAL BOT...');
+
+    // 1. SMART PRÉ-VALIDAÇÃO MULTI-SMART
+    const smartValidation = await SmartPreValidationService
+      .createBuilder()
+      .withEma(12, 26, 25)
+      .withRSI(14, 20)
+      .withVolume(1.5, 20)
+      .withSupportResistance(0.5, 15)
+      .withMomentum(0.02, 15)
+      .withConfidence(85, 25)
+      .build()
+      .validate(symbol, marketData, decision, this.getBinancePublic());
+
+    if (!smartValidation.isValid) {
+      console.log('❌ SMART PRÉ-VALIDAÇÃO FALHOU:');
+      smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
+      return false;
+    }
+
+    console.log('✅ SMART PRÉ-VALIDAÇÃO APROVADA:');
+    smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
+    console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
+    console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
+    console.log(`🔍 Camadas Ativas: ${smartValidation.activeLayers.join(', ')}`);
+
+    // 2. VALIDAÇÕES ESPECÍFICAS MULTI-SMART
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
     if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: false })) return false;
 
-    // 2. Validar decisão DeepSeek
     if (!validateDeepSeekDecision(decision, 'BUY')) return false;
 
-    // 3. Aplicar boost inteligente
+    // 3. BOOST INTELIGENTE
     const boostedDecision = boostConfidence(decision, { baseBoost: 8, maxBoost: 15, trendType: 'BUY' });
 
-    // 4. Validação completa (confiança + ação + risk/reward)
-    console.log('🔍 Validação final de Risk/Reward antes da execução...');
-
+    // 4. VALIDAÇÃO FINAL DE RISK/REWARD
     const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
       boostedDecision.price,
       boostedDecision.confidence,
@@ -133,12 +158,18 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
     );
 
     if (!riskRewardResult.isValid) {
-      console.log('❌ Validações falharam - Risk/Reward insuficiente');
+      console.log('❌ Risk/Reward insuficiente para trade real');
       return false;
     }
 
-    // Atualizar decisão com boost
+    // Atualizar decisão com smart pré-validação e boost
+    decision.confidence = smartValidation.confidence || boostedDecision.confidence;
+    decision.validationScore = smartValidation.totalScore;
+    decision.riskLevel = smartValidation.riskLevel;
+    decision.smartValidationPassed = true;
+    decision.activeLayers = smartValidation.activeLayers;
     Object.assign(decision, boostedDecision);
+    
     return true;
   }
 

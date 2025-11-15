@@ -4,6 +4,9 @@ export interface TradeDecision {
   reason: string;
   symbol: string;
   price: number;
+  validationScore?: number;
+  activeLayers?: string[];
+  riskLevel?: string;
 }
 
 export interface RiskRewardCalculation {

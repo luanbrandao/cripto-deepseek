@@ -8,6 +8,7 @@ import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
 import TradingConfigManager from '../../../shared/config/trading-config-manager';
 import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
+import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import { BaseTradingBot } from '../../core/base-trading-bot';
 
 dotenv.config();
@@ -92,23 +93,46 @@ export class EmaTradingBot extends BaseTradingBot {
   private async validateEmaDecision(decision: TradeDecision, symbol?: string, marketData?: any): Promise<boolean> {
     if (!symbol || !marketData) return false;
     
-    console.log('🛡️ VALIDAÇÃO ULTRA-CONSERVADORA EMA...');
+    console.log('🛡️ PRÉ-VALIDAÇÃO ULTRA-CONSERVADORA EMA...');
     
-    // 🚨 ANÁLISE ULTRA-RIGOROSA EM 5 CAMADAS
+    // 1. SMART PRÉ-VALIDAÇÃO ULTRA-CONSERVADORA
+    const smartValidation = await SmartPreValidationService
+      .createBuilder()
+      .usePreset('UltraConservative')
+      .build()
+      .validate(symbol, marketData, decision, this.getBinancePublic());
+
+    if (!smartValidation.isValid) {
+      console.log('❌ SMART PRÉ-VALIDAÇÃO FALHOU:');
+      smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
+      return false;
+    }
+
+    console.log('✅ SMART PRÉ-VALIDAÇÃO APROVADA:');
+    smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
+    console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
+    console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
+    console.log(`🔍 Camadas Ativas: ${smartValidation.activeLayers.join(', ')}`);
+    
+    // 2. ANÁLISE ULTRA-CONSERVADORA ADICIONAL
     const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
     
     if (!ultraAnalysis.isValid) {
-      console.log('❌ REJEITADO pela análise ultra-conservadora EMA:');
+      console.log('❌ ANÁLISE ULTRA-CONSERVADORA FALHOU:');
       ultraAnalysis.warnings.forEach(warning => console.log(`   ${warning}`));
       return false;
     }
     
-    console.log('✅ APROVADO pela análise ultra-conservadora EMA:');
+    console.log('✅ ANÁLISE ULTRA-CONSERVADORA APROVADA:');
     ultraAnalysis.reasons.forEach(reason => console.log(`   ${reason}`));
-    console.log(`🛡️ Nível de Risco: ${ultraAnalysis.riskLevel}`);
     
-    // Atualizar decisão com análise ultra-conservadora
-    decision.confidence = ultraAnalysis.confidence;
+    // Atualizar decisão com smart pré-validação e análise ultra-conservadora
+    decision.confidence = smartValidation.confidence || ultraAnalysis.confidence;
+    decision.validationScore = smartValidation.totalScore;
+    (decision as any).ultraConservativeScore = ultraAnalysis.score;
+    (decision as any).riskLevel = smartValidation.riskLevel || ultraAnalysis.riskLevel;
+    (decision as any).smartValidationPassed = true;
+    (decision as any).activeLayers = smartValidation.activeLayers;
     
     return true;
   }
