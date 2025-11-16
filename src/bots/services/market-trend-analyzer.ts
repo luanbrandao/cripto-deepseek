@@ -1,6 +1,6 @@
 import { BinancePublicClient } from '../../core/clients/binance-public-client';
-import EmaAnalyzer from '../../analyzers/emaAnalyzer';
-import { TradingConfigManager } from '../../shared/config/trading-config-manager';
+import EmaAnalyzer from '../../core/analyzers/technical/ema-analyzer';
+import { TradingConfigManager } from '../../core/config/trading-config-manager';
 
 interface MarketData {
   price24h: number[];

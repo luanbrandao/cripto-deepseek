@@ -1,7 +1,9 @@
 /**
  * 🚀 MOMENTUM ANALYZER
- * Moved and optimized from src/analyzers/momentumAnalyzer.ts
+ * Uses centralized TechnicalCalculator for calculations
  */
+
+import { TechnicalCalculator } from '../../../shared/calculations';
 
 interface MomentumAnalysis {
   isValid: boolean;
@@ -14,6 +16,8 @@ interface MomentumAnalysis {
 export class MomentumAnalyzer {
   
   public validateMomentum(prices: number[]): MomentumAnalysis {
+    const momentumResult = TechnicalCalculator.calculateMomentumAnalysis(prices);
+    
     if (prices.length < 5) {
       return { 
         isValid: false, 
@@ -24,32 +28,17 @@ export class MomentumAnalyzer {
       };
     }
 
-    const recent = prices.slice(-5);
-    const momentum = (recent[4] - recent[0]) / recent[0];
+    const momentumThreshold = 0.005;
+    const isValid = Math.abs(momentumResult.value) >= momentumThreshold;
     
-    let direction: 'bullish' | 'bearish' | 'neutral';
-    const momentumThreshold = 0.005; // Algorithm constant - minimum momentum threshold
-    if (momentum > momentumThreshold) direction = 'bullish';
-    else if (momentum < -momentumThreshold) direction = 'bearish';
-    else direction = 'neutral';
-    
-    if (momentum < momentumThreshold) {
-      return { 
-        isValid: false, 
-        reason: `Momentum ${(momentum * 100).toFixed(2)}% < ${(momentumThreshold * 100).toFixed(1)}%`, 
-        score: momentum * 1000,
-        momentum,
-        direction
-      };
-    }
-
-    const score = Math.min(100, momentum * 1000);
     return { 
-      isValid: true, 
-      reason: `Momentum ${(momentum * 100).toFixed(2)}% OK`, 
-      score,
-      momentum,
-      direction
+      isValid,
+      reason: isValid ? 
+        `Momentum ${(momentumResult.value * 100).toFixed(2)}% OK` : 
+        `Momentum ${(momentumResult.value * 100).toFixed(2)}% < ${(momentumThreshold * 100).toFixed(1)}%`,
+      score: momentumResult.strength,
+      momentum: momentumResult.value,
+      direction: momentumResult.direction
     };
   }
 
@@ -106,30 +95,15 @@ export class MomentumAnalyzer {
   }
 
   private calculateMomentumWithRSI(prices: number[]) {
+    const momentumResult = TechnicalCalculator.calculateMomentumAnalysis(prices);
+    const rsiResult = TechnicalCalculator.calculateRSIAnalysis(prices);
+    
     if (prices.length < 14) {
       return { momentum: 0, rsi: 50, strength: 'neutral' as const, score: 0 };
     }
 
-    const momentum = (prices[prices.length - 1] - prices[prices.length - 5]) / prices[prices.length - 5];
-    
-    const gains: number[] = [];
-    const losses: number[] = [];
-    
-    for (let i = 1; i < Math.min(prices.length, 14); i++) {
-      const change = prices[i] - prices[i - 1];
-      if (change > 0) {
-        gains.push(change);
-        losses.push(0);
-      } else {
-        gains.push(0);
-        losses.push(Math.abs(change));
-      }
-    }
-    
-    const avgGain = gains.reduce((a, b) => a + b, 0) / gains.length;
-    const avgLoss = losses.reduce((a, b) => a + b, 0) / losses.length;
-    const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
-    const rsi = 100 - (100 / (1 + rs));
+    const momentum = momentumResult.value;
+    const rsi = rsiResult.value;
     
     let strength: 'overbought' | 'oversold' | 'neutral' | 'strong_bullish' | 'strong_bearish';
     if (rsi > 70 && momentum > 0.02) strength = 'overbought';

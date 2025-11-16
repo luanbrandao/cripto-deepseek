@@ -9,9 +9,30 @@ import { VolumeCalculator } from './volume-calculator';
 import { MomentumCalculator } from './momentum-calculator';
 import { VolatilityCalculator } from './volatility-calculator';
 import { SupportResistanceCalculator, type SupportResistanceLevel, type PivotPoint } from './support-resistance-calculator';
+import { PriceCalculator, type PriceTargets, type EnhancedPriceTargets } from './price-calculator';
+import { TechnicalIndicators, type EMAResult, type RSIResult, type MomentumResult, type VolumeResult } from './technical-indicators';
 
-export { EMACalculator, RSICalculator, VolumeCalculator, MomentumCalculator, VolatilityCalculator, SupportResistanceCalculator };
-export type { SupportResistanceLevel, PivotPoint };
+export { 
+  EMACalculator, 
+  RSICalculator, 
+  VolumeCalculator, 
+  MomentumCalculator, 
+  VolatilityCalculator, 
+  SupportResistanceCalculator,
+  PriceCalculator,
+  TechnicalIndicators
+};
+
+export type { 
+  SupportResistanceLevel, 
+  PivotPoint, 
+  PriceTargets, 
+  EnhancedPriceTargets,
+  EMAResult,
+  RSIResult,
+  MomentumResult,
+  VolumeResult
+};
 
 /**
  * 🎯 UNIFIED TECHNICAL CALCULATOR
@@ -35,7 +56,6 @@ export class TechnicalCalculator {
   static calculateVolumeTrend = VolumeCalculator.calculateVolumeTrend;
   static calculateVolumeVolatility = VolumeCalculator.calculateVolumeVolatility;
   static calculateVolumePriceCorrelation = VolumeCalculator.calculateVolumePriceCorrelation;
-  static calculateOBV = VolumeCalculator.calculateOBV;
 
   // Momentum Methods
   static calculateMomentum = MomentumCalculator.calculateMomentum;
@@ -47,8 +67,6 @@ export class TechnicalCalculator {
 
   // Volatility Methods
   static calculateVolatility = VolatilityCalculator.calculateVolatility;
-  static calculateATR = VolatilityCalculator.calculateATR;
-  static calculateBollingerBands = VolatilityCalculator.calculateBollingerBands;
   static calculateFromKlines = VolatilityCalculator.calculateFromKlines;
   static calculateGarmanKlass = VolatilityCalculator.calculateGarmanKlass;
   static calculateVolatilityCone = VolatilityCalculator.calculateVolatilityCone;
@@ -62,6 +80,27 @@ export class TechnicalCalculator {
   static calculateSRStrength = SupportResistanceCalculator.calculateLevelStrength;
   static findDynamicSRLevels = SupportResistanceCalculator.findDynamicLevels;
 
+  // Price Calculation Methods
+  static calculatePricesForAction = PriceCalculator.calculatePricesForAction;
+  static calculateWithVolatility = PriceCalculator.calculateWithVolatility;
+  static calculateWithLevels = PriceCalculator.calculateWithLevels;
+  static calculateEnhancedTargets = PriceCalculator.calculateEnhancedTargets;
+
+  // Technical Indicators Methods (Unified Interface)
+  static calculateEMAAnalysis = TechnicalIndicators.calculateEMAAnalysis;
+  static calculateRSIAnalysis = TechnicalIndicators.calculateRSI;
+  static calculateMomentumAnalysis = TechnicalIndicators.calculateMomentum;
+  static calculateVolumeAnalysis = TechnicalIndicators.calculateVolumeAnalysis;
+  static calculateOBVIndicator = TechnicalIndicators.calculateOBV;
+  static calculateBollingerBandsIndicator = TechnicalIndicators.calculateBollingerBands;
+  static calculateMACD = TechnicalIndicators.calculateMACD;
+  static calculateATRIndicator = TechnicalIndicators.calculateATR;
+
+  // Legacy Volume/Volatility Methods (for backward compatibility)
+  static calculateOBV = VolumeCalculator.calculateOBV;
+  static calculateATR = VolatilityCalculator.calculateATR;
+  static calculateBollingerBands = VolatilityCalculator.calculateBollingerBands;
+
   /**
    * 📊 COMPREHENSIVE MARKET ANALYSIS
    * All-in-one analysis method
@@ -70,17 +109,16 @@ export class TechnicalCalculator {
     const currentPrice = prices[prices.length - 1];
     
     // EMA Analysis (12/26 default)
-    const ema = this.calculateEMACrossover(prices, 12, 26);
+    const ema = this.calculateEMAAnalysis(prices);
     
     // RSI Analysis
-    const rsiValue = this.calculateRSI(prices);
-    const rsi = { value: rsiValue, signal: this.getRSISignal(rsiValue) };
+    const rsi = this.calculateRSIAnalysis(prices);
     
     // Volume Analysis (if available)
-    const volume = volumes ? this.calculateVolumeRatio(volumes) : undefined;
+    const volume = volumes ? this.calculateVolumeAnalysis(volumes) : undefined;
     
     // Momentum Analysis
-    const momentum = this.calculateMomentum(prices);
+    const momentum = this.calculateMomentumAnalysis(prices);
     
     // Volatility Analysis
     const volatility = this.calculateVolatility(prices);
@@ -88,13 +126,25 @@ export class TechnicalCalculator {
     // Support/Resistance Analysis (if klines available)
     const supportResistance = klines ? this.findBasicSRLevels(klines, currentPrice) : undefined;
     
+    // Bollinger Bands
+    const bollingerBands = this.calculateBollingerBands(prices);
+    
+    // MACD
+    const macd = this.calculateMACD(prices);
+    
+    // ATR (if klines available)
+    const atr = klines ? this.calculateATRIndicator(klines) : undefined;
+    
     return {
       ema,
       rsi,
       volume,
       momentum,
       volatility,
-      supportResistance
+      supportResistance,
+      bollingerBands,
+      macd,
+      atr
     };
   }
 }

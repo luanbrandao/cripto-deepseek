@@ -4,6 +4,7 @@
  */
 
 import TradingConfigManager from "../../config/trading-config-manager";
+import { TechnicalCalculator } from '../../../shared/calculations';
 
 
 export interface UltraConservativeAnalysis {
@@ -150,7 +151,7 @@ export class UltraConservativeAnalyzer {
     }
 
     // RSI em zona segura (25 pontos)
-    const rsi = this.calculateRSI(klines);
+    const rsi = TechnicalCalculator.calculateRSI(klines.map(k => parseFloat(k[4])));
     const config = TradingConfigManager.getConfig();
     const [rsiMin, rsiMax] = [35, 65]; // Zona segura padrão
     if (rsi >= rsiMin && rsi <= rsiMax) {
@@ -338,10 +339,7 @@ export class UltraConservativeAnalyzer {
     return { isAligned: true }; // Placeholder
   }
 
-  private static calculateRSI(klines: any[]): number {
-    // Implementação simplificada do RSI
-    return 50; // Placeholder
-  }
+  // RSI calculation moved to centralized TechnicalCalculator
 
   private static calculateMACD(klines: any[]): { signal: string; strength: number } {
     // Implementação simplificada do MACD

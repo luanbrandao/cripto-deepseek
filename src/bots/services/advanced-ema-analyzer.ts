@@ -1,5 +1,5 @@
 import { TradingConfigManager } from '../../core/config/trading-config-manager';
-import { TechnicalCalculator } from '../../../shared/calculations';
+import { TechnicalCalculator } from '../../shared/calculations';
 
 interface AdvancedEmaAnalysis {
   shortTerm: { ema12: number; ema26: number; trend: string; strength: number };
@@ -26,47 +26,38 @@ export class AdvancedEmaAnalyzer {
   }
 
   analyzeAdvanced(prices: number[], volumes?: number[]): AdvancedEmaAnalysis {
-    const currentPrice = prices[prices.length - 1];
-
-    // Calculate multiple EMAs - Algorithm constants
-    const ema12Period = 12;
-    const ema26Period = 26;
-    const ema50Period = 50;
-    const ema100Period = 100;
-    const ema200Period = 200;
-    
-    const ema12 = TechnicalCalculator.calculateEMA(prices, ema12Period);
-    const ema26 = TechnicalCalculator.calculateEMA(prices, ema26Period);
-    const ema50 = TechnicalCalculator.calculateEMA(prices, ema50Period);
-    const ema100 = TechnicalCalculator.calculateEMA(prices, ema100Period);
-    const ema200 = TechnicalCalculator.calculateEMA(prices, ema200Period);
+    // Use centralized EMA analysis
+    const emaAnalysis = TechnicalCalculator.calculateEMAAnalysis(prices);
+    const momentumAnalysis = TechnicalCalculator.calculateMomentumAnalysis(prices);
+    const rsiAnalysis = TechnicalCalculator.calculateRSIAnalysis(prices);
+    const volumeAnalysis = volumes ? TechnicalCalculator.calculateVolumeAnalysis(volumes) : null;
 
     // Short-term analysis
     const shortTerm = {
-      ema12,
-      ema26,
-      trend: this.determineTrend(currentPrice, ema12, ema26),
-      strength: this.calculateTrendStrength(currentPrice, ema12, ema26)
+      ema12: emaAnalysis.ema12,
+      ema26: emaAnalysis.ema26,
+      trend: emaAnalysis.trend,
+      strength: emaAnalysis.strength
     };
 
     // Medium-term analysis
     const mediumTerm = {
-      ema50,
-      ema100,
-      trend: this.determineTrend(ema26, ema50, ema100),
-      strength: this.calculateTrendStrength(ema26, ema50, ema100)
+      ema50: emaAnalysis.ema50 || 0,
+      ema100: emaAnalysis.ema100 || 0,
+      trend: this.determineMediumTrend(emaAnalysis),
+      strength: this.calculateMediumStrength(emaAnalysis)
     };
 
     // Long-term analysis
     const longTerm = {
-      ema200,
-      trend: currentPrice > ema200 ? 'UP' : 'DOWN'
+      ema200: emaAnalysis.ema200 || 0,
+      trend: emaAnalysis.ema200 ? (prices[prices.length - 1] > emaAnalysis.ema200 ? 'UP' : 'DOWN') : 'UP'
     };
 
-    // Calculate momentum and RSI
-    const momentum = this.calculateMomentum(prices);
-    const rsi = this.calculateRSI(prices);
-    const volumeStrength = volumes ? this.calculateVolumeStrength(volumes) : 60;
+    // Use centralized calculations
+    const momentum = momentumAnalysis.strength;
+    const rsi = rsiAnalysis.value;
+    const volumeStrength = volumeAnalysis ? volumeAnalysis.strength : 60;
 
     // Overall strength calculation
     const overallStrength = this.calculateOverallStrength(
@@ -181,64 +172,19 @@ export class AdvancedEmaAnalyzer {
     return Math.min(maxStrength, strength * strengthMultiplier);
   }
 
-  private calculateMomentum(prices: number[]): number {
-    const minMomentumPeriod = 14; // Algorithm constant
-    const defaultMomentum = 50; // Algorithm constant
-    const momentumWindow = 7; // Algorithm constant
+  private determineMediumTrend(emaAnalysis: any): string {
+    if (!emaAnalysis.ema50 || !emaAnalysis.ema100) return 'SIDEWAYS';
     
-    if (prices.length < minMomentumPeriod) return defaultMomentum;
-
-    const recent = prices.slice(-momentumWindow);
-    const previous = prices.slice(-minMomentumPeriod, -momentumWindow);
-
-    const recentAvg = recent.reduce((a, b) => a + b) / recent.length;
-    const previousAvg = previous.reduce((a, b) => a + b) / previous.length;
-
-    const momentum = ((recentAvg - previousAvg) / previousAvg) * 100;
-    const baseMomentum = 50; // Algorithm constant
-    const momentumMultiplier = 5; // Algorithm constant
-    return Math.max(0, Math.min(100, baseMomentum + momentum * momentumMultiplier));
+    if (emaAnalysis.ema26 > emaAnalysis.ema50 && emaAnalysis.ema50 > emaAnalysis.ema100) return 'UP';
+    if (emaAnalysis.ema26 < emaAnalysis.ema50 && emaAnalysis.ema50 < emaAnalysis.ema100) return 'DOWN';
+    return 'SIDEWAYS';
   }
 
-  private calculateRSI(prices: number[], period = 14): number {
-    const defaultRSI = 50; // Algorithm constant
-    if (prices.length < period + 1) return defaultRSI;
-
-    let gains = 0;
-    let losses = 0;
-
-    for (let i = prices.length - period; i < prices.length; i++) {
-      const change = prices[i] - prices[i - 1];
-      if (change > 0) {
-        gains += change;
-      } else {
-        losses -= change;
-      }
-    }
-
-    const avgGain = gains / period;
-    const avgLoss = losses / period;
-
-    const maxRSI = 100; // Algorithm constant
-    if (avgLoss === 0) return maxRSI;
-
-    const rs = avgGain / avgLoss;
-    return maxRSI - (maxRSI / (1 + rs));
-  }
-
-  private calculateVolumeStrength(volumes: number[]): number {
-    const config = TradingConfigManager.getConfig();
-    const defaultVolumeStrength = config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60;
-    const minDataPoints = 20; // Algorithm constant
-    const volumeMultiplier = 50; // Algorithm constant
+  private calculateMediumStrength(emaAnalysis: any): number {
+    if (!emaAnalysis.ema50 || !emaAnalysis.ema100) return 50;
     
-    if (volumes.length < minDataPoints) return defaultVolumeStrength;
-
-    const recentVolume = volumes.slice(-5).reduce((a, b) => a + b) / 5;
-    const avgVolume = volumes.slice(-minDataPoints).reduce((a, b) => a + b) / minDataPoints;
-
-    const volumeRatio = recentVolume / avgVolume;
-    return Math.min(100, Math.max(0, volumeRatio * volumeMultiplier));
+    const diff = Math.abs(emaAnalysis.ema50 - emaAnalysis.ema100) / emaAnalysis.ema100 * 100;
+    return Math.min(100, diff * 10);
   }
 
   private calculateOverallStrength(

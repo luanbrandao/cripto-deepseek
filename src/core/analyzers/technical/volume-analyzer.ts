@@ -1,8 +1,9 @@
 /**
  * 📊 VOLUME ANALYZER
- * Moved and optimized from src/analyzers/volumeAnalyzer.ts
+ * Uses centralized TechnicalCalculator for calculations
  */
 
+import { TechnicalCalculator } from '../../../shared/calculations';
 import { BOT_SPECIFIC_CONFIG } from '../../../shared/config/unified-trading-config';
 
 interface VolumeAnalysis {
@@ -29,31 +30,23 @@ export class VolumeAnalyzer {
     }
 
     const volumes = klines.map((k: any) => parseFloat(k[5]));
+    const volumeResult = TechnicalCalculator.calculateVolumeAnalysis(volumes);
+    
     const currentVolume = volumes[volumes.length - 1];
     const avgVolume = volumes.slice(-10).reduce((a, b) => a + b, 0) / 10;
-    
-    const volumeMultiplier = currentVolume / avgVolume;
+    const volumeMultiplier = volumeResult.ratio;
     
     const botConfig = BOT_SPECIFIC_CONFIG.SMART_BOT_BUY;
     const requiredVolume = botConfig.VOLUME_MULTIPLIER;
     
-    if (volumeMultiplier < requiredVolume) {
-      return { 
-        isValid: false, 
-        reason: `Volume ${volumeMultiplier.toFixed(1)}x < ${requiredVolume}x (BOT_SPECIFIC)`, 
-        score: volumeMultiplier * 10,
-        volumeMultiplier,
-        avgVolume,
-        currentVolume
-      };
-    }
-
-    const scoreMultiplier = 10; // Algorithm constant
-    const score = Math.min(100, volumeMultiplier * scoreMultiplier);
+    const isValid = volumeMultiplier >= requiredVolume;
+    
     return { 
-      isValid: true, 
-      reason: `Volume ${volumeMultiplier.toFixed(1)}x OK`, 
-      score,
+      isValid,
+      reason: isValid ? 
+        `Volume ${volumeMultiplier.toFixed(1)}x OK` : 
+        `Volume ${volumeMultiplier.toFixed(1)}x < ${requiredVolume}x (BOT_SPECIFIC)`,
+      score: volumeResult.strength,
       volumeMultiplier,
       avgVolume,
       currentVolume
@@ -105,33 +98,18 @@ export class VolumeAnalyzer {
     }
 
     const volumes = klines.map((k: any) => parseFloat(k[5]));
-    const recent10 = volumes.slice(-10);
-    const previous10 = volumes.slice(-20, -10);
+    const volumeResult = TechnicalCalculator.calculateVolumeAnalysis(volumes, 20);
     
-    const recentAvg = recent10.reduce((a, b) => a + b, 0) / 10;
-    const previousAvg = previous10.reduce((a, b) => a + b, 0) / 10;
-    
-    const change = (recentAvg - previousAvg) / previousAvg;
     const currentVolume = volumes[volumes.length - 1];
     const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
-    
     const anomaly = currentVolume > avgVolume * this.getAnomalyMultiplier();
     
-    let trend: 'increasing' | 'decreasing' | 'stable';
-    let strength: number;
     let reason: string;
-    
-    if (change > this.getChangeThreshold()) {
-      trend = 'increasing';
-      strength = Math.min(100, change * 100);
-      reason = `Volume crescente: +${(change * 100).toFixed(1)}%`;
-    } else if (change < -this.getChangeThreshold()) {
-      trend = 'decreasing';
-      strength = Math.min(100, Math.abs(change) * 100);
-      reason = `Volume decrescente: ${(change * 100).toFixed(1)}%`;
+    if (volumeResult.trend === 'increasing') {
+      reason = `Volume crescente`;
+    } else if (volumeResult.trend === 'decreasing') {
+      reason = `Volume decrescente`;
     } else {
-      trend = 'stable';
-      strength = this.getStableStrength();
       reason = 'Volume estável';
     }
     
@@ -139,7 +117,12 @@ export class VolumeAnalyzer {
       reason += ` | ANOMALIA: ${(currentVolume / avgVolume).toFixed(1)}x acima da média`;
     }
     
-    return { trend, strength, anomaly, reason };
+    return { 
+      trend: volumeResult.trend, 
+      strength: volumeResult.strength, 
+      anomaly, 
+      reason 
+    };
   }
 
   // Algorithm constants as methods

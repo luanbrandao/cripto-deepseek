@@ -1,7 +1,10 @@
+/**
+ * @deprecated Use TechnicalCalculator from shared/calculations instead
+ * This file is kept for backward compatibility
+ */
+import { TechnicalCalculator } from '../../../shared/calculations';
 import { calculateRiskReward } from './trade-validators';
-import { calculateVolatility } from './volatility-calculator';
 import { RiskManager } from '../../services/risk-manager';
-import { findSupportResistanceLevels } from '../analysis/support-resistance-calculator';
 
 // ============================================================================
 // CORE FUNCTIONS - Cálculo de Preços (usando utils existentes)
@@ -40,10 +43,6 @@ export function calculateTargetAndStopPrices(price: number, confidence: number, 
   return { targetPrice, stopPrice, riskPercent: riskPercent * 100 };
 }
 
-/**
- * Calcula preços com volatilidade do mercado (Ratio dinâmico)
- * Usa RiskManager e volatility-calculator existentes
- */
 export function calculateTargetAndStopPricesRealMarket(
   price: number,
   confidence: number,
@@ -51,59 +50,30 @@ export function calculateTargetAndStopPricesRealMarket(
   volatility: number
 ) {
   const { riskPercent, rewardPercent } = RiskManager.calculateDynamicRiskReward(price, confidence);
-
-  // Ajustar com volatilidade
-  const volatilityAdjustmentFactor = 0.5; // Algorithm constant
-  const adjustedRisk = riskPercent * (1 + volatility / (1 / volatilityAdjustmentFactor));
-  const adjustedReward = rewardPercent * (1 + volatility / (1 / volatilityAdjustmentFactor));
-
-  const { targetPrice, stopPrice } = calculatePricesForAction(price, adjustedRisk, adjustedReward, action);
-
-  return { targetPrice, stopPrice, riskPercent: adjustedRisk * 100 };
+  return TechnicalCalculator.calculateWithVolatility(price, riskPercent, rewardPercent, action, volatility);
 }
 
-/**
- * Calcula preços com níveis de suporte/resistência
- * Usa volatility-calculator existente
- */
 export function calculateTargetAndStopPricesWithLevels(
   price: number,
   confidence: number,
   action: 'BUY' | 'SELL',
   klines: any[]
 ) {
-  // Usar volatility-calculator existente
-  const volatility = calculateVolatility(klines);
-  const levels = findSupportResistanceLevels(klines, price);
-
-  // Usar lógica própria baseada em níveis técnicos + volatilidade
-  // Calcular risco baseado na distância aos níveis de suporte/resistência
-  const supportDistance = Math.abs(price - levels.support) / price;
-  const resistanceDistance = Math.abs(levels.resistance - price) / price;
+  const prices = klines.map(k => parseFloat(k[4]));
+  const volatilityResult = TechnicalCalculator.calculateVolatility(prices);
+  const volatility = volatilityResult.volatility;
+  const srLevels = TechnicalCalculator.findBasicSRLevels(klines, price);
   
-  // Garantir ratio mínimo de 2:1 sempre
-  const minRisk = 0.005; // Algorithm constant - 0.5%
-  const maxRisk = 0.015; // Algorithm constant - 1.5%
-  const volatilityDivisor = 100; // Algorithm constant
-  const riskRewardRatio = 2.0; // Algorithm constant - 2:1 ratio
+  const { riskPercent, rewardPercent } = RiskManager.calculateDynamicRiskReward(price, confidence);
   
-  const baseRisk = Math.max(minRisk, Math.min(maxRisk, volatility / volatilityDivisor));
-  const adjustedRisk = baseRisk;
-  const adjustedReward = adjustedRisk * riskRewardRatio;
-  
-  const baseResult = calculatePricesForAction(price, adjustedRisk, adjustedReward, action);
-  const baseResultWithPercent = { ...baseResult, riskPercent: adjustedRisk * 100 };
-
-  // Manter os preços calculados para garantir ratio 2:1
-  return {
-    targetPrice: baseResultWithPercent.targetPrice,
-    stopPrice: baseResultWithPercent.stopPrice,
-    riskPercent: baseResultWithPercent.riskPercent,
-    levels,
-    originalTarget: baseResultWithPercent.targetPrice,
-    originalStop: baseResultWithPercent.stopPrice,
+  return TechnicalCalculator.calculateWithLevels(
+    price, 
+    riskPercent, 
+    rewardPercent, 
+    action, 
+    { support: srLevels.support, resistance: srLevels.resistance },
     volatility
-  };
+  );
 }
 
 // ============================================================================

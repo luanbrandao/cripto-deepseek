@@ -523,7 +523,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     }
 
     // 3. Volatilidade controlada (5 pontos)
-    const volatility = this.calculateVolatility(closes);
+    const volatility = TechnicalCalculator.calculateVolatility(closes).volatility;
     if (volatility < 3.0) {
       score += 5;
       details.push(`✅ Volatilidade controlada (${volatility.toFixed(1)}%)`);
@@ -602,24 +602,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     return body < totalRange * 0.05;
   }
 
-  private calculateVolatility(closes: number[]): number {
-    if (closes.length < 2) return 0;
-
-    const returns = [];
-    for (let i = 1; i < closes.length; i++) {
-      const returnRate = (closes[i] - closes[i - 1]) / closes[i - 1];
-      if (!isNaN(returnRate) && isFinite(returnRate)) {
-        returns.push(returnRate);
-      }
-    }
-
-    if (returns.length === 0) return 0;
-
-    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
-    const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - mean, 2), 0) / returns.length;
-
-    return Math.sqrt(variance) * 100;
-  }
+  // Volatility calculation moved to centralized TechnicalCalculator
 
   private async executeEliteSetup(setup: any) {
     const { symbol, score, marketData } = setup;

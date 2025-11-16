@@ -1,5 +1,6 @@
 import { AdvancedEmaAnalyzer } from './advanced-ema-analyzer';
 import { TradingConfigManager } from '../../core';
+import { TechnicalCalculator } from '../../shared/calculations';
 
 export interface SmartScore {
   emaScore: number;        // 0-100 (peso: 35%)
@@ -187,17 +188,7 @@ export class SmartScoringSystem {
   }
 
   private calculateVolatility(prices: number[]): number {
-    if (prices.length < 2) return 0;
-
-    const returns = [];
-    for (let i = 1; i < prices.length; i++) {
-      returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
-    }
-
-    const avgReturn = returns.reduce((a, b) => a + b) / returns.length;
-    const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - avgReturn, 2), 0) / returns.length;
-
-    return Math.sqrt(variance) * 100;
+    return TechnicalCalculator.calculateVolatility(prices).volatility;
   }
 
   private calculateAdjustedConfidence(finalScore: number, aiConfidence: number): number {

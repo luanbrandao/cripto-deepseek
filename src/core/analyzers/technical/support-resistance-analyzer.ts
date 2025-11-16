@@ -3,7 +3,7 @@
  * Moved and optimized from src/analyzers/supportResistanceAnalyzer.ts
  */
 
-import { findPivotPoints } from '../../../bots/utils/analysis/support-resistance-calculator';
+import { TechnicalCalculator } from '../../../shared/calculations';
 import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
 
 interface Candle {
@@ -91,7 +91,7 @@ export default class SupportResistanceAnalyzer {
     const actualLookback = lookbackPeriods || this.lookbackPeriods;
     const recentCandles = candles.slice(-actualLookback);
 
-    const pivots = findPivotPoints(recentCandles);
+    const pivots = TechnicalCalculator.findPivotPoints(recentCandles);
     const priceGroups = this.groupSimilarPrices(pivots);
 
     priceGroups.forEach(group => {
