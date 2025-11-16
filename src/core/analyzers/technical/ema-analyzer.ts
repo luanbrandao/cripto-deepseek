@@ -3,7 +3,7 @@
  * Moved and optimized from src/analyzers/emaAnalyzer.ts
  */
 
-import { calculateEMA } from '../../../bots/utils/analysis/ema-calculator';
+import { TechnicalCalculator } from '../../../shared/calculations';
 import { TradingConfigManager } from '../../config/trading-config-manager';
 import { PreValidationService } from '../../../shared/services/pre-validation-service';
 
@@ -44,8 +44,8 @@ class EmaAnalyzer {
       };
     }
 
-    const emaFast = calculateEMA(prices, this.fastPeriod);
-    const emaSlow = calculateEMA(prices, this.slowPeriod);
+    const emaFast = TechnicalCalculator.calculateEMA(prices, this.fastPeriod);
+    const emaSlow = TechnicalCalculator.calculateEMA(prices, this.slowPeriod);
     const priceChange = ((currentPrice - prices[0]) / prices[0]) * 100;
 
     let action = "HOLD";

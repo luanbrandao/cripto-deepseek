@@ -4,6 +4,7 @@
  */
 
 import { TradingConfigManager } from '../../core';
+import { TechnicalCalculator } from '../calculations';
 
 // === INTERFACES ===
 export interface ValidationLayer {
@@ -25,56 +26,6 @@ export interface ValidationResult {
   layerScores: { [key: string]: number };
 }
 
-// === CALCULADORAS TÉCNICAS ===
-class TechnicalCalculators {
-  static calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1] || 0;
-
-    const multiplier = 2 / (period + 1);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-
-    for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-
-    return ema;
-  }
-
-  static calculateRSI(prices: number[], period: number = 14): number {
-    if (prices.length < period + 1) return 50;
-
-    const changes = prices.slice(1).map((price, i) => price - prices[i]);
-    const gains = changes.map(change => change > 0 ? change : 0);
-    const losses = changes.map(change => change < 0 ? Math.abs(change) : 0);
-
-    const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
-    const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
-
-    if (avgLoss === 0) return 100;
-    const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
-  }
-
-  static calculateVolatility(prices: number[]): number {
-    if (prices.length < 2) return 0;
-
-    const returns = [];
-    for (let i = 1; i < prices.length; i++) {
-      const returnRate = (prices[i] - prices[i - 1]) / prices[i - 1];
-      if (!isNaN(returnRate) && isFinite(returnRate)) {
-        returns.push(returnRate);
-      }
-    }
-
-    if (returns.length === 0) return 0;
-
-    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
-    const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - mean, 2), 0) / returns.length;
-
-    return Math.sqrt(variance) * 100;
-  }
-}
-
 // === VALIDADORES ESPECIALIZADOS ===
 
 /**
@@ -89,8 +40,8 @@ class EMAValidator {
     }
 
     const prices = marketData.price24h;
-    const emaFast = TechnicalCalculators.calculateEMA(prices, fastPeriod);
-    const emaSlow = TechnicalCalculators.calculateEMA(prices, slowPeriod);
+    const emaFast = TechnicalCalculator.calculateEMA(prices, fastPeriod);
+    const emaSlow = TechnicalCalculator.calculateEMA(prices, slowPeriod);
     const currentPrice = marketData.currentPrice || prices[prices.length - 1];
 
     let score = 0;
@@ -136,7 +87,7 @@ class RSIValidator {
       return { isValid: false, score: 0, reason: 'Dados insuficientes para RSI' };
     }
 
-    const rsi = TechnicalCalculators.calculateRSI(marketData.price24h, period);
+    const rsi = TechnicalCalculator.calculateRSI(marketData.price24h, period);
     const config = TradingConfigManager.getConfig();
     
     let score = 0;
@@ -284,7 +235,7 @@ class VolatilityValidator {
       return { isValid: false, score: 50, reason: 'Dados insuficientes para volatilidade' };
     }
 
-    const volatility = TechnicalCalculators.calculateVolatility(marketData.price24h);
+    const volatility = TechnicalCalculator.calculateVolatility(marketData.price24h).volatility;
     let score = 0;
     let reason = '';
 

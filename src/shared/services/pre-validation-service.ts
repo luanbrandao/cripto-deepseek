@@ -166,48 +166,10 @@ class VolatilityValidator {
 /**
  * 🧮 CALCULADORA TÉCNICA
  */
-class TechnicalCalculator {
-  static calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1] || 0;
-    
-    const multiplier = 2 / (period + 1);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b) / period;
-    
-    for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-    
-    return ema;
-  }
-  
-  static calculateRSI(prices: number[], period: number = 14): number {
-    if (prices.length < period + 1) return 50;
-    
-    const changes = prices.slice(1).map((price, i) => price - prices[i]);
-    const gains = changes.map(change => change > 0 ? change : 0);
-    const losses = changes.map(change => change < 0 ? -change : 0);
-    
-    const avgGain = gains.slice(-period).reduce((a, b) => a + b) / period;
-    const avgLoss = losses.slice(-period).reduce((a, b) => a + b) / period;
-    
-    if (avgLoss === 0) return 100;
-    const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
-  }
-  
-  static analyzeTrend(candles: any[]): 'up' | 'down' | 'sideways' {
-    if (candles.length < 10) return 'sideways';
-    
-    const closes = candles.slice(-10).map(c => parseFloat(c[4] || c.close || c));
-    const first = closes[0];
-    const last = closes[closes.length - 1];
-    const change = (last - first) / first;
-    
-    if (change > 0.02) return 'up';
-    if (change < -0.02) return 'down';
-    return 'sideways';
-  }
-}
+// Import centralized calculations
+import { TechnicalCalculator } from '../calculations';
+
+// Use centralized TechnicalCalculator instead of local implementation
 
 // === SERVIÇO PRINCIPAL ===
 export class PreValidationService {
@@ -280,7 +242,7 @@ export class PreValidationService {
     }
     
     // Validação de tendência
-    const trend = TechnicalCalculator.analyzeTrend(candles);
+    const trend = this.analyzeTrend(candles);
     if ((decision.action === 'BUY' && trend === 'up') || (decision.action === 'SELL' && trend === 'down')) {
       validation.score += 5;
       validation.reasons.push(`✅ Tendência alinhada: ${trend}`);
@@ -293,6 +255,19 @@ export class PreValidationService {
     
     validation.isValid = validation.score >= Math.floor((srConfig?.MIN_TOUCHES || 2) * 5);
     return validation;
+  }
+
+  private static analyzeTrend(candles: any[]): 'up' | 'down' | 'sideways' {
+    if (candles.length < 10) return 'sideways';
+    
+    const closes = candles.slice(-10).map(c => parseFloat(c[4] || c.close || c));
+    const first = closes[0];
+    const last = closes[closes.length - 1];
+    const change = (last - first) / first;
+    
+    if (change > 0.02) return 'up';
+    if (change < -0.02) return 'down';
+    return 'sideways';
   }
 
   /**

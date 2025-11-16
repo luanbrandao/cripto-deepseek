@@ -1,6 +1,7 @@
 import { BaseTradingBot } from '../../core/base-trading-bot';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { TradingConfigManager } from '../../../core';
+import { TechnicalCalculator } from '../../../shared/calculations';
 import { getMarketData } from '../../utils/data/market-data-fetcher';
 // Elite components removed - using existing risk management
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
@@ -328,10 +329,10 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     const currentPrice = closes[closes.length - 1];
 
     // Calcular EMAs (ajustado para dados disponíveis)
-    const ema8 = this.calculateEMA(closes, 8);
-    const ema21 = this.calculateEMA(closes, 21);
-    const ema55 = closes.length >= 55 ? this.calculateEMA(closes, 55) : this.calculateEMA(closes, Math.min(closes.length - 1, 26));
-    const ema200 = closes.length >= 50 ? this.calculateEMA(closes, Math.min(closes.length - 1, 50)) : this.calculateEMA(closes, Math.min(closes.length - 1, 26));
+    const ema8 = TechnicalCalculator.calculateEMA(closes, 8);
+    const ema21 = TechnicalCalculator.calculateEMA(closes, 21);
+    const ema55 = closes.length >= 55 ? TechnicalCalculator.calculateEMA(closes, 55) : TechnicalCalculator.calculateEMA(closes, Math.min(closes.length - 1, 26));
+    const ema200 = closes.length >= 50 ? TechnicalCalculator.calculateEMA(closes, Math.min(closes.length - 1, 50)) : TechnicalCalculator.calculateEMA(closes, Math.min(closes.length - 1, 26));
 
     let score = 0;
     const details = [];
@@ -534,25 +535,13 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     return Math.min(score, 15);
   }
 
-  // Métodos auxiliares
-  private calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1];
-
-    const multiplier = 2 / (period + 1);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-
-    for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-
-    return ema;
-  }
+  // Métodos auxiliares - usando calculadoras centralizadas
 
   private calculateSlope(prices: number[], period: number): number {
     if (prices.length < 2) return 0;
 
-    const ema1 = this.calculateEMA(prices.slice(0, -1), period);
-    const ema2 = this.calculateEMA(prices, period);
+    const ema1 = TechnicalCalculator.calculateEMA(prices.slice(0, -1), period);
+    const ema2 = TechnicalCalculator.calculateEMA(prices, period);
 
     return (ema2 - ema1) / ema1;
   }

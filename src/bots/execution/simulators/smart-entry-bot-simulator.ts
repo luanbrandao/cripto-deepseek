@@ -4,6 +4,7 @@ import { BotConfig, TradeDecision } from '../../core/types';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
 import { TradingConfigManager } from '../../../core';
+import { TechnicalCalculator } from '../../../shared/calculations';
 import { BaseTradingBot } from '../../core/base-trading-bot';
 import { TradeStorage } from '../../../core/utils/trade-storage';
 import { DeepSeekHistoryLogger } from '../../../shared/utils/deepseek-history-logger';
@@ -132,9 +133,9 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     const currentPrice = parseFloat(price.price);
 
     // Calcular indicadores
-    const emaFast = this.calculateEMA(prices, 21);
-    const emaSlow = this.calculateEMA(prices, 50);
-    const rsi = this.calculateRSI(prices);
+    const emaFast = TechnicalCalculator.calculateEMA(prices, 21);
+    const emaSlow = TechnicalCalculator.calculateEMA(prices, 50);
+    const rsi = TechnicalCalculator.calculateRSI(prices);
     const avgVolume = volumes.slice(-20).reduce((a: number, b: number) => a + b, 0) / 20;
     const currentVolume = volumes[volumes.length - 1];
 
@@ -361,39 +362,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
     });
   }
 
-  // Métodos auxiliares de cálculo
-  private calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1];
-
-    const multiplier = 2 / (period + 1);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-
-    for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-
-    return ema;
-  }
-
-  private calculateRSI(prices: number[], period: number = 14): number {
-    if (prices.length < period + 1) return 50;
-
-    const changes = [];
-    for (let i = 1; i < prices.length; i++) {
-      changes.push(prices[i] - prices[i - 1]);
-    }
-
-    const gains = changes.map(change => change > 0 ? change : 0);
-    const losses = changes.map(change => change < 0 ? Math.abs(change) : 0);
-
-    const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
-    const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
-
-    if (avgLoss === 0) return 100;
-
-    const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
-  }
+  // Métodos auxiliares de cálculo - usando calculadoras centralizadas
 
   private findSupportLevels(lows: number[], currentPrice: number): number[] {
     const levels: number[] = [];

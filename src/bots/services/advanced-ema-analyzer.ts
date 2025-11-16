@@ -1,5 +1,5 @@
 import { TradingConfigManager } from '../../core/config/trading-config-manager';
-import { calculateEMA } from '../utils/analysis/ema-calculator';
+import { TechnicalCalculator } from '../../../shared/calculations';
 
 interface AdvancedEmaAnalysis {
   shortTerm: { ema12: number; ema26: number; trend: string; strength: number };
@@ -35,11 +35,11 @@ export class AdvancedEmaAnalyzer {
     const ema100Period = 100;
     const ema200Period = 200;
     
-    const ema12 = calculateEMA(prices, ema12Period);
-    const ema26 = calculateEMA(prices, ema26Period);
-    const ema50 = calculateEMA(prices, ema50Period);
-    const ema100 = calculateEMA(prices, ema100Period);
-    const ema200 = calculateEMA(prices, ema200Period);
+    const ema12 = TechnicalCalculator.calculateEMA(prices, ema12Period);
+    const ema26 = TechnicalCalculator.calculateEMA(prices, ema26Period);
+    const ema50 = TechnicalCalculator.calculateEMA(prices, ema50Period);
+    const ema100 = TechnicalCalculator.calculateEMA(prices, ema100Period);
+    const ema200 = TechnicalCalculator.calculateEMA(prices, ema200Period);
 
     // Short-term analysis
     const shortTerm = {
