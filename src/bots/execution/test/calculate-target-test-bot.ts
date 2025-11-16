@@ -1,7 +1,7 @@
 import { BaseTradingBot } from '../../core/base-trading-bot';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
-import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
+import { TradingConfigManager } from '../../../core';
 import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { calculateTargetAndStopPrices, calculateTargetAndStopPricesRealMarket, calculateTargetAndStopPricesWithLevels } from '../../utils/risk/price-calculator';
 import { getMarketData } from '../../utils/data/market-data-fetcher';

@@ -48,9 +48,9 @@ export class UltraConservativeVerifier {
         operator: '>='
       },
       {
-        name: 'Cooldown Hours',
-        actual: ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_HOURS,
-        expected: 12,
+        name: 'Cooldown Minutes',
+        actual: ULTRA_CONSERVATIVE_CONFIG.TRADE_COOLDOWN_MINUTES,
+        expected: 720,
         operator: '>='
       },
       {

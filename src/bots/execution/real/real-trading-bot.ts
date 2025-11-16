@@ -4,9 +4,9 @@ import { BotFlowManager } from '../../utils/execution/bot-flow-manager';
 import { BotConfig } from '../../core/types';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
-import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
-import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
+import { TradingConfigManager } from '../../../core';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
+import { UnifiedDeepSeekAnalyzer } from '../../../core/analyzers/factories/unified-deepseek-analyzer';
 
 dotenv.config();
 

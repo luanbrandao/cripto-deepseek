@@ -3,7 +3,7 @@ import { BotFlowManager } from '../../utils/execution/bot-flow-manager';
 import { BotConfig, TradeDecision } from '../../core/types';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
-import TradingConfigManager from '../../../shared/config/trading-config-manager';
+import { TradingConfigManager } from '../../../core';
 import { BaseTradingBot } from '../../core/base-trading-bot';
 import { TradeStorage } from '../../../core/utils/trade-storage';
 import { DeepSeekHistoryLogger } from '../../../shared/utils/deepseek-history-logger';
@@ -300,20 +300,25 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
   private calculateConfidence(analysis: MarketAnalysis, action: 'BUY' | 'SELL', entryPrice: number): number {
     let confidence = 70;
 
+    const config = TradingConfigManager.getConfig();
+    const emaAlignmentBonus = (config.VALIDATION_SCORES?.EMA_ALIGNMENT || 40) / 4;
+    const rsiZoneBonus = (config.VALIDATION_SCORES?.RSI_NEUTRAL || 100) / 20;
+    const volumeBonus = (config.VALIDATION_SCORES?.VOLUME_ADEQUATE || 80) / 16;
+    const trendStrengthBonus = (config.VALIDATION_SCORES?.EMA_SEPARATION || 20) / 4;
+
     // Bonus por alinhamento EMA
-    if (action === 'BUY' && analysis.emaFast > analysis.emaSlow) confidence += 10;
-    if (action === 'SELL' && analysis.emaFast < analysis.emaSlow) confidence += 10;
+    if (action === 'BUY' && analysis.emaFast > analysis.emaSlow) confidence += emaAlignmentBonus;
+    if (action === 'SELL' && analysis.emaFast < analysis.emaSlow) confidence += emaAlignmentBonus;
 
     // Bonus por RSI em zona adequada
-    if (action === 'BUY' && analysis.rsi < 70 && analysis.rsi > 30) confidence += 5;
-    if (action === 'SELL' && analysis.rsi > 30 && analysis.rsi < 70) confidence += 5;
+    if (action === 'BUY' && analysis.rsi < 70 && analysis.rsi > 30) confidence += rsiZoneBonus;
+    if (action === 'SELL' && analysis.rsi > 30 && analysis.rsi < 70) confidence += rsiZoneBonus;
 
     // Bonus por volume
-    const config = TradingConfigManager.getConfig();
-    if (analysis.volume > analysis.avgVolume * (config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER / 2)) confidence += 5;
+    if (analysis.volume > analysis.avgVolume * (config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER / 2)) confidence += volumeBonus;
 
     // Bonus por força da tendência
-    if (analysis.strength > 0.01) confidence += 5;
+    if (analysis.strength > config.EMA_ADVANCED.MIN_TREND_STRENGTH) confidence += trendStrengthBonus;
 
     return Math.min(confidence, 95);
   }
@@ -331,31 +336,7 @@ export class SmartEntryBotSimulator extends BaseTradingBot {
 
     fs.writeFileSync(this.ordersFile, JSON.stringify(orders, null, 2));
 
-    // Salvar também no histórico padrão usando TradeStorage
-    const tradeRecord = {
-      timestamp: order.timestamp,
-      symbol: order.symbol,
-      action: order.action,
-      price: order.currentPrice,
-      entryPrice: order.targetEntryPrice,
-      targetPrice: order.targetPrice,
-      stopPrice: order.stopPrice,
-      amount: TradingConfigManager.getConfig().TRADE_AMOUNT_USD,
-      balance: 1000, // Simulação
-      crypto: 0,
-      reason: order.reason,
-      confidence: order.confidence,
-      status: 'pending' as 'pending',
-      riskReturn: {
-        potentialGain: Math.abs(order.targetPrice - order.targetEntryPrice),
-        potentialLoss: Math.abs(order.stopPrice - order.targetEntryPrice),
-        riskRewardRatio: Math.abs(order.targetPrice - order.targetEntryPrice) / Math.abs(order.stopPrice - order.targetEntryPrice)
-      },
-      riskCalculationMethod: 'SmartEntryBot'
-    };
-
-
-    TradeStorage.saveTrades([tradeRecord], this.ordersFile);
+    // Ordem já salva no array acima - não duplicar
     console.log(`💾 Ordem agendada salva: ${order.id} (histórico + ordens)`);
   }
 

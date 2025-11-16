@@ -55,8 +55,10 @@ export class TradeMonitor {
   }
 
   private async getCandleHistory(symbol: string): Promise<{ high: number, low: number, timestamp: number }[]> {
-    // Buscar últimos 30 minutos de dados (1m interval)
-    const klines = await this.binance.getKlines(symbol, '1m', 30);
+    // Buscar últimos 30 minutos de dados (1m interval) - Algorithm constants
+    const historyMinutes = 30;
+    const timeframe = '1m';
+    const klines = await this.binance.getKlines(symbol, timeframe, historyMinutes);
     return klines.map((k: any) => ({
       high: parseFloat(k[2]),  // High price
       low: parseFloat(k[3]),   // Low price

@@ -1,4 +1,4 @@
-import { TradingConfigManager } from '../../shared/config/trading-config-manager';
+import { TradingConfigManager } from '../../core/config/trading-config-manager';
 import { calculateEMA } from '../utils/analysis/ema-calculator';
 
 interface AdvancedEmaAnalysis {
@@ -28,12 +28,18 @@ export class AdvancedEmaAnalyzer {
   analyzeAdvanced(prices: number[], volumes?: number[]): AdvancedEmaAnalysis {
     const currentPrice = prices[prices.length - 1];
 
-    // Calculate multiple EMAs
-    const ema12 = calculateEMA(prices, 12);
-    const ema26 = calculateEMA(prices, 26);
-    const ema50 = calculateEMA(prices, 50);
-    const ema100 = calculateEMA(prices, 100);
-    const ema200 = calculateEMA(prices, 200);
+    // Calculate multiple EMAs - Algorithm constants
+    const ema12Period = 12;
+    const ema26Period = 26;
+    const ema50Period = 50;
+    const ema100Period = 100;
+    const ema200Period = 200;
+    
+    const ema12 = calculateEMA(prices, ema12Period);
+    const ema26 = calculateEMA(prices, ema26Period);
+    const ema50 = calculateEMA(prices, ema50Period);
+    const ema100 = calculateEMA(prices, ema100Period);
+    const ema200 = calculateEMA(prices, ema200Period);
 
     // Short-term analysis
     const shortTerm = {
@@ -83,13 +89,19 @@ export class AdvancedEmaAnalyzer {
   }
 
   isStrongUptrend(analysis: AdvancedEmaAnalysis): boolean {
+    const config = TradingConfigManager.getConfig();
+    const momentumThreshold = (config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60);
+    const strengthThreshold = (config.VALIDATION_SCORES?.VOLUME_ADEQUATE || 80) - 5;
+    const rsiMin = config.RSI?.OVERSOLD_THRESHOLD + 5 || 30;
+    const rsiMax = config.RSI?.OVERBOUGHT_THRESHOLD + 5 || 80;
+    
     return (
       analysis.shortTerm.trend === 'UP' &&
       analysis.mediumTerm.trend === 'UP' &&
       analysis.longTerm.trend === 'UP' &&
-      analysis.momentum > 60 &&
-      analysis.overallStrength > 75 &&
-      analysis.rsi > 30 && analysis.rsi < 80
+      analysis.momentum > momentumThreshold &&
+      analysis.overallStrength > strengthThreshold &&
+      analysis.rsi > rsiMin && analysis.rsi < rsiMax
     );
   }
 
@@ -104,11 +116,15 @@ export class AdvancedEmaAnalyzer {
 
 
   isModerateUptrend(analysis: AdvancedEmaAnalysis): boolean {
+    const config = TradingConfigManager.getConfig();
+    const momentumThreshold = (config.VALIDATION_SCORES?.VOLUME_LOW || 40);
+    const strengthThreshold = (config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60);
+    
     return (
       analysis.shortTerm.trend === 'UP' &&
       (analysis.mediumTerm.trend === 'UP' || analysis.longTerm.trend === 'UP') &&
-      analysis.momentum > 40 &&
-      analysis.overallStrength > 60
+      analysis.momentum > momentumThreshold &&
+      analysis.overallStrength > strengthThreshold
     );
   }
 
@@ -127,15 +143,20 @@ export class AdvancedEmaAnalyzer {
       return { type: 'BULL_MARKET', confidence: TradingConfigManager.getConfig().HIGH_CONFIDENCE };
     }
 
+    const config = TradingConfigManager.getConfig();
+    const moderateBullConfidence = (config.VALIDATION_SCORES?.MIN_CONFIDENCE || 50) + 20;
+    const bearMarketConfidence = (config.VALIDATION_SCORES?.VOLUME_ADEQUATE || 80);
+    const sidewaysConfidence = (config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60);
+    
     if (this.isModerateUptrend(analysis)) {
-      return { type: 'BULL_MARKET', confidence: 70 };
+      return { type: 'BULL_MARKET', confidence: moderateBullConfidence };
     }
 
     if (analysis.shortTerm.trend === 'DOWN' && analysis.mediumTerm.trend === 'DOWN') {
-      return { type: 'BEAR_MARKET', confidence: 80 };
+      return { type: 'BEAR_MARKET', confidence: bearMarketConfidence };
     }
 
-    return { type: 'SIDEWAYS', confidence: 60 };
+    return { type: 'SIDEWAYS', confidence: sidewaysConfidence };
   }
 
 
@@ -150,25 +171,38 @@ export class AdvancedEmaAnalyzer {
     const fastSlowDiff = Math.abs(fast - slow) / slow * 100;
     const currentFastDiff = Math.abs(current - fast) / fast * 100;
 
-    const strength = (fastSlowDiff * 0.6) + (currentFastDiff * 0.4);
-    return Math.min(100, strength * 10);
+    // Trend strength calculation weights - Algorithm constants
+    const fastSlowWeight = 0.6;
+    const currentFastWeight = 0.4;
+    const strengthMultiplier = 10;
+    const maxStrength = 100;
+    
+    const strength = (fastSlowDiff * fastSlowWeight) + (currentFastDiff * currentFastWeight);
+    return Math.min(maxStrength, strength * strengthMultiplier);
   }
 
   private calculateMomentum(prices: number[]): number {
-    if (prices.length < 14) return 50;
+    const minMomentumPeriod = 14; // Algorithm constant
+    const defaultMomentum = 50; // Algorithm constant
+    const momentumWindow = 7; // Algorithm constant
+    
+    if (prices.length < minMomentumPeriod) return defaultMomentum;
 
-    const recent = prices.slice(-7);
-    const previous = prices.slice(-14, -7);
+    const recent = prices.slice(-momentumWindow);
+    const previous = prices.slice(-minMomentumPeriod, -momentumWindow);
 
     const recentAvg = recent.reduce((a, b) => a + b) / recent.length;
     const previousAvg = previous.reduce((a, b) => a + b) / previous.length;
 
     const momentum = ((recentAvg - previousAvg) / previousAvg) * 100;
-    return Math.max(0, Math.min(100, 50 + momentum * 5));
+    const baseMomentum = 50; // Algorithm constant
+    const momentumMultiplier = 5; // Algorithm constant
+    return Math.max(0, Math.min(100, baseMomentum + momentum * momentumMultiplier));
   }
 
   private calculateRSI(prices: number[], period = 14): number {
-    if (prices.length < period + 1) return 50;
+    const defaultRSI = 50; // Algorithm constant
+    if (prices.length < period + 1) return defaultRSI;
 
     let gains = 0;
     let losses = 0;
@@ -185,20 +219,26 @@ export class AdvancedEmaAnalyzer {
     const avgGain = gains / period;
     const avgLoss = losses / period;
 
-    if (avgLoss === 0) return 100;
+    const maxRSI = 100; // Algorithm constant
+    if (avgLoss === 0) return maxRSI;
 
     const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
+    return maxRSI - (maxRSI / (1 + rs));
   }
 
   private calculateVolumeStrength(volumes: number[]): number {
-    if (volumes.length < 20) return 60;
+    const config = TradingConfigManager.getConfig();
+    const defaultVolumeStrength = config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60;
+    const minDataPoints = 20; // Algorithm constant
+    const volumeMultiplier = 50; // Algorithm constant
+    
+    if (volumes.length < minDataPoints) return defaultVolumeStrength;
 
     const recentVolume = volumes.slice(-5).reduce((a, b) => a + b) / 5;
-    const avgVolume = volumes.slice(-20).reduce((a, b) => a + b) / 20;
+    const avgVolume = volumes.slice(-minDataPoints).reduce((a, b) => a + b) / minDataPoints;
 
     const volumeRatio = recentVolume / avgVolume;
-    return Math.min(100, Math.max(0, volumeRatio * 50));
+    return Math.min(100, Math.max(0, volumeRatio * volumeMultiplier));
   }
 
   private calculateOverallStrength(
@@ -208,7 +248,7 @@ export class AdvancedEmaAnalyzer {
     rsi: number,
     volumeStrength: number
   ): number {
-    // Weighted average
+    // Weighted average - Algorithm constants
     const weights = {
       short: 0.3,
       medium: 0.25,
@@ -217,8 +257,15 @@ export class AdvancedEmaAnalyzer {
       volume: 0.1
     };
 
-    // RSI normalization (50 = neutral, higher/lower = stronger)
-    const normalizedRSI = rsi > 50 ? Math.min(100, (rsi - 50) * 2 + 50) : Math.max(0, rsi * 2);
+    // RSI normalization (50 = neutral, higher/lower = stronger) - Algorithm constants
+    const rsiNeutral = 50;
+    const rsiMultiplier = 2;
+    const maxRSINormalized = 100;
+    const minRSINormalized = 0;
+    
+    const normalizedRSI = rsi > rsiNeutral ? 
+      Math.min(maxRSINormalized, (rsi - rsiNeutral) * rsiMultiplier + rsiNeutral) : 
+      Math.max(minRSINormalized, rsi * rsiMultiplier);
 
     return (
       shortStrength * weights.short +

@@ -36,9 +36,9 @@ class EmaAnalyzer {
     if (prices.length < this.slowPeriod) {
       return {
         action: "HOLD",
-        confidence: 50,
+        confidence: this.getDefaultConfidence(),
         reason: "Dados insuficientes para análise EMA",
-        suggested_amount: 1
+        suggested_amount: this.getDefaultAmount()
       };
     }
 
@@ -47,7 +47,7 @@ class EmaAnalyzer {
     const priceChange = ((currentPrice - prices[0]) / prices[0]) * 100;
 
     let action = "HOLD";
-    let confidence = 50;
+    let confidence = this.getDefaultConfidence();
     let reason = "Mercado estável";
 
     // Calcular confiança baseada na força do sinal EMA
@@ -59,16 +59,16 @@ class EmaAnalyzer {
     if (emaSeparation < minSeparation) {
       return {
         action: "HOLD",
-        confidence: 40,
+        confidence: this.getLowConfidence(),
         reason: `Separação EMA insuficiente: ${(emaSeparation * 100).toFixed(2)}% < ${(minSeparation * 100).toFixed(1)}% mínimo`,
-        suggested_amount: 1
+        suggested_amount: this.getDefaultAmount()
       };
     }
 
     // Sinal de compra: Preço > EMA Rápida > EMA Lenta
     if (currentPrice > emaFast && emaFast > emaSlow) {
       const strengthScore = Math.min(100, (emaSeparation * 1000) + (priceAboveEma * 500));
-      const baseConfidence = 65 + (strengthScore * 0.25); // Base mais alta para ultra-conservador
+      const baseConfidence = this.getBaseConfidence() + (strengthScore * this.getStrengthMultiplier());
 
       // VALIDAÇÃO: Mudança de preço mínima baseada na configuração
       const minPriceChange = config.EMA_ADVANCED.MIN_TREND_STRENGTH * 100;
@@ -81,7 +81,7 @@ class EmaAnalyzer {
     // Sinal de venda: Preço < EMA Rápida < EMA Lenta  
     else if (currentPrice < emaFast && emaFast < emaSlow) {
       const strengthScore = Math.min(100, (emaSeparation * 1000) + (Math.abs(priceAboveEma) * 500));
-      const baseConfidence = 65 + (strengthScore * 0.25);
+      const baseConfidence = this.getBaseConfidence() + (strengthScore * this.getStrengthMultiplier());
 
       // VALIDAÇÃO: Mudança de preço mínima baseada na configuração
       const minPriceChange = config.EMA_ADVANCED.MIN_TREND_STRENGTH * 100;
@@ -95,7 +95,7 @@ class EmaAnalyzer {
     // VALIDAÇÃO FINAL: Confiança mínima baseada na configuração
     if (action !== "HOLD" && confidence < minConfidence) {
       action = "HOLD";
-      confidence = 50;
+      confidence = this.getDefaultConfidence();
       reason = `Sinal EMA rejeitado - confiança ${confidence.toFixed(0)}% < ${minConfidence}% mínimo`;
     }
 
@@ -112,7 +112,7 @@ class EmaAnalyzer {
       action,
       confidence,
       reason,
-      suggested_amount: confidence >= config.HIGH_CONFIDENCE ? 3 : confidence >= config.MIN_CONFIDENCE ? 2 : 1
+      suggested_amount: confidence >= config.HIGH_CONFIDENCE ? config.ALGORITHM.HIGH_AMOUNT_MULTIPLIER : confidence >= config.MIN_CONFIDENCE ? config.ALGORITHM.MEDIUM_AMOUNT_MULTIPLIER : config.ALGORITHM.DEFAULT_AMOUNT
     };
   }
 
@@ -120,7 +120,7 @@ class EmaAnalyzer {
   public validateEmaStrengthPublic(prices: number[], currentPrice: number): { isValid: boolean; reason: string; score: number } {
     const validation = PreValidationService.validateEmaSignal(
       { price24h: prices, currentPrice },
-      { action: 'BUY', confidence: 75 }
+      { action: 'BUY', confidence: TradingConfigManager.getConfig().MIN_CONFIDENCE }
     );
     
     return {
@@ -133,13 +133,13 @@ class EmaAnalyzer {
 
 
   private validateEmaStrength(prices: number[]): { isValid: boolean; reason: string; score: number } {
-    if (prices.length < 26) {
+    if (prices.length < TradingConfigManager.getConfig().EMA.SLOW_PERIOD) {
       return { isValid: false, reason: 'Dados insuficientes', score: 0 };
     }
 
     // Calcular EMAs
-    const ema12 = calculateEMA(prices, 12);
-    const ema26 = calculateEMA(prices, 26);
+    const ema12 = calculateEMA(prices, TradingConfigManager.getConfig().EMA.FAST_PERIOD);
+    const ema26 = calculateEMA(prices, TradingConfigManager.getConfig().EMA.SLOW_PERIOD);
     const currentPrice = prices[prices.length - 1];
 
     // Verificar separação mínima usando configuração
@@ -171,6 +171,26 @@ class EmaAnalyzer {
     };
   }
 
+  // Algorithm constants from configuration
+  private getDefaultConfidence(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.DEFAULT_CONFIDENCE;
+  }
+
+  private getDefaultAmount(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.DEFAULT_AMOUNT;
+  }
+
+  private getLowConfidence(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.LOW_CONFIDENCE;
+  }
+
+  private getBaseConfidence(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.BASE_CONFIDENCE;
+  }
+
+  private getStrengthMultiplier(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.STRENGTH_MULTIPLIER;
+  }
 }
 
 export default EmaAnalyzer;

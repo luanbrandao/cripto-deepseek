@@ -1,6 +1,6 @@
 // === CORE ===
 export { BaseTradingBot } from './core/base-trading-bot';
-export * from './core/types';
+export { TradeDecision, RiskRewardCalculation, BotConfig as CoreBotConfig, MarketData, AnalysisResult } from './core/types';
 
 // === EXECUTION BOTS (Real Trading) ===
 export { RealTradingBot } from './execution/real/real-trading-bot';
@@ -20,7 +20,7 @@ export { MarketTrendAnalyzer } from './services/market-trend-analyzer';
 
 // === UTILS (Direct Exports) ===
 export * from './utils/logging/bot-logger';
-export * from './utils/execution/bot-flow-manager';
+export { BotFlowManager, BotConfig as FlowBotConfig, TradeExecutionResult } from './utils/execution/bot-flow-manager';
 export * from './utils/risk/trade-validators';
 export * from './utils/analysis/ema-calculator';
 export * from './utils/analysis/support-resistance-calculator';

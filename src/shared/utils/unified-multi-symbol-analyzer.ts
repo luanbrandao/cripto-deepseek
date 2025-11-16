@@ -7,6 +7,7 @@ export interface SymbolAnalysis {
   symbol: string;
   decision: TradeDecision;
   score: number;
+  marketData?: any;
 }
 
 export interface MultiSymbolOptions {
@@ -47,11 +48,12 @@ export class UnifiedMultiSymbolAnalyzer {
           console.log(`\n📊 Analisando ${symbol}...`);
         }
         
-        const { price, stats, klines } = await getMarketData(binancePublic, symbol);
+        const marketData = await getMarketData(binancePublic, symbol);
+        const { price, stats, klines } = marketData;
         const decision = await parseAnalysisFunction(symbol, { price, stats, klines });
         
         const score = (decision.action === 'BUY' || decision.action === 'SELL') ? decision.confidence : 0;
-        analyses.push({ symbol, decision, score });
+        analyses.push({ symbol, decision, score, marketData });
         
         if (logLevel === 'DETAILED') {
           console.log(`   ${symbol}: ${decision.action} (${decision.confidence}% confiança, score: ${score})`);

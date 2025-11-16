@@ -45,9 +45,9 @@ export default class SupportResistanceAnalyzer {
 
   constructor(config: { tolerance?: number; minTouches?: number; lookbackPeriods?: number } = {}) {
     const srConfig = TradingConfigManager.getBotConfig().SUPPORT_RESISTANCE;
-    this.tolerance = config.tolerance || srConfig?.MAX_DISTANCE || 0.005;
-    this.minTouches = config.minTouches || srConfig?.MIN_TOUCHES || 2;
-    this.lookbackPeriods = config.lookbackPeriods || 30;
+    this.tolerance = config.tolerance || srConfig?.MAX_DISTANCE || TradingConfigManager.getConfig().ALGORITHM.NUMERICAL_TOLERANCE / 2;
+    this.minTouches = config.minTouches || srConfig?.MIN_TOUCHES || TradingConfigManager.getConfig().ALGORITHM.EMA_MULTIPLIER_NUMERATOR;
+    this.lookbackPeriods = config.lookbackPeriods || TradingConfigManager.getConfig().CHART.PERIODS;
   }
 
   analyze(marketData: MarketData, isSimulation: boolean = true): AnalysisResult {
@@ -67,11 +67,11 @@ export default class SupportResistanceAnalyzer {
       };
     }
 
-    if (!candles || candles.length < 10) {
+    if (!candles || candles.length < TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.MIN_CANDLES_REQUIRED) {
       return {
         action: 'HOLD',
         confidence: 0,
-        reason: `Dados insuficientes: ${candles?.length || 0} candles (mínimo 10)`,
+        reason: `Dados insuficientes: ${candles?.length || 0} candles (mínimo ${TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.MIN_CANDLES_REQUIRED})`,
         suggested_amount: 0,
         levels: []
       };
@@ -141,8 +141,8 @@ export default class SupportResistanceAnalyzer {
           touches,
           strength,
           type,
-          isZone: group.prices.length > 3,
-          zoneRange: group.prices.length > 3 ? {
+          isZone: group.prices.length > TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT,
+          zoneRange: group.prices.length > TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT ? {
             min: Math.min(...group.prices.map(p => p.price)),
             max: Math.max(...group.prices.map(p => p.price))
           } : undefined
@@ -192,26 +192,30 @@ export default class SupportResistanceAnalyzer {
     if (currentPrice >= 1000) {
       // Para preços altos, usar centenas
       const base = Math.floor(currentPrice / 100) * 100;
-      for (let i = -3; i <= 3; i++) {
+      const range = TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.TREND_OFFSET;
+      for (let i = -range; i <= range; i++) {
         roundNumbers.push(base + (i * 100));
       }
     } else if (currentPrice >= 100) {
       // Para preços médios, usar dezenas
       const base = Math.floor(currentPrice / 10) * 10;
-      for (let i = -3; i <= 3; i++) {
+      const range = TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.TREND_OFFSET;
+      for (let i = -range; i <= range; i++) {
         roundNumbers.push(base + (i * 10));
       }
     } else if (currentPrice >= 1) {
       // Para preços baixos, usar unidades
       const base = Math.floor(currentPrice);
-      for (let i = -3; i <= 3; i++) {
+      const range = TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.TREND_OFFSET;
+      for (let i = -range; i <= range; i++) {
         roundNumbers.push(base + i);
       }
     } else {
       // Para preços muito baixos, usar décimos
       const base = Math.floor(currentPrice * 10) / 10;
-      for (let i = -3; i <= 3; i++) {
-        roundNumbers.push(base + (i * 0.1));
+      const range = TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.TREND_OFFSET;
+      for (let i = -range; i <= range; i++) {
+        roundNumbers.push(base + (i * (TradingConfigManager.getConfig().ALGORITHM.EMA_COMPLEMENT_FACTOR / 10)));
       }
     }
 
@@ -220,7 +224,7 @@ export default class SupportResistanceAnalyzer {
         levels.push({
           price,
           touches: this.minTouches, // Mínimo baseado na configuração
-          strength: 0.7, // Força maior para níveis psicológicos
+          strength: 0.7,
           type: price > currentPrice ? 'resistance' : 'support',
           isZone: false
         });
@@ -234,18 +238,23 @@ export default class SupportResistanceAnalyzer {
     let strength = 0;
 
     // Força baseada no número de toques
-    strength += Math.min(touches * 0.25, 0.8);
+    const touchMultiplier = TradingConfigManager.getConfig().ALGORITHM.STRENGTH_MULTIPLIER;
+    const maxTouchStrength = 0.8;
+    strength += Math.min(touches * touchMultiplier, maxTouchStrength);
 
     // Força baseada na idade dos toques (mais recente = mais forte)
     if (prices.length > 0 && prices[0].timestamp) {
       const now = Date.now();
       const avgAge = prices.reduce((sum, p) => sum + (now - (p.timestamp || now)), 0) / prices.length;
-      const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 dias
+      const maxAgeDays = 30;
+      const maxAge = maxAgeDays * 24 * 60 * 60 * 1000;
       const ageScore = Math.max(0, 1 - (avgAge / maxAge));
-      strength += ageScore * 0.2;
+      const ageMultiplier = 0.2;
+      strength += ageScore * ageMultiplier;
     } else {
       // Para níveis sem timestamp (psicológicos), força base
-      strength += 0.15;
+      const baseStrength = 0.15;
+      strength += baseStrength;
     }
 
     return Math.min(strength, 1);
@@ -254,26 +263,26 @@ export default class SupportResistanceAnalyzer {
   private analyzeCurrentSituation(currentPrice: number, levels: SupportResistanceLevel[], candles: Candle[]): { action: 'BUY' | 'SELL' | 'HOLD', confidence: number, reason: string } {
     const config = TradingConfigManager.getConfig();
     const srConfig = TradingConfigManager.getBotConfig().SUPPORT_RESISTANCE;
-    const tolerance = currentPrice * (srConfig?.MAX_DISTANCE || 0.005);
+    const tolerance = currentPrice * (srConfig?.MAX_DISTANCE || TradingConfigManager.getConfig().ALGORITHM.NUMERICAL_TOLERANCE / 2);
     const minConfidence = config.MIN_CONFIDENCE;
     const highConfidence = config.HIGH_CONFIDENCE;
 
     // Encontrar níveis próximos que atendem ao mínimo de toques
     const nearbyLevels = levels.filter(level =>
-      Math.abs(level.price - currentPrice) <= tolerance * 3 && // Tolerância maior
-      level.touches >= Math.min(this.minTouches, 2) // Aceita 2+ toques
+      Math.abs(level.price - currentPrice) <= tolerance * TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT &&
+      level.touches >= Math.min(this.minTouches, TradingConfigManager.getConfig().ALGORITHM.EMA_MULTIPLIER_NUMERATOR)
     );
 
     if (nearbyLevels.length === 0) {
       return {
         action: 'HOLD',
-        confidence: 30,
+        confidence: TradingConfigManager.getConfig().ALGORITHM.RSI_MIN,
         reason: 'Preço em área neutra, sem níveis significativos próximos'
       };
     }
 
     // Analisar tendência recente
-    const recentCandles = candles.slice(-10);
+    const recentCandles = candles.slice(-TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.TREND_ANALYSIS_CANDLES);
     const trend = this.analyzeTrend(recentCandles);
 
     // Encontrar o nível mais próximo e forte
@@ -282,20 +291,24 @@ export default class SupportResistanceAnalyzer {
     );
 
     let action: 'BUY' | 'SELL' | 'HOLD' = 'HOLD';
-    let confidence = 50;
+    let confidence = TradingConfigManager.getConfig().ALGORITHM.DEFAULT_CONFIDENCE;
     let reason = '';
 
     if (strongestLevel.type === 'support' && currentPrice <= strongestLevel.price + tolerance) {
       if (trend === 'down' || trend === 'sideways') {
         action = 'BUY';
-        const baseConfidence = minConfidence + (strongestLevel.strength * 25) + (strongestLevel.touches * 2);
+        const strengthMultiplier = TradingConfigManager.getConfig().ALGORITHM.VERY_HIGH_SCORE;
+        const touchMultiplier = TradingConfigManager.getConfig().ALGORITHM.EMA_MULTIPLIER_NUMERATOR;
+        const baseConfidence = minConfidence + (strongestLevel.strength * strengthMultiplier) + (strongestLevel.touches * touchMultiplier);
         confidence = Math.min(highConfidence, baseConfidence);
         reason = `Preço próximo ao suporte forte em $${strongestLevel.price.toFixed(4)} (${strongestLevel.touches} toques)`;
       }
     } else if (strongestLevel.type === 'resistance' && currentPrice >= strongestLevel.price - tolerance) {
       if (trend === 'up' || trend === 'sideways') {
         action = 'SELL';
-        const baseConfidence = minConfidence + (strongestLevel.strength * 25) + (strongestLevel.touches * 2);
+        const strengthMultiplier = TradingConfigManager.getConfig().ALGORITHM.VERY_HIGH_SCORE;
+        const touchMultiplier = TradingConfigManager.getConfig().ALGORITHM.EMA_MULTIPLIER_NUMERATOR;
+        const baseConfidence = minConfidence + (strongestLevel.strength * strengthMultiplier) + (strongestLevel.touches * touchMultiplier);
         confidence = Math.min(highConfidence, baseConfidence);
         reason = `Preço próximo à resistência forte em $${strongestLevel.price.toFixed(4)} (${strongestLevel.touches} toques)`;
       }
@@ -306,14 +319,16 @@ export default class SupportResistanceAnalyzer {
     const prevCandle = candles[candles.length - 2];
 
     // Filtrar apenas níveis com mínimo de toques para rompimentos
-    const validLevels = levels.filter(level => level.touches >= this.minTouches).slice(0, 3);
+    const validLevels = levels.filter(level => level.touches >= this.minTouches).slice(0, TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT);
 
     for (const level of validLevels) {
       if (level.type === 'resistance' &&
         prevCandle.close <= level.price &&
         lastCandle.close > level.price) {
         action = 'BUY';
-        const baseConfidence = minConfidence + (level.strength * 20) + (level.touches * 2);
+        const strengthMultiplier = TradingConfigManager.getConfig().ALGORITHM.ACTION_SCORE;
+        const touchMultiplier = TradingConfigManager.getConfig().ALGORITHM.EMA_MULTIPLIER_NUMERATOR;
+        const baseConfidence = minConfidence + (level.strength * strengthMultiplier) + (level.touches * touchMultiplier);
         confidence = Math.min(highConfidence, baseConfidence);
         reason = `Rompimento de resistência em $${level.price.toFixed(4)} - sinal de alta`;
         break;
@@ -321,7 +336,9 @@ export default class SupportResistanceAnalyzer {
         prevCandle.close >= level.price &&
         lastCandle.close < level.price) {
         action = 'SELL';
-        const baseConfidence = minConfidence + (level.strength * 20) + (level.touches * 2);
+        const strengthMultiplier = TradingConfigManager.getConfig().ALGORITHM.ACTION_SCORE;
+        const touchMultiplier = TradingConfigManager.getConfig().ALGORITHM.EMA_MULTIPLIER_NUMERATOR;
+        const baseConfidence = minConfidence + (level.strength * strengthMultiplier) + (level.touches * touchMultiplier);
         confidence = Math.min(highConfidence, baseConfidence);
         reason = `Rompimento de suporte em $${level.price.toFixed(4)} - sinal de baixa`;
         break;
@@ -332,7 +349,7 @@ export default class SupportResistanceAnalyzer {
     if (action !== 'HOLD' && confidence < minConfidence) {
       return {
         action: 'HOLD',
-        confidence: 50,
+        confidence: TradingConfigManager.getConfig().ALGORITHM.DEFAULT_CONFIDENCE,
         reason: `Sinal S/R rejeitado - confiança ${confidence.toFixed(0)}% < ${minConfidence}% mínimo ultra-conservador`
       };
     }
@@ -341,7 +358,7 @@ export default class SupportResistanceAnalyzer {
   }
 
   private analyzeTrend(candles: Candle[]): 'up' | 'down' | 'sideways' {
-    if (candles.length < 3) return 'sideways';
+    if (candles.length < TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT) return 'sideways';
 
     const first = candles[0].close;
     const last = candles[candles.length - 1].close;
@@ -372,7 +389,7 @@ export default class SupportResistanceAnalyzer {
     // Mostrar resistências (acima do preço atual)
     if (resistances.length > 0) {
       console.log('🔴 RESISTÊNCIAS:');
-      resistances.slice(0, 3).forEach((level, index) => {
+      resistances.slice(0, TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT).forEach((level, index) => {
         const distance = ((level.price - currentPrice) / currentPrice * 100).toFixed(2);
         const strengthBar = '█'.repeat(Math.round(level.strength * 10));
         const zoneInfo = level.isZone ? ` [Zona: $${level.zoneRange?.min.toFixed(4)}-$${level.zoneRange?.max.toFixed(4)}]` : '';
@@ -385,7 +402,7 @@ export default class SupportResistanceAnalyzer {
     // Mostrar suportes (abaixo do preço atual)
     if (supports.length > 0) {
       console.log('🟢 SUPORTES:');
-      supports.slice(0, 3).forEach((level, index) => {
+      supports.slice(0, TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT).forEach((level, index) => {
         const distance = ((currentPrice - level.price) / currentPrice * 100).toFixed(2);
         const strengthBar = '█'.repeat(Math.round(level.strength * 10));
         const zoneInfo = level.isZone ? ` [Zona: $${level.zoneRange?.min.toFixed(4)}-$${level.zoneRange?.max.toFixed(4)}]` : '';

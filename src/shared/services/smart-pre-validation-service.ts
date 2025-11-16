@@ -1,3 +1,5 @@
+import { TradingConfigManager } from '../../core';
+
 interface ValidationLayer {
   name: string;
   weight: number;
@@ -135,13 +137,19 @@ export class SmartPreValidationBuilder {
     }
 
     const scorePercentage = (totalScore / maxScore) * 100;
-    const isValid = scorePercentage >= 60; // 60% mínimo para aprovação
+    const config = TradingConfigManager.getConfig();
+    const minApprovalScore = config.VALIDATION_SCORES?.MIN_APPROVAL_SCORE || 60;
+    const isValid = scorePercentage >= minApprovalScore;
 
     // Calcular confiança e nível de risco baseado no score
-    const confidence = Math.min(95, Math.max(50, scorePercentage));
+    const maxConfidence = config.HIGH_CONFIDENCE || 95;
+    const minConfidence = config.VALIDATION_SCORES?.MIN_CONFIDENCE || 50;
+    const confidence = Math.min(maxConfidence, Math.max(minConfidence, scorePercentage));
     let riskLevel = 'HIGH';
-    if (scorePercentage >= 80) riskLevel = 'LOW';
-    else if (scorePercentage >= 65) riskLevel = 'MEDIUM';
+    const lowRiskThreshold = config.VALIDATION_SCORES?.LOW_RISK_THRESHOLD || 80;
+    const mediumRiskThreshold = config.VALIDATION_SCORES?.MEDIUM_RISK_THRESHOLD || 65;
+    if (scorePercentage >= lowRiskThreshold) riskLevel = 'LOW';
+    else if (scorePercentage >= mediumRiskThreshold) riskLevel = 'MEDIUM';
 
     return {
       isValid,
@@ -173,27 +181,34 @@ export class SmartPreValidationBuilder {
     let score = 0;
     const details = [];
 
+    const config = TradingConfigManager.getConfig();
+    const emaAlignmentScore = config.VALIDATION_SCORES?.EMA_ALIGNMENT || 40;
+    const priceAboveEmaScore = config.VALIDATION_SCORES?.PRICE_ABOVE_EMA || 40;
+    const separationScore = config.VALIDATION_SCORES?.EMA_SEPARATION || 20;
+    const minValidScore = config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60;
+
     // Alinhamento bullish
     if (emaFast > emaSlow) {
-      score += 40;
+      score += emaAlignmentScore;
       details.push('EMA rápida > lenta');
     }
 
     // Preço acima das EMAs
     if (currentPrice > emaFast && currentPrice > emaSlow) {
-      score += 40;
+      score += priceAboveEmaScore;
       details.push('Preço > EMAs');
     }
 
     // Separação adequada
     const separation = Math.abs(emaFast - emaSlow) / emaSlow;
-    if (separation > 0.005) {
-      score += 20;
+    const minSeparation = config.EMA_ADVANCED?.MIN_SEPARATION || 0.005;
+    if (separation > minSeparation) {
+      score += separationScore;
       details.push('Separação adequada');
     }
 
     return {
-      isValid: score >= 60,
+      isValid: score >= minValidScore,
       score,
       reason: details.join(', ') || 'Condições EMA desfavoráveis'
     };
@@ -209,20 +224,28 @@ export class SmartPreValidationBuilder {
     const rsi = this.calculateRSI(marketData.price24h, period);
     let score = 0;
     let reason = '';
+    
+    const config = TradingConfigManager.getConfig();
+    const rsiOversold = config.RSI?.OVERSOLD_THRESHOLD || 25;
+    const rsiOverbought = config.RSI?.OVERBOUGHT_THRESHOLD || 75;
+    const rsiNeutralScore = config.VALIDATION_SCORES?.RSI_NEUTRAL || 100;
+    const rsiOversoldScore = config.VALIDATION_SCORES?.RSI_OVERSOLD || 80;
+    const rsiOverboughtScore = config.VALIDATION_SCORES?.RSI_OVERBOUGHT || 20;
+    const minValidScore = config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60;
 
-    if (rsi >= 25 && rsi <= 75) {
-      score = 100;
+    if (rsi >= rsiOversold && rsi <= rsiOverbought) {
+      score = rsiNeutralScore;
       reason = `RSI em zona neutra (${rsi.toFixed(1)})`;
-    } else if (rsi < 25) {
-      score = 80;
+    } else if (rsi < rsiOversold) {
+      score = rsiOversoldScore;
       reason = `RSI oversold (${rsi.toFixed(1)}) - oportunidade`;
     } else {
-      score = 20;
+      score = rsiOverboughtScore;
       reason = `RSI overbought (${rsi.toFixed(1)}) - risco alto`;
     }
 
     return {
-      isValid: score >= 60,
+      isValid: score >= minValidScore,
       score,
       reason
     };
@@ -240,22 +263,29 @@ export class SmartPreValidationBuilder {
     const avgVolume = volumes.reduce((a: number, b: number) => a + b, 0) / volumes.length;
     const volumeRatio = recentVolume / avgVolume;
 
+    const config = TradingConfigManager.getConfig();
+    const volumeHighScore = config.VALIDATION_SCORES?.VOLUME_HIGH || 100;
+    const volumeAdequateScore = config.VALIDATION_SCORES?.VOLUME_ADEQUATE || 80;
+    const volumeLowScore = config.VALIDATION_SCORES?.VOLUME_LOW || 40;
+    const volumeHighMultiplier = config.VALIDATION_SCORES?.VOLUME_HIGH_MULTIPLIER || 1.5;
+    const minValidScore = config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60;
+
     let score = 0;
     let reason = '';
 
-    if (volumeRatio >= multiplier * 1.5) {
-      score = 100;
+    if (volumeRatio >= multiplier * volumeHighMultiplier) {
+      score = volumeHighScore;
       reason = `Volume muito alto (${volumeRatio.toFixed(1)}x)`;
     } else if (volumeRatio >= multiplier) {
-      score = 80;
+      score = volumeAdequateScore;
       reason = `Volume adequado (${volumeRatio.toFixed(1)}x)`;
     } else {
-      score = 40;
+      score = volumeLowScore;
       reason = `Volume baixo (${volumeRatio.toFixed(1)}x)`;
     }
 
     return {
-      isValid: score >= 60,
+      isValid: score >= minValidScore,
       score,
       reason
     };
@@ -460,24 +490,26 @@ export class SmartPreValidationService {
 
   // Presets comuns
   static forEmaBot(data: any): ValidationResult {
+    const config = TradingConfigManager.getConfig();
     return this.create(data)
-      .withEma(12, 26, 25)
+      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 25)
       .withRSI(14, 20)
-      .withVolume(1.2, 20)
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER, 20)
       .withMomentum(15)
-      .withVolatility(1, 5, 10)
-      .withConfidence(70, 10)
+      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY, 10)
+      .withConfidence(config.MIN_CONFIDENCE, 10)
       .validate();
   }
 
   static forSmartBot(data: any): ValidationResult {
+    const config = TradingConfigManager.getConfig();
     return this.create(data)
-      .withEma(12, 26, 20)
+      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 20)
       .withRSI(14, 15)
-      .withVolume(1.5, 15)
-      .withSupportResistance(0.01, 20)
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 1.25, 15)
+      .withSupportResistance(config.EMA_ADVANCED.MIN_SEPARATION * 2, 20)
       .withMomentum(15)
-      .withConfidence(75, 15)
+      .withConfidence(config.MIN_CONFIDENCE + 5, 15)
       .validate();
   }
 
@@ -878,12 +910,18 @@ export class SmartPreValidationValidator {
     }
 
     const scorePercentage = (totalScore / maxScore) * 100;
-    const isValid = scorePercentage >= 60;
+    const config = TradingConfigManager.getConfig();
+    const minApprovalScore = 60;
+    const isValid = scorePercentage >= minApprovalScore;
 
-    const confidence = Math.min(95, Math.max(50, scorePercentage));
+    const maxConfidence = config.HIGH_CONFIDENCE || 95;
+    const minConfidence = 50;
+    const confidence = Math.min(maxConfidence, Math.max(minConfidence, scorePercentage));
     let riskLevel = 'HIGH';
-    if (scorePercentage >= 80) riskLevel = 'LOW';
-    else if (scorePercentage >= 65) riskLevel = 'MEDIUM';
+    const lowRiskThreshold = 80;
+    const mediumRiskThreshold = 65;
+    if (scorePercentage >= lowRiskThreshold) riskLevel = 'LOW';
+    else if (scorePercentage >= mediumRiskThreshold) riskLevel = 'MEDIUM';
 
     return {
       isValid,

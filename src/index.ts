@@ -1,10 +1,6 @@
 import { AnalysisParser } from './bots/services/analysis-parser';
 import { RiskManager } from './bots/services/risk-manager';
-import * as path from 'path';
-import { Trade, TradeStorage } from './core/utils/trade-storage';
-import { BinancePublicClient } from './core/clients/binance-public-client';
-import { DeepSeekService } from './core/clients/deepseek-client';
-import TradingConfigManager from './shared/config/trading-config-manager';
+import { Trade, TradeStorage, BinancePublicClient, DeepSeekService, TradingConfigManager } from './core';
 
 async function main() {
   const binancePublic = new BinancePublicClient();
@@ -16,7 +12,8 @@ async function main() {
     const symbol = TradingConfigManager.getConfig().DEFAULT_SYMBOL;
     const price = await binancePublic.getPrice(symbol);
     const stats = await binancePublic.get24hrStats(symbol);
-    const klines = await binancePublic.getKlines(symbol, TradingConfigManager.getConfig().CHART.TIMEFRAME, 24);
+    const klinesCount = TradingConfigManager.getConfig().CHART.PERIODS;
+    const klines = await binancePublic.getKlines(symbol, TradingConfigManager.getConfig().CHART.TIMEFRAME, klinesCount);
 
     console.log(`💰 ${symbol}: $${parseFloat(price.price).toLocaleString()}`);
     console.log(`📈 Variação 24h: ${parseFloat(stats.priceChangePercent).toFixed(2)}%`);
@@ -28,8 +25,9 @@ async function main() {
       `Analyze ${symbol} market data including 24h klines. Provide a CLEAR trading recommendation: BUY, SELL, or HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators.`
     );
 
+    const analysisPreviewLength = 500;
     console.log('\n📋 Análise DeepSeek (primeiros 500 chars):');
-    console.log(analysis.substring(0, 500) + '...');
+    console.log(analysis.substring(0, analysisPreviewLength) + '...');
 
     const decision = await AnalysisParser.parseDeepSeekAnalysis(analysis, symbol, parseFloat(price.price));
     const { riskPercent, rewardPercent } = RiskManager.calculateDynamicRiskReward(decision.price, decision.confidence);

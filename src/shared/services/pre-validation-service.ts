@@ -82,10 +82,10 @@ export class PreValidationService {
     
     // 3. Validação de RSI (5 pontos)
     const rsi = this.calculateRSI(price24h);
-    const rsiMin = 30;
-    const rsiMax = 70;
-    const rsiOptimalMin = 40;
-    const rsiOptimalMax = 60;
+    const rsiMin = config.ALGORITHM.RSI_MIN;
+    const rsiMax = config.ALGORITHM.RSI_MAX;
+    const rsiOptimalMin = config.ALGORITHM.RSI_OPTIMAL_MIN;
+    const rsiOptimalMax = config.ALGORITHM.RSI_OPTIMAL_MAX;
     
     if (rsi >= rsiMin && rsi <= rsiMax) {
       if (rsi >= rsiOptimalMin && rsi <= rsiOptimalMax) {
@@ -222,16 +222,22 @@ export class PreValidationService {
     const config = TradingConfigManager.getConfig();
     
     // 1. Validação de Confiança (25 pontos)
-    if (decision.confidence >= 95) {
-      validation.score += 25;
+    const exceptionalConfidence = config.ALGORITHM.EXCEPTIONAL_CONFIDENCE;
+    const veryHighConfidence = config.ALGORITHM.VERY_HIGH_CONFIDENCE;
+    const exceptionalScore = config.ALGORITHM.EXCEPTIONAL_SCORE;
+    const veryHighScore = config.ALGORITHM.VERY_HIGH_SCORE;
+    
+    if (decision.confidence >= exceptionalConfidence) {
+      validation.score += exceptionalScore;
       validation.reasons.push(`✅ Confiança excepcional: ${decision.confidence}%`);
       validation.riskLevel = 'LOW';
-    } else if (decision.confidence >= 90) {
-      validation.score += 20;
+    } else if (decision.confidence >= veryHighConfidence) {
+      validation.score += veryHighScore;
       validation.reasons.push(`✅ Confiança muito alta: ${decision.confidence}%`);
       validation.riskLevel = 'MEDIUM';
     } else if (decision.confidence >= config.MIN_CONFIDENCE) {
-      validation.score += 15;
+      const minScore = config.ALGORITHM.MIN_SCORE;
+      validation.score += minScore;
       validation.reasons.push(`✅ Confiança mínima: ${decision.confidence}%`);
     } else {
       validation.warnings.push(`❌ Confiança insuficiente: ${decision.confidence}% < ${config.MIN_CONFIDENCE}%`);
@@ -244,20 +250,25 @@ export class PreValidationService {
     validation.warnings.push(...emaValidation.warnings);
     
     // 3. Validação de Símbolo (25 pontos)
+    const approvedSymbolScore = config.ALGORITHM.MIN_SCORE;
+    const premiumSymbolScore = config.ALGORITHM.MIN_SCORE_THRESHOLD;
+    const premiumSymbols = ['BTCUSDT', 'ETHUSDT'];
+    
     if (config.SYMBOLS.includes(symbol)) {
-      validation.score += 15;
+      validation.score += approvedSymbolScore;
       validation.reasons.push(`✅ Símbolo aprovado: ${symbol}`);
     } else {
       validation.warnings.push(`❌ Símbolo não aprovado: ${symbol}`);
     }
     
-    if (['BTCUSDT', 'ETHUSDT'].includes(symbol)) {
-      validation.score += 10;
+    if (premiumSymbols.includes(symbol)) {
+      validation.score += premiumSymbolScore;
       validation.reasons.push(`✅ Símbolo premium: ${symbol}`);
     }
     
-    // Critério ultra-rigoroso: 80/100 pontos
-    validation.isValid = validation.score >= 80;
+    // Critério ultra-rigoroso
+    const ultraConservativeThreshold = config.ALGORITHM.ULTRA_CONSERVATIVE_THRESHOLD;
+    validation.isValid = validation.score >= ultraConservativeThreshold;
     validation.confidence = Math.min(100, validation.score);
     
     return validation;
@@ -280,29 +291,33 @@ export class PreValidationService {
     const config = TradingConfigManager.getConfig();
     
     // 1. Validação de Confiança (40 pontos)
+    const simulationConfidenceScore = config.ALGORITHM.SIMULATION_CONFIDENCE_SCORE;
     if (decision.confidence >= config.MIN_CONFIDENCE) {
-      validation.score += 40;
+      validation.score += simulationConfidenceScore;
       validation.reasons.push(`✅ Confiança adequada: ${decision.confidence}%`);
     } else {
       validation.warnings.push(`❌ Confiança baixa: ${decision.confidence}%`);
     }
     
     // 2. Validação EMA Simplificada (40 pontos)
+    const emaMultiplier = config.ALGORITHM.EMA_MULTIPLIER_NUMERATOR;
     const emaValidation = this.validateEmaSignal(marketData, decision);
-    validation.score += Math.floor(emaValidation.score * 2);
+    validation.score += Math.floor(emaValidation.score * emaMultiplier);
     validation.reasons.push(...emaValidation.reasons.slice(0, 2));
     validation.warnings.push(...emaValidation.warnings.slice(0, 2));
     
     // 3. Validação de Ação (20 pontos)
+    const actionScore = config.ALGORITHM.ACTION_SCORE;
     if (decision.action !== 'HOLD') {
-      validation.score += 20;
+      validation.score += actionScore;
       validation.reasons.push(`✅ Ação definida: ${decision.action}`);
     } else {
       validation.warnings.push(`❌ Nenhuma ação recomendada`);
     }
     
-    // Critério relaxado: 60/100 pontos
-    validation.isValid = validation.score >= 60;
+    // Critério relaxado
+    const simulationThreshold = config.ALGORITHM.SIMULATION_THRESHOLD;
+    validation.isValid = validation.score >= simulationThreshold;
     validation.confidence = Math.min(100, validation.score);
     
     return validation;
@@ -313,7 +328,8 @@ export class PreValidationService {
   private static calculateEMA(prices: number[], period: number): number {
     if (prices.length < period) return prices[prices.length - 1];
     
-    const multiplier = 2 / (period + 1);
+    const config = TradingConfigManager.getConfig().ALGORITHM;
+    const multiplier = config.EMA_MULTIPLIER_NUMERATOR / (period + config.EMA_COMPLEMENT_FACTOR);
     let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
     
     for (let i = period; i < prices.length; i++) {
@@ -324,7 +340,8 @@ export class PreValidationService {
   }
 
   private static calculateRSI(prices: number[], period: number = 14): number {
-    if (prices.length < period + 1) return 50;
+    const defaultRSI = TradingConfigManager.getConfig().ALGORITHM.DEFAULT_CONFIDENCE;
+    if (prices.length < period + 1) return defaultRSI;
     
     const changes = [];
     for (let i = 1; i < prices.length; i++) {
@@ -337,14 +354,16 @@ export class PreValidationService {
     const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
     const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
     
-    if (avgLoss === 0) return 100;
+    const maxRSI = 100;
+    if (avgLoss === 0) return maxRSI;
     
     const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
+    return maxRSI - (maxRSI / (1 + rs));
   }
 
   private static analyzeTrend(candles: any[]): 'up' | 'down' | 'sideways' {
-    if (candles.length < 3) return 'sideways';
+    const minCandlesForTrend = TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT;
+    if (candles.length < minCandlesForTrend) return 'sideways';
 
     const first = candles[0].close;
     const last = candles[candles.length - 1].close;

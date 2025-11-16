@@ -83,8 +83,9 @@ export function calculateRiskReward(confidence: number): { riskPercent: number; 
   const { BASE_PERCENT, MAX_PERCENT } = TradingConfigManager.getConfig().RISK;
 
   // Quanto maior a confiança, menor o risco
+  const confidenceDivisor = TradingConfigManager.getConfig().ALGORITHM.CONFIDENCE_DIVISOR;
   const riskPercent = Math.max(BASE_PERCENT, Math.min(MAX_PERCENT,
-    MAX_PERCENT - ((confidence - TradingConfigManager.getConfig().MIN_CONFIDENCE) / 15) * (MAX_PERCENT - BASE_PERCENT)
+    MAX_PERCENT - ((confidence - TradingConfigManager.getConfig().MIN_CONFIDENCE) / confidenceDivisor) * (MAX_PERCENT - BASE_PERCENT)
   ));
 
   // GARANTIR SEMPRE 2:1
@@ -119,7 +120,7 @@ export function calculateRiskRewardDynamic(entryPrice: number, targetPrice: numb
   console.log(`📊 Risk/Reward Dinâmico: ${(rewardPercent * 100).toFixed(2)}%/${(riskPercent * 100).toFixed(2)}% (${ratio.toFixed(2)}:1)`);
 
   // Usar tolerância para evitar problemas de precisão numérica
-  const tolerance = 0.01;
+  const tolerance = TradingConfigManager.getConfig().ALGORITHM.NUMERICAL_TOLERANCE;
   const isValid = ratio >= (TradingConfigManager.getConfig().MIN_RISK_REWARD_RATIO - tolerance);
 
   if (!isValid) {

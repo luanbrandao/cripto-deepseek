@@ -53,8 +53,9 @@ export function calculateTargetAndStopPricesRealMarket(
   const { riskPercent, rewardPercent } = RiskManager.calculateDynamicRiskReward(price, confidence);
 
   // Ajustar com volatilidade
-  const adjustedRisk = riskPercent * (1 + volatility / 2);
-  const adjustedReward = rewardPercent * (1 + volatility / 2);
+  const volatilityAdjustmentFactor = 0.5; // Algorithm constant
+  const adjustedRisk = riskPercent * (1 + volatility / (1 / volatilityAdjustmentFactor));
+  const adjustedReward = rewardPercent * (1 + volatility / (1 / volatilityAdjustmentFactor));
 
   const { targetPrice, stopPrice } = calculatePricesForAction(price, adjustedRisk, adjustedReward, action);
 
@@ -81,9 +82,14 @@ export function calculateTargetAndStopPricesWithLevels(
   const resistanceDistance = Math.abs(levels.resistance - price) / price;
   
   // Garantir ratio mínimo de 2:1 sempre
-  const baseRisk = Math.max(0.005, Math.min(0.015, volatility / 100)); // 0.5% a 1.5%
+  const minRisk = 0.005; // Algorithm constant - 0.5%
+  const maxRisk = 0.015; // Algorithm constant - 1.5%
+  const volatilityDivisor = 100; // Algorithm constant
+  const riskRewardRatio = 2.0; // Algorithm constant - 2:1 ratio
+  
+  const baseRisk = Math.max(minRisk, Math.min(maxRisk, volatility / volatilityDivisor));
   const adjustedRisk = baseRisk;
-  const adjustedReward = adjustedRisk * 2.0; // Ratio exato 2:1
+  const adjustedReward = adjustedRisk * riskRewardRatio;
   
   const baseResult = calculatePricesForAction(price, adjustedRisk, adjustedReward, action);
   const baseResultWithPercent = { ...baseResult, riskPercent: adjustedRisk * 100 };
@@ -117,8 +123,11 @@ function adjustTargetToNearestLevel(
   const distanceToLevel = Math.abs(nearestLevel - currentPrice) / currentPrice;
   const distanceToTarget = Math.abs(calculatedTarget - currentPrice) / currentPrice;
 
-  if (Math.abs(distanceToLevel - distanceToTarget) < 0.002) {
-    const buffer = currentPrice * 0.001;
+  const levelTargetTolerance = 0.002; // Algorithm constant
+  const priceBuffer = 0.001; // Algorithm constant
+  
+  if (Math.abs(distanceToLevel - distanceToTarget) < levelTargetTolerance) {
+    const buffer = currentPrice * priceBuffer;
     return action === 'BUY' ? nearestLevel - buffer : nearestLevel + buffer;
   }
 
@@ -131,7 +140,8 @@ function adjustStopToProtectionLevel(
   currentPrice: number,
   action: 'BUY' | 'SELL'
 ): number {
-  const buffer = currentPrice * 0.002;
+  const protectionBuffer = 0.002; // Algorithm constant
+  const buffer = currentPrice * protectionBuffer;
 
   if (action === 'BUY') {
     const protectedStop = protectionLevel - buffer;

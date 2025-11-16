@@ -4,11 +4,10 @@ import { MarketTrendAnalyzer } from '../../services/market-trend-analyzer';
 import { calculateRiskRewardDynamic, validateConfidence } from '../../utils/risk/trade-validators';
 import { calculateTargetAndStopPrices } from '../../utils/risk/price-calculator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
-import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
-import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
-import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
+import { EmaAnalyzer, TradingConfigManager } from '../../../core';
 import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../../shared/validators/trend-validator';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
+import { UnifiedDeepSeekAnalyzer } from '../../../core/analyzers/factories/unified-deepseek-analyzer';
 
 export class SmartTradingBotSimulatorSell extends BaseTradingBot {
   private flowManager: BotFlowManager;

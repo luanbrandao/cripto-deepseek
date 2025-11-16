@@ -3,8 +3,7 @@ import { BotFlowManager } from '../../utils/execution/bot-flow-manager';
 import { BotConfig, TradeDecision } from '../../core/types';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
-import SupportResistanceAnalyzer from '../../../analyzers/supportResistanceAnalyzer';
-import TradingConfigManager from '../../../shared/config/trading-config-manager';
+import { SupportResistanceAnalyzer, TradingConfigManager } from '../../../core';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import { BaseTradingBot } from '../../core/base-trading-bot';
 

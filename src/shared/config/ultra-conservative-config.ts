@@ -14,6 +14,7 @@ export const ULTRA_CONSERVATIVE_CONFIG = TradingConfigManager.getConfig();
 export const BOT_ULTRA_CONSERVATIVE_CONFIG = TradingConfigManager.getBotConfig();
 
 // MÉTRICAS E CONFIGURAÇÕES ADICIONAIS (mantidas para compatibilidade)
+// Algorithm constants for ultra-conservative targets
 export const ULTRA_CONSERVATIVE_TARGETS = {
   WIN_RATE_TARGET: 80,
   TRADES_PER_WEEK: 2,
@@ -23,6 +24,7 @@ export const ULTRA_CONSERVATIVE_TARGETS = {
   ROI_MONTHLY_TARGET: 8
 };
 
+// Algorithm constants for emergency stops
 export const EMERGENCY_STOPS = {
   STOP_IF_WIN_RATE_BELOW: 70,
   STOP_IF_DRAWDOWN_ABOVE: 5,

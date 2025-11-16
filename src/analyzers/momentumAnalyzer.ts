@@ -1,3 +1,5 @@
+import { TradingConfigManager } from '../shared/config/trading-config-manager';
+
 interface MomentumAnalysis {
   isValid: boolean;
   reason: string;
@@ -12,7 +14,7 @@ export class MomentumAnalyzer {
    * 🚀 VALIDAÇÃO DE MOMENTUM
    */
   public validateMomentum(prices: number[]): MomentumAnalysis {
-    if (prices.length < 5) {
+    if (prices.length < this.getMinPeriodsRequired()) {
       return { 
         isValid: false, 
         reason: 'Dados insuficientes para momentum', 
@@ -23,16 +25,16 @@ export class MomentumAnalyzer {
     }
 
     // Calcular momentum dos últimos 5 períodos
-    const recent = prices.slice(-5);
+    const recent = prices.slice(-this.getMinPeriodsRequired());
     const momentum = (recent[4] - recent[0]) / recent[0];
     
     let direction: 'bullish' | 'bearish' | 'neutral';
-    if (momentum > 0.005) direction = 'bullish';
-    else if (momentum < -0.005) direction = 'bearish';
+    if (momentum > this.getMomentumThreshold()) direction = 'bullish';
+    else if (momentum < -this.getMomentumThreshold()) direction = 'bearish';
     else direction = 'neutral';
     
     // Exigir momentum positivo mínimo de 0.5%
-    if (momentum < 0.005) {
+    if (momentum < this.getMomentumThreshold()) {
       return { 
         isValid: false, 
         reason: `Momentum ${(momentum * 100).toFixed(2)}% < 0.5%`, 
@@ -61,9 +63,9 @@ export class MomentumAnalyzer {
     long: MomentumAnalysis;     // 10 períodos
     consensus: 'bullish' | 'bearish' | 'mixed' | 'neutral';
   } {
-    const short = this.calculateMomentumForPeriod(prices, 3);
-    const medium = this.calculateMomentumForPeriod(prices, 5);
-    const long = this.calculateMomentumForPeriod(prices, 10);
+    const short = this.calculateMomentumForPeriod(prices, TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT);
+    const medium = this.calculateMomentumForPeriod(prices, this.getMinPeriodsRequired());
+    const long = this.calculateMomentumForPeriod(prices, TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.TREND_ANALYSIS_CANDLES);
     
     // Determinar consenso
     const directions = [short.direction, medium.direction, long.direction];
@@ -71,8 +73,9 @@ export class MomentumAnalyzer {
     const bearishCount = directions.filter(d => d === 'bearish').length;
     
     let consensus: 'bullish' | 'bearish' | 'mixed' | 'neutral';
-    if (bullishCount >= 2) consensus = 'bullish';
-    else if (bearishCount >= 2) consensus = 'bearish';
+    const minConsensus = TradingConfigManager.getConfig().ALGORITHM.EMA_MULTIPLIER_NUMERATOR;
+    if (bullishCount >= minConsensus) consensus = 'bullish';
+    else if (bearishCount >= minConsensus) consensus = 'bearish';
     else if (bullishCount > 0 && bearishCount > 0) consensus = 'mixed';
     else consensus = 'neutral';
     
@@ -88,7 +91,8 @@ export class MomentumAnalyzer {
     strength: 'overbought' | 'oversold' | 'neutral' | 'strong_bullish' | 'strong_bearish';
     score: number;
   } {
-    if (prices.length < 14) {
+    const rsiPeriod = 14;
+    if (prices.length < rsiPeriod) {
       return {
         momentum: 0,
         rsi: 50,
@@ -104,7 +108,7 @@ export class MomentumAnalyzer {
     const gains: number[] = [];
     const losses: number[] = [];
     
-    for (let i = 1; i < Math.min(prices.length, 14); i++) {
+    for (let i = 1; i < Math.min(prices.length, rsiPeriod); i++) {
       const change = prices[i] - prices[i - 1];
       if (change > 0) {
         gains.push(change);
@@ -202,7 +206,7 @@ export class MomentumAnalyzer {
     
     const breakdown = {
       basic: basic.score,
-      multiPeriod: multiPeriod.consensus === 'bullish' ? 80 : multiPeriod.consensus === 'bearish' ? 20 : 50,
+      multiPeriod: multiPeriod.consensus === 'bullish' ? this.getBullishScore() : multiPeriod.consensus === 'bearish' ? this.getBearishScore() : this.getNeutralScore(),
       rsi: rsiAnalysis.score,
       acceleration: acceleration.score
     };
@@ -210,10 +214,10 @@ export class MomentumAnalyzer {
     const totalScore = (breakdown.basic * 0.3) + (breakdown.multiPeriod * 0.3) + (breakdown.rsi * 0.2) + (breakdown.acceleration * 0.2);
     
     let recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG_SELL';
-    if (totalScore >= 80 && basic.direction === 'bullish') recommendation = 'STRONG_BUY';
-    else if (totalScore >= 60 && basic.direction === 'bullish') recommendation = 'BUY';
-    else if (totalScore <= 20 && basic.direction === 'bearish') recommendation = 'STRONG_SELL';
-    else if (totalScore <= 40 && basic.direction === 'bearish') recommendation = 'SELL';
+    if (totalScore >= this.getStrongBuyThreshold() && basic.direction === 'bullish') recommendation = 'STRONG_BUY';
+    else if (totalScore >= this.getBuyThreshold() && basic.direction === 'bullish') recommendation = 'BUY';
+    else if (totalScore <= this.getBearishScore() && basic.direction === 'bearish') recommendation = 'STRONG_SELL';
+    else if (totalScore <= this.getSellThreshold() && basic.direction === 'bearish') recommendation = 'SELL';
     else recommendation = 'HOLD';
     
     return { totalScore, breakdown, recommendation };
@@ -237,8 +241,9 @@ export class MomentumAnalyzer {
     const momentum = (recent[period - 1] - recent[0]) / recent[0];
     
     let direction: 'bullish' | 'bearish' | 'neutral';
-    if (momentum > 0.002) direction = 'bullish';
-    else if (momentum < -0.002) direction = 'bearish';
+    const threshold = this.getMomentumThreshold() / 2.5;
+    if (momentum > threshold) direction = 'bullish';
+    else if (momentum < -threshold) direction = 'bearish';
     else direction = 'neutral';
     
     const score = Math.min(100, Math.abs(momentum) * 1000);
@@ -250,6 +255,39 @@ export class MomentumAnalyzer {
       momentum,
       direction
     };
+  }
+
+  // Algorithm constants from configuration
+  private getMinPeriodsRequired(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.TREND_OFFSET + 2;
+  }
+
+  private getMomentumThreshold(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.NUMERICAL_TOLERANCE / 2;
+  }
+
+  private getBullishScore(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.ULTRA_CONSERVATIVE_THRESHOLD;
+  }
+
+  private getBearishScore(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.ACTION_SCORE;
+  }
+
+  private getNeutralScore(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.DEFAULT_CONFIDENCE;
+  }
+
+  private getStrongBuyThreshold(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.ULTRA_CONSERVATIVE_THRESHOLD;
+  }
+
+  private getBuyThreshold(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.SIMULATION_THRESHOLD;
+  }
+
+  private getSellThreshold(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.RSI_OPTIMAL_MIN;
   }
 }
 

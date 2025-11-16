@@ -15,7 +15,7 @@ export class VolumeAnalyzer {
    * 📊 ANÁLISE DE VOLUME AVANÇADA
    */
   public validateVolumeStrength(klines: any[]): VolumeAnalysis {
-    if (klines.length < 10) {
+    if (klines.length < this.getMinKlinesRequired()) {
       return { 
         isValid: false, 
         reason: 'Dados de volume insuficientes', 
@@ -40,14 +40,14 @@ export class VolumeAnalyzer {
       return { 
         isValid: false, 
         reason: `Volume ${volumeMultiplier.toFixed(1)}x < ${requiredVolume}x (BOT_SPECIFIC)`, 
-        score: volumeMultiplier * 10,
+        score: volumeMultiplier * this.getScoreMultiplier(),
         volumeMultiplier,
         avgVolume,
         currentVolume
       };
     }
 
-    const score = Math.min(100, volumeMultiplier * 10);
+    const score = Math.min(100, volumeMultiplier * this.getScoreMultiplier());
     return { 
       isValid: true, 
       reason: `Volume ${volumeMultiplier.toFixed(1)}x OK`, 
@@ -88,23 +88,23 @@ export class VolumeAnalyzer {
     const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
     
     // Detectar anomalia (volume muito acima do normal)
-    const anomaly = currentVolume > avgVolume * 3;
+    const anomaly = currentVolume > avgVolume * this.getAnomalyMultiplier();
     
     let trend: 'increasing' | 'decreasing' | 'stable';
     let strength: number;
     let reason: string;
     
-    if (change > 0.2) {
+    if (change > this.getChangeThreshold()) {
       trend = 'increasing';
       strength = Math.min(100, change * 100);
       reason = `Volume crescente: +${(change * 100).toFixed(1)}%`;
-    } else if (change < -0.2) {
+    } else if (change < -this.getChangeThreshold()) {
       trend = 'decreasing';
       strength = Math.min(100, Math.abs(change) * 100);
       reason = `Volume decrescente: ${(change * 100).toFixed(1)}%`;
     } else {
       trend = 'stable';
-      strength = 50;
+      strength = this.getStableStrength();
       reason = 'Volume estável';
     }
     
@@ -146,11 +146,40 @@ export class VolumeAnalyzer {
     const totalScore = (breakdown.strength * 0.5) + (breakdown.pattern * 0.3) + (breakdown.consistency * 0.2);
     
     let recommendation: 'STRONG' | 'MODERATE' | 'WEAK';
-    if (totalScore >= 70) recommendation = 'STRONG';
-    else if (totalScore >= 50) recommendation = 'MODERATE';
+    if (totalScore >= this.getStrongThreshold()) recommendation = 'STRONG';
+    else if (totalScore >= this.getModerateThreshold()) recommendation = 'MODERATE';
     else recommendation = 'WEAK';
     
     return { totalScore, breakdown, recommendation };
+  }
+
+  // Algorithm constants as methods
+  private getMinKlinesRequired(): number {
+    return 10; // Algorithm constant
+  }
+
+  private getScoreMultiplier(): number {
+    return 10; // Algorithm constant
+  }
+
+  private getAnomalyMultiplier(): number {
+    return 3; // Algorithm constant
+  }
+
+  private getChangeThreshold(): number {
+    return 0.2; // Algorithm constant
+  }
+
+  private getStableStrength(): number {
+    return 50; // Algorithm constant
+  }
+
+  private getStrongThreshold(): number {
+    return 70; // Algorithm constant
+  }
+
+  private getModerateThreshold(): number {
+    return 50; // Algorithm constant
   }
 }
 

@@ -7,10 +7,10 @@ import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { validateAdvancedSellStrength } from '../../utils/validation/advanced-sell-validator';
 import { AdvancedEmaAnalyzer } from '../../services/advanced-ema-analyzer';
 import { calculateSymbolVolatility } from '../../utils/risk/volatility-calculator';
-import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
-import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
+import { TradingConfigManager } from '../../../core';
 import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../../shared/validators/trend-validator';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
+import { UnifiedDeepSeekAnalyzer } from '../../../core/analyzers/factories/unified-deepseek-analyzer';
 
 export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   private flowManager: BotFlowManager;
@@ -95,12 +95,12 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   }
 
   private getThresholdSellMarketCondition(marketType: string): number {
-    // Critérios REALISTAS para Multi-Smart Bot SELL (equilibrio precisão/execução)
+    // Critérios EXECUTÁVEIS para Multi-Smart Bot SELL
     switch (marketType) {
-      case 'BULL_MARKET': return 50;  // Rigoroso mas executável em bull market
-      case 'BEAR_MARKET': return 25;  // Moderado em bear market
-      case 'SIDEWAYS': return 35;     // Equilibrado em mercado lateral
-      default: return 40;             // Padrão realista
+      case 'BULL_MARKET': return 35;  // Moderado em bull market
+      case 'BEAR_MARKET': return 15;  // Muito permissivo em bear market
+      case 'SIDEWAYS': return 25;     // Executável para mercado atual
+      default: return 25;             // Padrão executável
     }
   }
 
@@ -135,7 +135,7 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   }
 
   private async validateMultiSmartDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
-    if (!symbol || !marketData) return false;
+    if (!symbol) return false;
 
     console.log('🛡️ PRÉ-VALIDAÇÃO MULTI-SMART SELL SIMULATOR...');
 
@@ -168,18 +168,23 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
     // 2. VALIDAÇÕES ESPECÍFICAS MULTI-SMART SELL
     console.log('🔍 Validações específicas Multi-Smart SELL...');
 
-    // Validar tendência EMA para baixa
+    // Validar tendência EMA para baixa (mais permissivo para SELL)
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    if (!validateTrendAnalysis(trendAnalysis, { direction: 'DOWN', isSimulation: true })) {
-      console.log('❌ Tendência EMA não favorável para venda');
+    // Para SELL, aceitar qualquer tendência que não seja fortemente bullish
+    const isSellFriendly = !trendAnalysis.isUptrend || trendAnalysis.reason?.includes('lateral') || trendAnalysis.reason?.includes('consolidação');
+    if (!isSellFriendly) {
+      console.log('❌ Tendência muito bullish para venda');
+      console.log(`💭 Razão: ${trendAnalysis.reason}`);
       return false;
     }
+    console.log('✅ Condições de mercado favoráveis para SELL');
 
     // Validar decisão DeepSeek para SELL
-    if (!validateDeepSeekDecision(decision, 'SELL')) {
+    if (decision.action !== 'SELL') {
       console.log('❌ DeepSeek não recomenda SELL');
       return false;
     }
+    console.log('✅ DeepSeek confirma oportunidade de SELL');
 
     // 3. BOOST INTELIGENTE DE CONFIANÇA
     const boostedDecision = boostConfidence(decision, { baseBoost: 10, maxBoost: 15, trendType: 'SELL' });

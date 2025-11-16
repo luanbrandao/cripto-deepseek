@@ -1,45 +1,6 @@
-import cron from 'node-cron';
-import { SmartTradingBotBuy } from '../bots/execution/real/smart-trading-bot-buy';
-import { TradingConfigManager } from '../shared/config/trading-config-manager';
 import * as dotenv from 'dotenv';
-import { validateBinanceKeys } from '../bots/utils/validation/env-validator';
+import { UnifiedCronService } from '../shared/services/unified-cron-service';
 
 dotenv.config();
 
-console.log(`🤖 Smart Trading Bot Cron iniciado - Execução a cada ${TradingConfigManager.getConfig().TRADE_COOLDOWN_MINUTES} minutos`);
-
-const keys = validateBinanceKeys();
-if (!keys) {
-  console.error('❌ Chaves da Binance não configuradas. Encerrando...');
-  process.exit(1);
-}
-
-const { apiKey, apiSecret } = keys;
-
-cron.schedule(`*/${TradingConfigManager.getConfig().TRADE_COOLDOWN_MINUTES} * * * *`, async () => {
-  const timestamp = new Date().toLocaleString('pt-BR');
-  console.log(`\n⏰ [${timestamp}] Executando Smart Trading Bot...`);
-
-  try {
-    const bot = new SmartTradingBotBuy(apiKey, apiSecret);
-    const tradeResult = await bot.executeTrade();
-
-    if (tradeResult) {
-      console.log('📊 Trade real executado com sucesso');
-    } else {
-      console.log('⚠️ Nenhum trade executado neste ciclo');
-    }
-
-    console.log(`✅ [${timestamp}] Ciclo completo finalizado\n`);
-  } catch (error) {
-    console.error(`❌ [${timestamp}] Erro no ciclo:`, error);
-    console.log('⏳ Aguardando próximo ciclo...\n');
-  }
-});
-
-process.on('SIGINT', () => {
-  console.log('\n🛑 Encerrando Smart Trading Bot Cron...');
-  process.exit(0);
-});
-
-console.log('✅ Cron job configurado. Pressione Ctrl+C para parar.');
+UnifiedCronService.startCronJob('smart-bot-buy');

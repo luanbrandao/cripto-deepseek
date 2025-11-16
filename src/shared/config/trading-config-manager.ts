@@ -71,6 +71,59 @@ interface BaseTradingConfig {
     MOMENTUM_CONFIRMATION: boolean;
   };
 
+  // ALGORITMO E CONSTANTES TÉCNICAS
+  ALGORITHM: {
+    // EMA
+    EMA_MULTIPLIER_NUMERATOR: number;
+    EMA_COMPLEMENT_FACTOR: number;
+
+    // Confiança
+    DEFAULT_CONFIDENCE: number;
+    LOW_CONFIDENCE: number;
+    BASE_CONFIDENCE: number;
+    HIGH_CONFIDENCE_THRESHOLD: number;
+    EXCEPTIONAL_CONFIDENCE: number;
+    VERY_HIGH_CONFIDENCE: number;
+
+    // RSI
+    RSI_MIN: number;
+    RSI_MAX: number;
+    RSI_OPTIMAL_MIN: number;
+    RSI_OPTIMAL_MAX: number;
+
+    // Padrão 123
+    PATTERN_123: {
+      MIN_CANDLES_REQUIRED: number;
+      PATTERN_CANDLES_COUNT: number;
+      TREND_ANALYSIS_CANDLES: number;
+      TREND_OFFSET: number;
+      BASE_CONFIDENCE: number;
+      TREND_CONFIDENCE: number;
+    };
+
+    // Multiplicadores
+    STRENGTH_MULTIPLIER: number;
+    CONFIDENCE_DIVISOR: number;
+    HIGH_AMOUNT_MULTIPLIER: number;
+    MEDIUM_AMOUNT_MULTIPLIER: number;
+    DEFAULT_AMOUNT: number;
+
+    // Tolerâncias
+    NUMERICAL_TOLERANCE: number;
+
+    // Scores
+    EXCEPTIONAL_SCORE: number;
+    VERY_HIGH_SCORE: number;
+    MIN_SCORE: number;
+    ACTION_SCORE: number;
+    SIMULATION_CONFIDENCE_SCORE: number;
+
+    // Thresholds
+    ULTRA_CONSERVATIVE_THRESHOLD: number;
+    SIMULATION_THRESHOLD: number;
+    MIN_SCORE_THRESHOLD: number;
+  };
+
   // CAMINHOS E ARQUIVOS
   PATHS: {
     TRADES_DIR: string;
@@ -150,6 +203,58 @@ const BALANCED_CONFIG: BaseTradingConfig = {
     REQUIRE_ALIGNMENT: true,
     MIN_TREND_STRENGTH: 0.01,
     MOMENTUM_CONFIRMATION: true
+  },
+
+  ALGORITHM: {
+    // EMA
+    EMA_MULTIPLIER_NUMERATOR: 2,
+    EMA_COMPLEMENT_FACTOR: 1,
+
+    // Confiança
+    DEFAULT_CONFIDENCE: 50,
+    LOW_CONFIDENCE: 40,
+    BASE_CONFIDENCE: 65,
+    HIGH_CONFIDENCE_THRESHOLD: 70,
+    EXCEPTIONAL_CONFIDENCE: 95,
+    VERY_HIGH_CONFIDENCE: 90,
+
+    // RSI
+    RSI_MIN: 30,
+    RSI_MAX: 70,
+    RSI_OPTIMAL_MIN: 40,
+    RSI_OPTIMAL_MAX: 60,
+
+    // Padrão 123
+    PATTERN_123: {
+      MIN_CANDLES_REQUIRED: 10,
+      PATTERN_CANDLES_COUNT: 3,
+      TREND_ANALYSIS_CANDLES: 7,
+      TREND_OFFSET: 3,
+      BASE_CONFIDENCE: 65,
+      TREND_CONFIDENCE: 80
+    },
+
+    // Multiplicadores
+    STRENGTH_MULTIPLIER: 0.25,
+    CONFIDENCE_DIVISOR: 15,
+    HIGH_AMOUNT_MULTIPLIER: 3,
+    MEDIUM_AMOUNT_MULTIPLIER: 2,
+    DEFAULT_AMOUNT: 1,
+
+    // Tolerâncias
+    NUMERICAL_TOLERANCE: 0.01,
+
+    // Scores
+    EXCEPTIONAL_SCORE: 25,
+    VERY_HIGH_SCORE: 20,
+    MIN_SCORE: 15,
+    ACTION_SCORE: 20,
+    SIMULATION_CONFIDENCE_SCORE: 40,
+
+    // Thresholds
+    ULTRA_CONSERVATIVE_THRESHOLD: 80,
+    SIMULATION_THRESHOLD: 60,
+    MIN_SCORE_THRESHOLD: 10
   },
 
   PATHS: {
@@ -232,6 +337,58 @@ const ULTRA_CONSERVATIVE_CONFIG: BaseTradingConfig = {
     MOMENTUM_CONFIRMATION: true
   },
 
+  ALGORITHM: {
+    // EMA
+    EMA_MULTIPLIER_NUMERATOR: 2,
+    EMA_COMPLEMENT_FACTOR: 1,
+
+    // Confiança (mais rigorosa)
+    DEFAULT_CONFIDENCE: 60,
+    LOW_CONFIDENCE: 50,
+    BASE_CONFIDENCE: 75,
+    HIGH_CONFIDENCE_THRESHOLD: 80,
+    EXCEPTIONAL_CONFIDENCE: 98,
+    VERY_HIGH_CONFIDENCE: 95,
+
+    // RSI (mais conservador)
+    RSI_MIN: 25,
+    RSI_MAX: 75,
+    RSI_OPTIMAL_MIN: 35,
+    RSI_OPTIMAL_MAX: 65,
+
+    // Padrão 123 (mais rigoroso)
+    PATTERN_123: {
+      MIN_CANDLES_REQUIRED: 15,
+      PATTERN_CANDLES_COUNT: 3,
+      TREND_ANALYSIS_CANDLES: 10,
+      TREND_OFFSET: 5,
+      BASE_CONFIDENCE: 75,
+      TREND_CONFIDENCE: 90
+    },
+
+    // Multiplicadores (mais conservadores)
+    STRENGTH_MULTIPLIER: 0.15,
+    CONFIDENCE_DIVISOR: 20,
+    HIGH_AMOUNT_MULTIPLIER: 2,
+    MEDIUM_AMOUNT_MULTIPLIER: 1.5,
+    DEFAULT_AMOUNT: 0.5,
+
+    // Tolerâncias (mais rigorosas)
+    NUMERICAL_TOLERANCE: 0.005,
+
+    // Scores (mais altos)
+    EXCEPTIONAL_SCORE: 30,
+    VERY_HIGH_SCORE: 25,
+    MIN_SCORE: 20,
+    ACTION_SCORE: 25,
+    SIMULATION_CONFIDENCE_SCORE: 50,
+
+    // Thresholds (mais rigorosos)
+    ULTRA_CONSERVATIVE_THRESHOLD: 90,
+    SIMULATION_THRESHOLD: 70,
+    MIN_SCORE_THRESHOLD: 15
+  },
+
   PATHS: {
     TRADES_DIR: './src/storage/trades'
   },
@@ -263,7 +420,7 @@ interface BotSpecificConfig {
 
 const BALANCED_BOT_CONFIG: BotSpecificConfig = {
   SMART_BOT_BUY: {
-    MIN_CONFIDENCE: 85,
+    MIN_CONFIDENCE: 80,
     MIN_EMA_SCORE: 12,
     MIN_TOTAL_SCORE: 80,
     VOLUME_MULTIPLIER: 1.5,
@@ -272,7 +429,7 @@ const BALANCED_BOT_CONFIG: BotSpecificConfig = {
   },
 
   REAL_BOT: {
-    MIN_CONFIDENCE: 90,
+    MIN_CONFIDENCE: 80,
     REQUIRE_EMA_CONFIRMATION: true,
     REQUIRE_VOLUME_SPIKE: true,
     STOP_LOSS_PERCENT: 1.0,
@@ -300,7 +457,7 @@ const BALANCED_BOT_CONFIG: BotSpecificConfig = {
 
 const ULTRA_CONSERVATIVE_BOT_CONFIG: BotSpecificConfig = {
   SMART_BOT_BUY: {
-    MIN_CONFIDENCE: 92,
+    MIN_CONFIDENCE: 80,
     MIN_EMA_SCORE: 18,
     MIN_TOTAL_SCORE: 90,
     VOLUME_MULTIPLIER: 3.0,
@@ -309,7 +466,7 @@ const ULTRA_CONSERVATIVE_BOT_CONFIG: BotSpecificConfig = {
   },
 
   REAL_BOT: {
-    MIN_CONFIDENCE: 95,
+    MIN_CONFIDENCE: 80,
     REQUIRE_EMA_CONFIRMATION: true,
     REQUIRE_VOLUME_SPIKE: true,
     STOP_LOSS_PERCENT: 0.5,

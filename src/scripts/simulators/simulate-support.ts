@@ -1,8 +1,5 @@
-import { TradingConfigManager } from '../../shared/config/trading-config-manager';
-import SupportResistanceAnalyzer from '../../analyzers/supportResistanceAnalyzer';
-import { PreValidationService } from '../../shared/services/pre-validation-service';
+import { TradingConfigManager, SupportResistanceAnalyzer } from '../../core';
 import * as fs from 'fs';
-import * as path from 'path';
 import { TradeSimulator } from './trade-simulator';
 
 // Ativar modo ultra-conservador para este simulador
@@ -42,7 +39,7 @@ function saveTrade(trade: SupportResistanceTrade, tradesFile: string) {
 async function runUltraConservativeSupportResistanceSimulation() {
   const config = TradingConfigManager.getConfig();
   const botConfig = TradingConfigManager.getBotConfig();
-  
+
   console.log('🛡️ SUPPORT/RESISTANCE SIMULATOR v7.0 - VALIDAÇÃO CENTRALIZADA');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log(`🎯 Modo: ${TradingConfigManager.getMode()}`);

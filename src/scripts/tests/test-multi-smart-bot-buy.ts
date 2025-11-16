@@ -1,5 +1,5 @@
 import { MultiSmartTradingBotBuy } from '../../bots/execution/real/multi-smart-trading-bot-buy';
-import { TRADING_CONFIG } from '../../bots/config/trading-config';
+import { TradingConfigManager } from '../../core';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -32,12 +32,13 @@ async function testMultiSmartBot() {
   }
 
   console.log('✅ Variáveis de ambiente verificadas');
-  console.log(`📊 Moedas configuradas: ${TRADING_CONFIG.SYMBOLS.join(', ')}`);
-  console.log(`💰 Valor por trade: $${TRADING_CONFIG.TRADE_AMOUNT_USD}`);
-  console.log(`📈 Timeframe: ${TRADING_CONFIG.CHART.TIMEFRAME} (${TRADING_CONFIG.CHART.PERIODS} períodos)`);
-  console.log(`🎯 Confiança mínima: ${TRADING_CONFIG.MIN_CONFIDENCE}%`);
-  console.log(`⚖️ Risk/Reward mínimo: ${TRADING_CONFIG.MIN_RISK_REWARD_RATIO}:1`);
-  console.log(`🔢 Máx. trades ativos: ${TRADING_CONFIG.LIMITS.MAX_ACTIVE_TRADES}`);
+  const config = TradingConfigManager.getConfig();
+  console.log(`📊 Moedas configuradas: ${config.SYMBOLS.join(', ')}`);
+  console.log(`💰 Valor por trade: $${config.TRADE_AMOUNT_USD}`);
+  console.log(`📈 Timeframe: ${config.CHART.TIMEFRAME} (${config.CHART.PERIODS} períodos)`);
+  console.log(`🎯 Confiança mínima: ${config.MIN_CONFIDENCE}%`);
+  console.log(`⚖️ Risk/Reward mínimo: ${config.MIN_RISK_REWARD_RATIO}:1`);
+  console.log(`🔢 Máx. trades ativos: ${config.LIMITS.MAX_ACTIVE_TRADES}`);
   console.log('');
 
   // Confirmação de segurança

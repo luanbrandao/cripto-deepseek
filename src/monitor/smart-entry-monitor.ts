@@ -95,7 +95,7 @@ export class SmartEntryMonitor {
   }
 
   private checkIfTriggered(order: SmartEntryOrder, currentPrice: number): boolean {
-    const tolerance = 0.001; // 0.1% tolerância
+    const tolerance = 0.001; // Algorithm constant - 0.1% tolerância
 
     if (order.action === 'BUY') {
       // BUY é ativado quando preço atinge ou fica abaixo do target entry
@@ -107,8 +107,9 @@ export class SmartEntryMonitor {
   }
 
   private simulateTradeResult(order: SmartEntryOrder): { outcome: 'win' | 'loss', actualReturn: number, exitPrice: number } {
-    // Para simulação, assumir que 80% dos trades são winners
-    const isWin = Math.random() < 0.8;
+    // Para simulação, assumir que 80% dos trades são winners - Algorithm constant
+    const winRate = 0.8;
+    const isWin = Math.random() < winRate;
 
     if (isWin) {
       return {

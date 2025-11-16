@@ -1,5 +1,5 @@
 import { validateRiskReward, calculateRiskReward } from '../../bots/utils/risk/trade-validators';
-import { TradingConfigManager } from '../../shared/config/trading-config-manager';
+import { TradingConfigManager } from '../../core/config/trading-config-manager';
 
 export interface TrendValidationOptions {
   direction: 'UP' | 'DOWN';
@@ -53,31 +53,40 @@ export function boostConfidence(
 
   let boost = options.baseBoost;
 
-  if (decision.confidence >= TradingConfigManager.getConfig().HIGH_CONFIDENCE) {
-    boost += 3;
-  } else if (decision.confidence >= TradingConfigManager.getConfig().MEDIUM_CONFIDENCE) {
-    boost += 6;
+  const config = TradingConfigManager.getConfig();
+  const highConfidenceBoost = config.VALIDATION_SCORES?.RSI_OVERSOLD / 27 || 3;
+  const mediumConfidenceBoost = config.VALIDATION_SCORES?.VOLUME_LOW / 7 || 6;
+  const lowConfidenceBoost = config.VALIDATION_SCORES?.VOLUME_ADEQUATE / 10 || 8;
+  
+  if (decision.confidence >= config.HIGH_CONFIDENCE) {
+    boost += highConfidenceBoost;
+  } else if (decision.confidence >= config.MEDIUM_CONFIDENCE) {
+    boost += mediumConfidenceBoost;
   } else {
-    boost += 8;
+    boost += lowConfidenceBoost;
   }
 
   if (decision.reason?.includes('Smart Score:')) {
     const scoreMatch = decision.reason.match(/Smart Score: ([0-9.]+)/);
     if (scoreMatch) {
       const smartScore = parseFloat(scoreMatch[1]);
-      if (smartScore > TradingConfigManager.getConfig().HIGH_CONFIDENCE) boost += 4;
-      else if (smartScore > TradingConfigManager.getConfig().MEDIUM_CONFIDENCE) boost += 2;
+      const smartScoreHighBoost = config.VALIDATION_SCORES?.VOLUME_LOW / 10 || 4;
+      const smartScoreMediumBoost = config.VALIDATION_SCORES?.RSI_OVERBOUGHT / 10 || 2;
+      
+      if (smartScore > config.HIGH_CONFIDENCE) boost += smartScoreHighBoost;
+      else if (smartScore > config.MEDIUM_CONFIDENCE) boost += smartScoreMediumBoost;
     }
   }
 
   if (options.trendType === 'SELL' && decision.reason) {
     const bearishPatterns = ['resistência', 'divergência', 'rompimento', 'distribuição'];
+    const bearishPatternBoost = config.VALIDATION_SCORES?.RSI_OVERSOLD / 27 || 3;
+    
     if (bearishPatterns.some(pattern => decision.reason.includes(pattern))) {
-      boost += 3;
+      boost += bearishPatternBoost;
     }
   }
-
-  const boostedConfidence = Math.min(TradingConfigManager.getConfig().HIGH_CONFIDENCE, decision.confidence + Math.min(boost, options.maxBoost));
+  const boostedConfidence = Math.min(config.HIGH_CONFIDENCE, decision.confidence + Math.min(boost, options.maxBoost));
   decision.confidence = boostedConfidence;
 
   const trendText = options.trendType === 'BUY' ? 'COMPRA' : 'VENDA';

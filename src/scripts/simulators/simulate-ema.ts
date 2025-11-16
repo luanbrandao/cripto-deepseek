@@ -1,15 +1,13 @@
 
-import { TradingConfigManager } from '../../shared/config/trading-config-manager';
-import EmaAnalyzer from '../../analyzers/emaAnalyzer';
+import { TradingConfigManager, EmaAnalyzer } from '../../core';
 import { TradeSimulator } from './trade-simulator';
-import { UltraConservativeAnalyzer } from '../../shared/analyzers/ultra-conservative-analyzer';
 
 // Ativar modo ultra-conservador
 TradingConfigManager.setMode('ULTRA_CONSERVATIVE');
 
 async function runUltraConservativeEmaSimulation() {
   const config = TradingConfigManager.getConfig();
-  
+
   console.log('🛡️ EMA SIMULATOR v6.0 - REALISTA CORRIGIDO');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log(`🎯 Modo: ${TradingConfigManager.getMode()}`);

@@ -4,14 +4,14 @@ import { MarketTrendAnalyzer } from '../../services/market-trend-analyzer';
 import { calculateRiskRewardDynamic } from '../../utils/risk/trade-validators';
 import { calculateTargetAndStopPricesRealMarket } from '../../utils/risk/price-calculator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
-import { validateAdvancedBuyStrength } from '../../utils/validation/advanced-buy-validator';
+import { validateAdvancedStrength } from '../../utils/validation/unified-advanced-validator';
 import { AdvancedEmaAnalyzer } from '../../services/advanced-ema-analyzer';
 import { calculateSymbolVolatility } from '../../utils/risk/volatility-calculator';
-import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
-import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
+import { TradingConfigManager } from '../../../core';
 import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../../shared/validators/trend-validator';
 import { PreValidationService } from '../../../shared/services/pre-validation-service';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
+import { UnifiedDeepSeekAnalyzer } from '../../../core/analyzers/factories/unified-deepseek-analyzer';
 
 export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
@@ -80,7 +80,7 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
 
       const threshold = this.getThresholdBuyMarketCondition(condition.type);
 
-      const strengthValid = validateAdvancedBuyStrength(analysis, threshold);
+      const strengthValid = validateAdvancedStrength(analysis, threshold, 'BUY');
       const strongUptrend = this.advancedEmaAnalyzer.isStrongUptrend(analysis);
       const moderateUptrend = this.advancedEmaAnalyzer.isModerateUptrend(analysis);
       const trendValid = strongUptrend || moderateUptrend;
@@ -106,12 +106,12 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   // }
 
   private getThresholdBuyMarketCondition(marketType: string): number {
-    // Critérios REALISTAS para Multi-Smart Bot BUY (equilibrio precisão/execução)
+    // Critérios EXECUTÁVEIS para Multi-Smart Bot BUY
     switch (marketType) {
-      case 'BULL_MARKET': return 30; // Seletivo mas executável em bull market
-      case 'BEAR_MARKET': return 45; // Rigoroso em bear market  
-      case 'SIDEWAYS': return 35;    // Moderado em mercado lateral
-      default: return 40;            // Padrão realista para boa precisão
+      case 'BULL_MARKET': return 20; // Permissivo em bull market
+      case 'BEAR_MARKET': return 30; // Moderado em bear market  
+      case 'SIDEWAYS': return 25;    // Executável para mercado atual
+      default: return 25;            // Padrão executável
     }
   }
 
@@ -148,7 +148,7 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
 
     // 2. VALIDAÇÕES ESPECÍFICAS MULTI-SMART
     console.log('🔍 Validações específicas Multi-Smart...');
-    
+
     // Validar tendência EMA para alta
     const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
     if (!validateTrendAnalysis(trendAnalysis, { direction: 'UP', isSimulation: true })) {

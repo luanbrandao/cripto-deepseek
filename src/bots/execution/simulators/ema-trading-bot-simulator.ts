@@ -3,8 +3,7 @@ import { BotFlowManager } from '../../utils/execution/bot-flow-manager';
 import { BotConfig, TradeDecision } from '../../core/types';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
-import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
-import TradingConfigManager from '../../../shared/config/trading-config-manager';
+import { EmaAnalyzer, TradingConfigManager } from '../../../core';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import { BaseTradingBot } from '../../core/base-trading-bot';
 
@@ -58,7 +57,7 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
     console.log('   ✅ Risk Level: Classificação automática de risco\n');
     console.log('🎯 Validações Ativas (Config-Based):');
     console.log(`   📈 EMA: Períodos ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} + Alinhamento (25pts)`);
-    console.log('   📊 RSI: Zona neutra 14-período (20pts)');
+    console.log(`   📊 RSI: Zona neutra 14-período (20pts)`);
     console.log(`   📊 Volume: ${(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER / 2).toFixed(1)}x média mínimo (20pts)`);
     console.log(`   ⚡ Momentum: ${(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 500).toFixed(1)}% mínimo (15pts)`);
     console.log(`   📉 Volatilidade: ${config.MARKET_FILTERS.MIN_VOLATILITY}-${config.MARKET_FILTERS.MAX_VOLATILITY}% (10pts)`);
@@ -105,9 +104,10 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
     if (!validation.isValid) {
       console.log('❌ Sinal EMA rejeitado pelas validações avançadas:');
       validation.warnings.forEach(warning => console.log(`   ${warning}`));
+      const config = TradingConfigManager.getConfig();
       return {
         action: 'HOLD',
-        confidence: 50,
+        confidence: config.VALIDATION_SCORES?.MIN_CONFIDENCE || 50,
         reason: 'Sinal EMA não passou nas validações rigorosas',
         symbol,
         price: marketData.currentPrice
@@ -118,7 +118,7 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
     validation.reasons.forEach(reason => console.log(`   ${reason}`));
     
     // 3. Ajustar confiança baseada no score de validação
-    const adjustedConfidence = Math.min(95, basicAnalysis.confidence + validation.score);
+    const adjustedConfidence = Math.min(config.HIGH_CONFIDENCE, basicAnalysis.confidence + validation.score);
     
     console.log(`📈 Sinal EMA: ${basicAnalysis.action} (${adjustedConfidence}% - melhorado)`);
     console.log(`💭 Razão: ${basicAnalysis.reason} + validações rigorosas`);
@@ -145,17 +145,19 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
     const smartValidation = await SmartPreValidationService
       .createBuilder()
       .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 25)
-      .withRSI(14, 20)
-      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER / 2, 20)
-      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 5, 15)
-      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY, 10)
-      .withConfidence(config.MIN_CONFIDENCE, 10)
+      .withRSI(config.RSI?.PERIOD || 14, config.VALIDATION_SCORES?.RSI_OVERBOUGHT || 20)
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER / 2, config.VALIDATION_SCORES?.RSI_OVERBOUGHT || 20)
+      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 5, config.VALIDATION_SCORES?.EMA_SEPARATION - 5 || 15)
+      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY, config.VALIDATION_SCORES?.EMA_SEPARATION / 2 || 10)
+      .withConfidence(config.MIN_CONFIDENCE, config.VALIDATION_SCORES?.EMA_SEPARATION / 2 || 10)
       .build()
       .validate('', mockMarketDataForValidation, mockDecision, null);
     
+    const scoreConversionFactor = 5; // Algorithm constant
+    
     return {
       isValid: smartValidation.isValid,
-      score: Math.round(smartValidation.totalScore / 5), // Convert to 0-20 scale
+      score: Math.round(smartValidation.totalScore / scoreConversionFactor), // Convert to 0-20 scale
       reasons: smartValidation.reasons,
       warnings: smartValidation.warnings
     };
@@ -221,7 +223,7 @@ if (require.main === module) {
   logBotStartup(
     'Ultra-Conservative EMA Simulator v6.0 - TYPESCRIPT FIXED',
     '🛡️ Ultra-Conservador v6.0 - TypeScript Corrigido + Smart Validation\n🔧 Correções: Interface TradeDecision + Async/Await + Fallback Protection\n🧪 Modo seguro - Apenas simulação, sem trades reais',
-    5000,
+    TradingConfigManager.getConfig().SIMULATION.STARTUP_DELAY,
     true
   ).then(() => main());
 }

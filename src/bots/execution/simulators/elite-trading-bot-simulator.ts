@@ -1,14 +1,13 @@
 import { BaseTradingBot } from '../../core/base-trading-bot';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
-import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
-import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
+import { TradingConfigManager } from '../../../core';
 import { getMarketData } from '../../utils/data/market-data-fetcher';
-import { EliteAnalyzer } from '../../../shared/analyzers/elite-analyzer';
-import { EliteRiskManager } from '../../services/elite-risk-manager';
+// Elite components removed - using existing risk management
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import * as fs from 'fs';
 import * as path from 'path';
+import { UnifiedDeepSeekAnalyzer } from '../../../core/analyzers/factories/unified-deepseek-analyzer';
 
 // Configurações Elite - Sistema de 5 Camadas
 const ELITE_CONFIG = {
@@ -36,20 +35,16 @@ const ELITE_CONFIG = {
 };
 
 export class EliteTradingBotSimulator extends BaseTradingBot {
-  private eliteAnalyzer: EliteAnalyzer;
-  private riskManager: EliteRiskManager;
   private tradesFile: string;
 
   constructor(apiKey: string, apiSecret: string) {
     super(apiKey, apiSecret, true);
-    this.eliteAnalyzer = new EliteAnalyzer();
-    this.riskManager = new EliteRiskManager();
     this.tradesFile = path.resolve(`${TradingConfigManager.getConfig().PATHS.TRADES_DIR}/${TradingConfigManager.getConfig().FILES.ELITE_SIMULATOR}`);
   }
 
   protected logBotInfo() {
     const config = TradingConfigManager.getConfig();
-    
+
     console.log('🏆 ELITE TRADING BOT SIMULATOR v6.0 - TYPESCRIPT CORRIGIDO - NÃO EXECUTA TRADES REAIS\n');
     logBotHeader('🏆 ELITE SIMULATOR v6.0 - TS FIXED', 'Win Rate Target: 95%+ | 7-Layer Smart Validation | TypeScript Corrigido', true);
     console.log('🔧 Atualizações v6.0 (TypeScript + Elite Validation):');
@@ -657,13 +652,16 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     console.log(`📏 Tamanho da Posição: ${positionSize}% do capital`);
     console.log(`⚖️ Risk/Reward Target: ${riskReward}:1`);
 
-    // Calcular preços de entrada e saída
-    const prices = this.riskManager.calculateElitePrices(
-      aiDecision.price,
-      aiDecision.action,
-      riskReward,
-      marketData.klines
-    );
+    // Calcular preços de entrada e saída usando risk manager padrão
+    const riskPercent = 1.0 / riskReward; // 1/4 = 0.25% para RR 4:1
+    const rewardPercent = riskPercent * riskReward;
+
+    const prices = {
+      target1: aiDecision.price * (1 + rewardPercent * 0.4),
+      target2: aiDecision.price * (1 + rewardPercent * 0.75),
+      target3: aiDecision.price * (1 + rewardPercent),
+      stopLoss: aiDecision.price * (1 - riskPercent)
+    };
 
     console.log(`\n🎯 NÍVEIS DE PREÇO:`);
     console.log(`📈 Target 1 (40%): $${prices.target1.toFixed(4)}`);

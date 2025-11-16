@@ -7,10 +7,10 @@ import { calculateRiskRewardDynamic } from '../../utils/risk/trade-validators';
 import { calculateTargetAndStopPrices } from '../../utils/risk/price-calculator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { AdvancedEmaAnalyzer } from '../../services/advanced-ema-analyzer';
-import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
-import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
+import { TradingConfigManager } from '../../../core';
 import { validateTrendAnalysis, validateDeepSeekDecision, boostConfidence } from '../../../shared/validators/trend-validator';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
+import { UnifiedDeepSeekAnalyzer } from '../../../core/analyzers/factories/unified-deepseek-analyzer';
 
 export class MultiSmartTradingBotBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
@@ -169,7 +169,7 @@ export class MultiSmartTradingBotBuy extends BaseTradingBot {
     decision.smartValidationPassed = true;
     decision.activeLayers = smartValidation.activeLayers;
     Object.assign(decision, boostedDecision);
-    
+
     return true;
   }
 

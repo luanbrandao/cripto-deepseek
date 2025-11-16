@@ -1,9 +1,9 @@
-import { DeepSeekService } from '../../core/clients/deepseek-client';
-import { UnifiedAnalysisParser } from '../parsers/unified-analysis-parser';
-import { TradingConfigManager } from '../../shared/config/trading-config-manager';
-import { SmartScoringSystem } from '../../bots/services/smart-scoring-system';
-import { AdvancedEmaAnalyzer } from '../../bots/services/advanced-ema-analyzer';
-import { DeepSeekHistoryLogger } from '../utils/deepseek-history-logger';
+import { DeepSeekService } from '../../../core/clients/deepseek-client';
+import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
+import { SmartScoringSystem } from '../../../bots/services/smart-scoring-system';
+import { AdvancedEmaAnalyzer } from '../../../bots/services/advanced-ema-analyzer';
+import { UnifiedAnalysisParser } from '../../../shared/parsers/unified-analysis-parser';
+import { DeepSeekHistoryLogger } from '../../../shared/utils/deepseek-history-logger';
 
 export interface DeepSeekAnalysisOptions {
   strategy: 'SMART_TRADE' | 'REAL_TRADE' | 'MULTI_SMART_TRADE' | 'CUSTOM';
@@ -40,7 +40,7 @@ export class UnifiedDeepSeekAnalyzer {
     const decision = options.parseMode === 'ADVANCED'
       ? await UnifiedAnalysisParser.parseAdvanced(analysis, symbol, price)
       : await UnifiedAnalysisParser.parseBasic(analysis, symbol, price);
-    
+
     // Salvar com dados parseados corretamente
     DeepSeekHistoryLogger.logAnalysis({
       symbol,
@@ -57,7 +57,7 @@ export class UnifiedDeepSeekAnalyzer {
       },
       executionTime: 0
     });
-    
+
     return decision;
   }
 
@@ -85,72 +85,21 @@ export class UnifiedDeepSeekAnalyzer {
 
   // Métodos de conveniência para compatibilidade
   static async analyzeSmartTrade(deepseek: DeepSeekService, symbol: string, marketData: any) {
-    console.log(`\n🧠 Analisando ${symbol} com SMART-TRADE...`);
-
-    const analysis = await deepseek.analyzeMarket(
-      marketData,
-      `Analyze ${symbol} market data including 24h klines. Focus on BULLISH signals only. Provide a CLEAR BUY recommendation if conditions are favorable, otherwise HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators for upward momentum.`,
-      undefined,
-      undefined
+    const { DeepSeekAnalysisFactory } = await import('./deepseek-analysis-factory');
+    return DeepSeekAnalysisFactory.executeAnalysis(
+      deepseek, symbol, marketData,
+      DeepSeekAnalysisFactory.buildSmartTradePrompt(symbol),
+      'smartBot'
     );
-
-    console.log(`\n📋 Análise DeepSeek SMART_TRADE (primeiros 500 chars):`);
-    console.log(analysis.substring(0, 500) + '...');
-
-    const decision = await UnifiedAnalysisParser.parseBasic(analysis, symbol, parseFloat(marketData.price.price));
-    
-    DeepSeekHistoryLogger.logAnalysis({
-      symbol,
-      botType: 'smartBot',
-      prompt: `Analyze ${symbol} market data including 24h klines. Focus on BULLISH signals only. Provide a CLEAR BUY recommendation if conditions are favorable, otherwise HOLD. Be specific about confidence level and reasoning. Consider current price action, volume, and technical indicators for upward momentum.`,
-      response: analysis,
-      confidence: decision.confidence,
-      action: decision.action,
-      reason: decision.reason,
-      marketData: {
-        price: parseFloat(marketData.price.price),
-        change24h: 0,
-        volume24h: 0
-      },
-      executionTime: 0
-    });
-    
-    return decision;
   }
 
   static async analyzeRealTrade(deepseek: DeepSeekService, symbol: string, marketData: any) {
-    console.log(`\n🧠 Analisando ${symbol} com REAL-TRADE...`);
-
-    const analysis = await deepseek.analyzeMarket(
-      marketData,
-      `Analyze ${symbol} market data (${TradingConfigManager.getConfig().CHART.TIMEFRAME} timeframe, ${TradingConfigManager.getConfig().CHART.PERIODS} periods) and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning.`,
-      undefined, // Não salvar no DeepSeekService
-      undefined
+    const { DeepSeekAnalysisFactory } = await import('./deepseek-analysis-factory');
+    return DeepSeekAnalysisFactory.executeAnalysis(
+      deepseek, symbol, marketData,
+      DeepSeekAnalysisFactory.buildRealTradePrompt(symbol),
+      'realBot'
     );
-
-    console.log(`\n📋 Análise DeepSeek REAL_TRADE (primeiros 500 chars):`);
-    console.log(analysis.substring(0, 500) + '...');
-
-    const decision = await UnifiedAnalysisParser.parseBasic(analysis, symbol, parseFloat(marketData.price.price));
-    
-    // Salvar com dados parseados corretamente
-    DeepSeekHistoryLogger.logAnalysis({
-      symbol,
-      botType: 'realBot',
-      prompt: `Analyze ${symbol} market data (${TradingConfigManager.getConfig().CHART.TIMEFRAME} timeframe, ${TradingConfigManager.getConfig().CHART.PERIODS} periods) and provide a clear BUY, SELL, or HOLD recommendation with confidence level and reasoning.`,
-      response: analysis,
-      confidence: decision.confidence,
-      action: decision.action,
-      reason: decision.reason,
-      marketData: {
-        price: parseFloat(marketData.price.price),
-        change24h: 0,
-        volume24h: 0
-      },
-      executionTime: 0
-    });
-    
-    return decision;
   }
 
   static async analyzeAdvanced(deepseek: DeepSeekService, symbol: string, marketData: any, strategy: 'SMART_TRADE' | 'REAL_TRADE' | 'MULTI_SMART_TRADE' = 'REAL_TRADE') {
@@ -285,23 +234,23 @@ ANÁLISE MULTI-DIMENSIONAL BEARISH:
    - Bull Market: Threshold mais alto (mais seletivo)
    - Sideways: Threshold médio
 
-CRITÉRIOS ULTRA-RIGOROSOS PARA VENDA:
-- Múltiplas confirmações bearish
-- Volume significativo em quedas
-- Rompimento de suportes importantes
-- Divergências bearish confirmadas
-- Padrões de reversão completos
+CRITÉRIOS EXECUTÁVEIS PARA VENDA:
+- Pelo menos 2-3 confirmações bearish
+- Volume moderado em quedas (não precisa ser extremo)
+- Sinais de fraqueza ou consolidação
+- Tendência lateral ou de baixa
+- Padrões bearish em formação (não precisam estar completos)
 
 IMPORTANTE: 
-- Seja EXTREMAMENTE seletivo - só recomende VENDA com altíssima confiança (85%+)
+- Seja REALISTA - recomende VENDA com confiança moderada (85%+)
 - NUNCA recomende BUY - este é um bot SHORT-ONLY
-- Caso não haja sinais claros, recomende HOLD
-- Considere múltiplos timeframes para confirmação
+- Prefira SELL quando houver sinais bearish razoáveis
+- Considere condições de mercado lateral como oportunidade
 
 Responda em JSON:
 {
   "action": "SELL" ou "HOLD",
-  "confidence": número de 0-100 (mínimo ${TradingConfigManager.getConfig().MIN_CONFIDENCE} para SELL),
+  "confidence": número de 0-100 (mínimo 70 para SELL),
   "reason": "explicação detalhada da análise multi-dimensional bearish",
   "price": ${parseFloat(price.price)},
   "symbol": "${symbol}",
@@ -403,7 +352,7 @@ Responda em JSON:
     console.log(analysis.substring(0, 500) + '...');
 
     const decision = await UnifiedAnalysisParser.parseBasic(analysis, symbol, parseFloat(marketData.price.price));
-    
+
     DeepSeekHistoryLogger.logAnalysis({
       symbol,
       botType: 'smartBot',
@@ -419,7 +368,7 @@ Responda em JSON:
       },
       executionTime: 0
     });
-    
+
     return decision;
   }
 
@@ -437,7 +386,7 @@ Responda em JSON:
     console.log(analysis.substring(0, 500) + '...');
 
     const decision = await UnifiedAnalysisParser.parseBasic(analysis, symbol, parseFloat(marketData.price.price));
-    
+
     DeepSeekHistoryLogger.logAnalysis({
       symbol,
       botType: 'smartBot',
@@ -453,7 +402,7 @@ Responda em JSON:
       },
       executionTime: 0
     });
-    
+
     return decision;
   }
 }

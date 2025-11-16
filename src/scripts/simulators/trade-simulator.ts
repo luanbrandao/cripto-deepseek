@@ -3,7 +3,7 @@ import { checkActiveSimulationTradesLimit } from '../../bots/utils/validation/si
 import { hasActiveTradeForSymbol } from '../../bots/utils/validation/symbol-trade-checker';
 import * as path from 'path';
 import { Trade, TradeStorage } from '../../core/utils/trade-storage';
-import { TradingConfigManager } from '../../shared/config/trading-config-manager';
+import { TradingConfigManager } from '../../core';
 
 // Função específica para manter consistência histórica do TradeSimulator
 function calculateTradeSimulatorPrices(currentPrice: number, confidence: number, action: 'BUY' | 'SELL') {

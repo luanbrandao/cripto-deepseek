@@ -139,10 +139,13 @@ export class PerformanceAnalyzer {
     console.log(`🔴 Perdas Consecutivas: ${analysis.consecutiveLosses}`);
     console.log(`🧠 Confiança Média: ${analysis.avgConfidence.toFixed(1)}%`);
 
-    // Status do bot
-    if (analysis.winRate >= 60) {
+    // Status do bot - Algorithm constants
+    const excellentThreshold = 60;
+    const goodThreshold = 40;
+    
+    if (analysis.winRate >= excellentThreshold) {
       console.log(`✅ Status: EXCELENTE`);
-    } else if (analysis.winRate >= 40) {
+    } else if (analysis.winRate >= goodThreshold) {
       console.log(`⚠️ Status: PRECISA MELHORAR`);
     } else {
       console.log(`🚨 Status: CRÍTICO - REQUER AJUSTES IMEDIATOS`);
@@ -155,7 +158,8 @@ export class PerformanceAnalyzer {
     const totalTrades = analyses.reduce((sum, a) => sum + a.completedTrades, 0);
     const totalWins = analyses.reduce((sum, a) => sum + (a.completedTrades * a.winRate / 100), 0);
     const totalReturn = analyses.reduce((sum, a) => sum + a.totalReturn, 0);
-    const totalInvested = analyses.reduce((sum, a) => sum + (a.totalTrades * 15), 0); // Assumindo $15 por trade
+    const tradeAmount = 15; // Algorithm constant - assumed trade amount
+    const totalInvested = analyses.reduce((sum, a) => sum + (a.totalTrades * tradeAmount), 0);
 
     const overallWinRate = totalTrades > 0 ? (totalWins / totalTrades) * 100 : 0;
     const roi = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
@@ -215,33 +219,40 @@ export class PerformanceAnalyzer {
     console.log('💡 RECOMENDAÇÕES BASEADAS NA ANÁLISE');
     console.log('═══════════════════════════════════════════════════════════════');
 
-    // Recomendações gerais
-    if (metrics.overallWinRate < 30) {
+    // Recomendações gerais - Algorithm constants
+    const criticalWinRate = 30;
+    const warningWinRate = 50;
+    const criticalLoss = -50;
+    
+    if (metrics.overallWinRate < criticalWinRate) {
       console.log('🚨 CRÍTICO: Win rate muito baixo - PARAR OPERAÇÕES IMEDIATAMENTE');
       console.log('   • Revisar completamente as estratégias');
       console.log('   • Aumentar critérios de entrada para 98%+ confiança');
       console.log('   • Reduzir tamanho de posição para $3-5 por trade');
-    } else if (metrics.overallWinRate < 50) {
+    } else if (metrics.overallWinRate < warningWinRate) {
       console.log('⚠️ ATENÇÃO: Win rate abaixo do esperado');
       console.log('   • Implementar filtros mais rigorosos');
       console.log('   • Aumentar confiança mínima para 90%');
       console.log('   • Adicionar cooldown de 60min entre trades');
     }
 
-    if (metrics.totalReturn < -50) {
+    if (metrics.totalReturn < criticalLoss) {
       console.log('🚨 CRÍTICO: Perdas excessivas');
       console.log('   • Ativar modo conservador imediatamente');
       console.log('   • Reduzir exposição para máximo $5 por trade');
       console.log('   • Implementar stop loss mais próximo (1%)');
     }
 
-    // Recomendações por bot
+    // Recomendações por bot - Algorithm constants
+    const disableThreshold = 20;
+    const consecutiveLossLimit = 3;
+    
     for (const analysis of analyses) {
-      if (analysis.winRate < 20) {
+      if (analysis.winRate < disableThreshold) {
         console.log(`🔴 ${analysis.botName}: DESATIVAR temporariamente`);
         console.log(`   • Win rate de ${analysis.winRate.toFixed(1)}% é inaceitável`);
         console.log(`   • Revisar completamente a estratégia`);
-      } else if (analysis.consecutiveLosses >= 3) {
+      } else if (analysis.consecutiveLosses >= consecutiveLossLimit) {
         console.log(`⚠️ ${analysis.botName}: Implementar cooldown após perdas`);
         console.log(`   • ${analysis.consecutiveLosses} perdas consecutivas detectadas`);
       }
@@ -259,12 +270,16 @@ export class PerformanceAnalyzer {
   }
 
   private static saveAnalysisReport(analyses: TradeAnalysis[], metrics: OverallMetrics): void {
+    // Algorithm constants for critical thresholds
+    const criticalWinRate = 30;
+    const criticalLoss = -50;
+    
     const report = {
       timestamp: new Date().toISOString(),
       overallMetrics: metrics,
       botAnalyses: analyses,
       recommendations: {
-        criticalIssues: metrics.overallWinRate < 30 || metrics.totalReturn < -50,
+        criticalIssues: metrics.overallWinRate < criticalWinRate || metrics.totalReturn < criticalLoss,
         suggestedActions: [
           'Aumentar confiança mínima para 95-98%',
           'Reduzir tamanho de posição para $5',

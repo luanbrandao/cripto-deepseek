@@ -4,12 +4,11 @@ import { MarketTrendAnalyzer } from '../../services/market-trend-analyzer';
 import { calculateRiskRewardDynamic, validateConfidence } from '../../utils/risk/trade-validators';
 import { calculateTargetAndStopPrices } from '../../utils/risk/price-calculator';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
-import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
-import TradingConfigManager from '../../../shared/config/trading-config-manager';
-import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
+import { EmaAnalyzer, TradingConfigManager } from '../../../core';
 import { boostConfidence, validateDeepSeekDecision, validateTrendAnalysis } from '../../../shared/validators/trend-validator';
-import { UnifiedDeepSeekAnalyzer } from '../../../shared/analyzers/unified-deepseek-analyzer';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
+import { UnifiedDeepSeekAnalyzer } from '../../../core/analyzers/factories/unified-deepseek-analyzer';
+import UltraConservativeAnalyzer from '../../../core/analyzers/factories/ultra-conservative-analyzer';
 
 export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
   private flowManager: BotFlowManager;
@@ -39,7 +38,7 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
 
   protected logBotInfo() {
     const config = TradingConfigManager.getConfig();
-    
+
     console.log('🛡️ ULTRA-CONSERVATIVE SIMULATOR - NÃO EXECUTA TRADES REAIS\n');
     logBotHeader('🛡️ ULTRA-CONSERVATIVE SMART SIMULATOR BUY v4.0', 'Win Rate Target: 80%+ | Máxima Segurança | Apenas Simulação', true);
     console.log('🎯 Configuração Ultra-Conservadora:');

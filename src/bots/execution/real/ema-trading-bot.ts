@@ -5,11 +5,10 @@ import { validateTrade, calculateRiskReward } from '../../utils/risk/trade-valid
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
 import { validateBinanceKeys } from '../../utils/validation/env-validator';
-import EmaAnalyzer from '../../../analyzers/emaAnalyzer';
-import TradingConfigManager from '../../../shared/config/trading-config-manager';
-import { UltraConservativeAnalyzer } from '../../../shared/analyzers/ultra-conservative-analyzer';
+import { EmaAnalyzer, TradingConfigManager } from '../../../core';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import { BaseTradingBot } from '../../core/base-trading-bot';
+import UltraConservativeAnalyzer from '../../../core/analyzers/factories/ultra-conservative-analyzer';
 
 dotenv.config();
 
@@ -32,16 +31,16 @@ export class EmaTradingBot extends BaseTradingBot {
     };
 
     this.flowManager = new BotFlowManager(this, config);
-    const config = TradingConfigManager.getConfig();
+    const tradingConfig = TradingConfigManager.getConfig();
     this.emaAnalyzer = new EmaAnalyzer({
-      fastPeriod: config.EMA.FAST_PERIOD,
-      slowPeriod: config.EMA.SLOW_PERIOD
+      fastPeriod: tradingConfig.EMA.FAST_PERIOD,
+      slowPeriod: tradingConfig.EMA.SLOW_PERIOD
     });
   }
 
   protected logBotInfo() {
     const config = TradingConfigManager.getConfig();
-    
+
     logBotHeader('🛡️ ULTRA-CONSERVATIVE EMA BOT v4.0', `Win Rate Target: 75%+ | EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} | Risk/Reward: 3:1`);
     console.log('🎯 Configuração Ultra-Conservadora:');
     console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
@@ -92,9 +91,9 @@ export class EmaTradingBot extends BaseTradingBot {
 
   private async validateEmaDecision(decision: TradeDecision, symbol?: string, marketData?: any): Promise<boolean> {
     if (!symbol || !marketData) return false;
-    
+
     console.log('🛡️ PRÉ-VALIDAÇÃO ULTRA-CONSERVADORA EMA...');
-    
+
     // 1. SMART PRÉ-VALIDAÇÃO ULTRA-CONSERVADORA
     const smartValidation = await SmartPreValidationService
       .createBuilder()
@@ -113,19 +112,19 @@ export class EmaTradingBot extends BaseTradingBot {
     console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
     console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
     console.log(`🔍 Camadas Ativas: ${smartValidation.activeLayers.join(', ')}`);
-    
+
     // 2. ANÁLISE ULTRA-CONSERVADORA ADICIONAL
     const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
-    
+
     if (!ultraAnalysis.isValid) {
       console.log('❌ ANÁLISE ULTRA-CONSERVADORA FALHOU:');
       ultraAnalysis.warnings.forEach(warning => console.log(`   ${warning}`));
       return false;
     }
-    
+
     console.log('✅ ANÁLISE ULTRA-CONSERVADORA APROVADA:');
     ultraAnalysis.reasons.forEach(reason => console.log(`   ${reason}`));
-    
+
     // Atualizar decisão com smart pré-validação e análise ultra-conservadora
     decision.confidence = smartValidation.confidence || ultraAnalysis.confidence;
     decision.validationScore = smartValidation.totalScore;
@@ -133,7 +132,7 @@ export class EmaTradingBot extends BaseTradingBot {
     (decision as any).riskLevel = smartValidation.riskLevel || ultraAnalysis.riskLevel;
     (decision as any).smartValidationPassed = true;
     (decision as any).activeLayers = smartValidation.activeLayers;
-    
+
     return true;
   }
 

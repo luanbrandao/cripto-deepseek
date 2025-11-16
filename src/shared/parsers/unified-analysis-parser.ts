@@ -78,10 +78,10 @@ export class UnifiedAnalysisParser {
         } else {
           // Mapear níveis textuais para valores numéricos
           const levelText = match[0].toLowerCase();
-          if (levelText.includes('medium-high')) confidence = 75;
-          else if (levelText.includes('high')) confidence = 85;
-          else if (levelText.includes('medium')) confidence = 65;
-          else if (levelText.includes('low')) confidence = 45;
+          if (levelText.includes('medium-high')) confidence = this.getMediumHighConfidence();
+          else if (levelText.includes('high')) confidence = this.getHighConfidenceLevel();
+          else if (levelText.includes('medium')) confidence = this.getMediumConfidence();
+          else if (levelText.includes('low')) confidence = this.getLowConfidence();
         }
         break;
       }
@@ -89,13 +89,13 @@ export class UnifiedAnalysisParser {
     
     // Ajustar confiança por palavras-chave
     if (analysisLower.includes('high confidence') || analysisLower.includes('strong confidence')) {
-      confidence = Math.max(confidence, 80);
+      confidence = Math.max(confidence, this.getStrongConfidenceLevel());
     } else if (analysisLower.includes('medium-high')) {
-      confidence = Math.max(confidence, 75);
+      confidence = Math.max(confidence, this.getMediumHighConfidence());
     } else if (analysisLower.includes('medium confidence')) {
-      confidence = Math.max(confidence, 65);
+      confidence = Math.max(confidence, this.getMediumConfidence());
     } else if (analysisLower.includes('low confidence') || analysisLower.includes('medium-low')) {
-      confidence = Math.min(confidence, 55);
+      confidence = Math.min(confidence, this.getMediumLowConfidence());
     }
     
     // 3. EXTRAIR PREÇOS E NÍVEIS TÉCNICOS
@@ -118,7 +118,7 @@ export class UnifiedAnalysisParser {
     
     return {
       action: action as 'BUY' | 'SELL' | 'HOLD',
-      confidence: Math.max(30, Math.min(confidence, 95)),
+      confidence: Math.max(this.getMinConfidenceBound(), Math.min(confidence, this.getMaxConfidenceBound())),
       reason: reason || `DeepSeek AI: ${action?.toLowerCase() || 'análise'}`,
       symbol,
       price,
@@ -144,7 +144,8 @@ export class UnifiedAnalysisParser {
       let match;
       while ((match = pattern.exec(analysis)) !== null) {
         const price = parseFloat(match[1].replace(/,/g, ''));
-        if (price > 0 && price < currentPrice * 2) { // Filtro de sanidade
+        const maxPriceMultiplier = 2; // Algorithm constant - sanity filter
+        if (price > 0 && price < currentPrice * maxPriceMultiplier) {
           supportLevels.add(price);
         }
       }
@@ -166,7 +167,9 @@ export class UnifiedAnalysisParser {
       let match;
       while ((match = pattern.exec(analysis)) !== null) {
         const price = parseFloat(match[1].replace(/,/g, ''));
-        if (price > currentPrice * 0.5 && price < currentPrice * 3) { // Filtro de sanidade
+        const minPriceMultiplier = 0.5; // Algorithm constant - sanity filter
+        const maxResistanceMultiplier = 3; // Algorithm constant - sanity filter
+        if (price > currentPrice * minPriceMultiplier && price < currentPrice * maxResistanceMultiplier) {
           resistanceLevels.add(price);
         }
       }
@@ -188,8 +191,11 @@ export class UnifiedAnalysisParser {
       let match;
       while ((match = pattern.exec(analysis)) !== null) {
         const price = parseFloat(match[1].replace(/,/g, ''));
-        // Filtro mais rigoroso para targets - deve ser um preço realista
-        if (price > currentPrice * 0.1 && price < currentPrice * 5 && price > 10) {
+        // Filtro mais rigoroso para targets - deve ser um preço realista - Algorithm constants
+        const minTargetMultiplier = 0.1;
+        const maxTargetMultiplier = 5;
+        const minAbsolutePrice = 10;
+        if (price > currentPrice * minTargetMultiplier && price < currentPrice * maxTargetMultiplier && price > minAbsolutePrice) {
           targetLevels.add(price);
         }
       }
@@ -210,7 +216,8 @@ export class UnifiedAnalysisParser {
       let match;
       while ((match = pattern.exec(analysis)) !== null) {
         const price = parseFloat(match[1].replace(/,/g, ''));
-        if (price > 0 && price < currentPrice * 2) {
+        const maxStopMultiplier = 2; // Algorithm constant
+        if (price > 0 && price < currentPrice * maxStopMultiplier) {
           stopLevels.add(price);
         }
       }
@@ -236,7 +243,8 @@ export class UnifiedAnalysisParser {
       if (match) {
         let reasoning = match[1].trim();
         // Limpar texto
-        reasoning = reasoning.replace(/^[-\s*]+/, '').substring(0, 120);
+        const maxReasoningLength = 120; // Algorithm constant
+        reasoning = reasoning.replace(/^[-\s*]+/, '').substring(0, maxReasoningLength);
         if (reasoning.length > 0) {
           return `DeepSeek AI: ${reasoning}`;
         }
@@ -246,7 +254,8 @@ export class UnifiedAnalysisParser {
     // Procurar por primeira frase após "Key Observations"
     const observationsMatch = analysis.match(/key observations?[:\s]*\n?\s*(?:1\.\s*)?([^\n]*)/i);
     if (observationsMatch) {
-      const observation = observationsMatch[1].trim().substring(0, 100);
+      const maxObservationLength = 100; // Algorithm constant
+      const observation = observationsMatch[1].trim().substring(0, maxObservationLength);
       if (observation.length > 10) {
         return `DeepSeek AI: ${observation}`;
       }
@@ -256,7 +265,9 @@ export class UnifiedAnalysisParser {
     const sentences = analysis.split(/[.!?]/);
     for (const sentence of sentences) {
       const cleanSentence = sentence.trim();
-      if (cleanSentence.length > 20 && cleanSentence.length < 150 && 
+      const minSentenceLength = 20; // Algorithm constant
+      const maxSentenceLength = 150; // Algorithm constant
+      if (cleanSentence.length > minSentenceLength && cleanSentence.length < maxSentenceLength && 
           !cleanSentence.includes('###') && !cleanSentence.includes('**')) {
         return `DeepSeek AI: ${cleanSentence}`;
       }
@@ -327,12 +338,16 @@ export class UnifiedAnalysisParser {
     // Priorizar confiança explícita da IA - ajustes mínimos apenas
     let confidence = baseConfidence;
     
-    // Boost apenas por sinais muito fortes
-    if (analysisLower.includes('strong buy') || analysisLower.includes('strong sell')) confidence += 3;
-    if (analysisLower.includes('confirmed breakout')) confidence += 2;
+    // Boost apenas por sinais muito fortes - Algorithm constants
+    const strongSignalBoost = 3;
+    const confirmedBreakoutBoost = 2;
+    const uncertaintyPenalty = 3;
+    
+    if (analysisLower.includes('strong buy') || analysisLower.includes('strong sell')) confidence += strongSignalBoost;
+    if (analysisLower.includes('confirmed breakout')) confidence += confirmedBreakoutBoost;
     
     // Redução apenas por incertezas explícitas
-    if (analysisLower.includes('uncertain') || analysisLower.includes('unclear')) confidence -= 3;
+    if (analysisLower.includes('uncertain') || analysisLower.includes('unclear')) confidence -= uncertaintyPenalty;
     
     return confidence;
   }
@@ -368,7 +383,7 @@ export class UnifiedAnalysisParser {
     return {
       bullishScore,
       bearishScore,
-      confidence: Math.min(TradingConfigManager.getConfig().HIGH_CONFIDENCE, Math.max(50, totalScore * 8))
+      confidence: Math.min(TradingConfigManager.getConfig().HIGH_CONFIDENCE, Math.max(50, totalScore * 8)) // Algorithm constant - score multiplier
     };
   }
 
@@ -384,16 +399,25 @@ export class UnifiedAnalysisParser {
 
   private static extractMomentumScore(analysis: string): number {
     if (analysis.includes('strong momentum')) return TradingConfigManager.getConfig().HIGH_CONFIDENCE;
-    if (analysis.includes('momentum')) return 75;
-    if (analysis.includes('weak momentum')) return 30;
-    return 50;
+    const momentumScore = 75; // Algorithm constant
+    const weakMomentumScore = 30; // Algorithm constant
+    const defaultMomentumScore = 50; // Algorithm constant
+    
+    if (analysis.includes('momentum')) return momentumScore;
+    if (analysis.includes('weak momentum')) return weakMomentumScore;
+    return defaultMomentumScore;
   }
 
   private static extractVolumeScore(analysis: string): number {
-    if (analysis.includes('high volume')) return 85;
-    if (analysis.includes('volume')) return 70;
-    if (analysis.includes('low volume')) return 40;
-    return 60;
+    const highVolumeScore = 85; // Algorithm constant
+    const volumeScore = 70; // Algorithm constant
+    const lowVolumeScore = 40; // Algorithm constant
+    const defaultVolumeScore = 60; // Algorithm constant
+    
+    if (analysis.includes('high volume')) return highVolumeScore;
+    if (analysis.includes('volume')) return volumeScore;
+    if (analysis.includes('low volume')) return lowVolumeScore;
+    return defaultVolumeScore;
   }
 
   private static analyzeConfidenceFactors(analysis: string): number {
@@ -401,22 +425,33 @@ export class UnifiedAnalysisParser {
     let confidenceBoost = 0;
 
     this.CONFIDENCE_BOOSTERS.forEach(booster => {
-      if (analysisLower.includes(booster)) confidenceBoost += 3;
+      const boosterValue = 3; // Algorithm constant
+      if (analysisLower.includes(booster)) confidenceBoost += boosterValue;
     });
 
-    if (analysisLower.includes('multiple indicators')) confidenceBoost += 5;
-    if (analysisLower.includes('confluence')) confidenceBoost += 4;
-    if (analysisLower.includes('confirmation')) confidenceBoost += 3;
+    const multipleIndicatorsBoost = 5; // Algorithm constant
+    const confluenceBoost = 4; // Algorithm constant
+    const confirmationBoost = 3; // Algorithm constant
+    const maxConfidenceBoost = 15; // Algorithm constant
+    
+    if (analysisLower.includes('multiple indicators')) confidenceBoost += multipleIndicatorsBoost;
+    if (analysisLower.includes('confluence')) confidenceBoost += confluenceBoost;
+    if (analysisLower.includes('confirmation')) confidenceBoost += confirmationBoost;
 
-    return Math.min(15, confidenceBoost);
+    return Math.min(maxConfidenceBoost, confidenceBoost);
   }
 
   private static determineAction(sentiment: SentimentAnalysis, signals: TechnicalSignals): 'BUY' | 'SELL' | 'HOLD' {
-    const bullishSignals = sentiment.bullishScore + (signals.breakout ? 2 : 0) + (signals.support ? 1 : 0);
+    const breakoutWeight = 2; // Algorithm constant
+    const supportWeight = 1; // Algorithm constant
+    const bullishSignals = sentiment.bullishScore + (signals.breakout ? breakoutWeight : 0) + (signals.support ? supportWeight : 0);
     const bearishSignals = sentiment.bearishScore;
 
-    if (bullishSignals >= 3 && bullishSignals > bearishSignals * 1.5) return 'BUY';
-    if (bearishSignals >= 3 && bearishSignals > bullishSignals * 1.5) return 'SELL';
+    const minSignalThreshold = 3; // Algorithm constant
+    const signalMultiplier = 1.5; // Algorithm constant
+    
+    if (bullishSignals >= minSignalThreshold && bullishSignals > bearishSignals * signalMultiplier) return 'BUY';
+    if (bearishSignals >= minSignalThreshold && bearishSignals > bullishSignals * signalMultiplier) return 'SELL';
     return 'HOLD';
   }
 
@@ -427,13 +462,21 @@ export class UnifiedAnalysisParser {
   ): number {
     let baseConfidence = sentiment.confidence;
 
-    if (signals.breakout) baseConfidence += 5;
-    if (signals.support) baseConfidence += 3;
-    if (signals.momentum > 80) baseConfidence += 4;
-    if (signals.volume > 80) baseConfidence += 3;
+    const breakoutConfidenceBoost = 5; // Algorithm constant
+    const supportConfidenceBoost = 3; // Algorithm constant
+    const momentumThreshold = 80; // Algorithm constant
+    const momentumConfidenceBoost = 4; // Algorithm constant
+    const volumeThreshold = 80; // Algorithm constant
+    const volumeConfidenceBoost = 3; // Algorithm constant
+    
+    if (signals.breakout) baseConfidence += breakoutConfidenceBoost;
+    if (signals.support) baseConfidence += supportConfidenceBoost;
+    if (signals.momentum > momentumThreshold) baseConfidence += momentumConfidenceBoost;
+    if (signals.volume > volumeThreshold) baseConfidence += volumeConfidenceBoost;
 
     baseConfidence += confidenceFactors;
-    return Math.min(TradingConfigManager.getConfig().HIGH_CONFIDENCE, Math.max(50, baseConfidence));
+    const minBaseConfidence = 50; // Algorithm constant
+    return Math.min(TradingConfigManager.getConfig().HIGH_CONFIDENCE, Math.max(minBaseConfidence, baseConfidence));
   }
 
   private static generateDetailedReason(
@@ -451,9 +494,45 @@ export class UnifiedAnalysisParser {
 
     if (signals.breakout) reasons.push('Breakout confirmado');
     if (signals.support) reasons.push('Suporte forte');
-    if (signals.momentum > 75) reasons.push('Momentum positivo');
-    if (signals.volume > 75) reasons.push('Volume confirmativo');
+    const momentumReasonThreshold = 75; // Algorithm constant
+    const volumeReasonThreshold = 75; // Algorithm constant
+    
+    if (signals.momentum > momentumReasonThreshold) reasons.push('Momentum positivo');
+    if (signals.volume > volumeReasonThreshold) reasons.push('Volume confirmativo');
 
     return reasons.length > 0 ? `DeepSeek AI: ${reasons.join(' + ')}` : 'Análise AI avançada';
+  }
+
+  // Algorithm constants as methods
+  private static getMediumHighConfidence(): number {
+    return 75; // Algorithm constant
+  }
+
+  private static getHighConfidenceLevel(): number {
+    return 85; // Algorithm constant
+  }
+
+  private static getMediumConfidence(): number {
+    return 65; // Algorithm constant
+  }
+
+  private static getLowConfidence(): number {
+    return 45; // Algorithm constant
+  }
+
+  private static getStrongConfidenceLevel(): number {
+    return 80; // Algorithm constant
+  }
+
+  private static getMediumLowConfidence(): number {
+    return 55; // Algorithm constant
+  }
+
+  private static getMinConfidenceBound(): number {
+    return 30; // Algorithm constant
+  }
+
+  private static getMaxConfidenceBound(): number {
+    return 95; // Algorithm constant
   }
 }

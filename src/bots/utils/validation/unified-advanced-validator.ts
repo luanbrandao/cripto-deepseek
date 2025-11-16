@@ -1,4 +1,4 @@
-import { TradingConfigManager } from '../../../shared/config/trading-config-manager';
+import { TradingConfigManager } from '../../../core/config/trading-config-manager';
 import { validateRiskReward, calculateRiskReward } from '../risk/trade-validators';
 
 export interface AdvancedValidationOptions {
@@ -66,46 +66,60 @@ export function boostAdvancedConfidence(decision: any, options: AdvancedBoostOpt
     throw new Error(`Risk/Reward ratio insuficiente - ${actionText} avançada cancelada`);
   }
 
-  let boost = 5; // Base boost para confirmação EMA
+  const config = TradingConfigManager.getConfig();
+  const baseBoost = config.VALIDATION_SCORES?.EMA_SEPARATION / 4 || 5;
+  const highScoreBoost = config.VALIDATION_SCORES?.EMA_ALIGNMENT / 8 || 5;
+  const mediumScoreBoost = config.VALIDATION_SCORES?.RSI_OVERSOLD / 27 || 3;
+  const minScoreBoost = config.VALIDATION_SCORES?.RSI_OVERBOUGHT / 10 || 2;
+  const highSignalBoost = config.VALIDATION_SCORES?.VOLUME_LOW / 10 || 4;
+  const mediumSignalBoost = config.VALIDATION_SCORES?.RSI_OVERBOUGHT / 10 || 2;
+  const lowRiskBoost = config.VALIDATION_SCORES?.RSI_OVERSOLD / 27 || 3;
+  const mediumRiskBoost = config.VALIDATION_SCORES?.RSI_OVERBOUGHT / 20 || 1;
+  const patternBoost = config.VALIDATION_SCORES?.RSI_OVERBOUGHT / 10 || 2;
+  const volumePatternBoost = config.VALIDATION_SCORES?.RSI_OVERBOUGHT / 10 || 2;
+  const divergenceBoost = config.VALIDATION_SCORES?.RSI_OVERBOUGHT / 20 || 1;
+
+  let boost = baseBoost;
 
   // Boost baseado no Smart Score
-  if (decision.smartScore >= TradingConfigManager.getConfig().HIGH_CONFIDENCE) {
-    boost += 5;
-  } else if (decision.smartScore >= TradingConfigManager.getConfig().MEDIUM_CONFIDENCE) {
-    boost += 3;
-  } else if (decision.smartScore >= TradingConfigManager.getConfig().MIN_CONFIDENCE) {
-    boost += 2;
+  if (decision.smartScore >= config.HIGH_CONFIDENCE) {
+    boost += highScoreBoost;
+  } else if (decision.smartScore >= config.MEDIUM_CONFIDENCE) {
+    boost += mediumScoreBoost;
+  } else if (decision.smartScore >= config.MIN_CONFIDENCE) {
+    boost += minScoreBoost;
   }
 
   // Boost baseado no número de sinais
   const signalKey = options.direction === 'BUY' ? 'bullishSignals' : 'bearishSignals';
   const signalCount = decision[signalKey]?.length || 0;
   if (signalCount >= 5) {
-    boost += 4;
+    boost += highSignalBoost;
   } else if (signalCount >= 3) {
-    boost += 2;
+    boost += mediumSignalBoost;
   }
 
   // Boost baseado no nível de risco
   if (decision.riskLevel === 'LOW') {
-    boost += 3;
+    boost += lowRiskBoost;
   } else if (decision.riskLevel === 'MEDIUM') {
-    boost += 1;
+    boost += mediumRiskBoost;
   }
 
   // Boost para padrões específicos
   const reason = decision.reason?.toLowerCase() || '';
   if (options.direction === 'BUY') {
-    if (reason.includes('golden cross') || reason.includes('rompimento')) boost += 2;
-    if (reason.includes('volume') && reason.includes('acumulação')) boost += 2;
-    if (reason.includes('divergência bullish')) boost += 1;
+    if (reason.includes('golden cross') || reason.includes('rompimento')) boost += patternBoost;
+    if (reason.includes('volume') && reason.includes('acumulação')) boost += volumePatternBoost;
+    if (reason.includes('divergência bullish')) boost += divergenceBoost;
   } else {
-    if (reason.includes('death cross') || reason.includes('rompimento')) boost += 2;
-    if (reason.includes('volume') && reason.includes('distribuição')) boost += 2;
-    if (reason.includes('divergência')) boost += 1;
+    if (reason.includes('death cross') || reason.includes('rompimento')) boost += patternBoost;
+    if (reason.includes('volume') && reason.includes('distribuição')) boost += volumePatternBoost;
+    if (reason.includes('divergência')) boost += divergenceBoost;
   }
 
-  const boostedConfidence = Math.min(TradingConfigManager.getConfig().HIGH_CONFIDENCE + 8, decision.confidence + boost);
+  const maxBoostLimit = config.VALIDATION_SCORES?.RSI_OVERSOLD / 10 || 8;
+  const boostedConfidence = Math.min(config.HIGH_CONFIDENCE + maxBoostLimit, decision.confidence + boost);
   decision.confidence = boostedConfidence;
   decision.reason = `${decision.reason} + Análise multi-dimensional confirmada (+${boost}% boost)`;
 
@@ -119,18 +133,26 @@ export function boostAdvancedConfidence(decision: any, options: AdvancedBoostOpt
 
 export function getAdvancedThreshold(marketType: string, direction: 'BUY' | 'SELL'): number {
   if (direction === 'BUY') {
+    const config = TradingConfigManager.getConfig();
+    const bullMarketThreshold = (config.VALIDATION_SCORES?.MIN_APPROVAL_SCORE || 60) + 5;
+    const sidewaysThreshold = (config.VALIDATION_SCORES?.VOLUME_ADEQUATE || 80) - 5;
+    const defaultThreshold = (config.VALIDATION_SCORES?.MIN_CONFIDENCE || 50) + 20;
+    
     switch (marketType) {
-      case 'BULL_MARKET': return 65;
-      case 'BEAR_MARKET': return TradingConfigManager.getConfig().MEDIUM_CONFIDENCE;
-      case 'SIDEWAYS': return 75;
-      default: return 70;
+      case 'BULL_MARKET': return bullMarketThreshold;
+      case 'BEAR_MARKET': return config.MEDIUM_CONFIDENCE;
+      case 'SIDEWAYS': return sidewaysThreshold;
+      default: return defaultThreshold;
     }
   } else {
+    const config = TradingConfigManager.getConfig();
+    const bearMarketThreshold = (config.VALIDATION_SCORES?.MIN_CONFIDENCE || 50) + 20;
+    
     switch (marketType) {
-      case 'BULL_MARKET': return TradingConfigManager.getConfig().HIGH_CONFIDENCE;
-      case 'BEAR_MARKET': return 70;
-      case 'SIDEWAYS': return TradingConfigManager.getConfig().MIN_CONFIDENCE;
-      default: return TradingConfigManager.getConfig().MEDIUM_CONFIDENCE;
+      case 'BULL_MARKET': return config.HIGH_CONFIDENCE;
+      case 'BEAR_MARKET': return bearMarketThreshold;
+      case 'SIDEWAYS': return config.MIN_CONFIDENCE;
+      default: return config.MEDIUM_CONFIDENCE;
     }
   }
 }

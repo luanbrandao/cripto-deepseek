@@ -31,7 +31,7 @@ export class BotFlowManager {
   async executeStandardFlow(
     analyzeFunction: (symbol: string, marketData: any) => Promise<any>,
     filterFunction?: (symbols: string[]) => Promise<string[]>,
-    validateFunction?: (decision: any, symbol?: string) => Promise<boolean>
+    validateFunction?: (decision: any, symbol?: string, marketData?: any) => Promise<boolean>
   ): Promise<TradeExecutionResult | null> {
 
     try {
@@ -55,8 +55,14 @@ export class BotFlowManager {
       }
 
       // 4. Validar decisão (se necessário)
-      if (validateFunction && !await validateFunction(bestAnalysis.decision, bestAnalysis.symbol)) {
-        return null;
+      if (validateFunction) {
+        console.log('\n🔍 Iniciando validação da decisão...');
+        const isValid = await validateFunction(bestAnalysis.decision, bestAnalysis.symbol, bestAnalysis.marketData);
+        if (!isValid) {
+          console.log('❌ Validação falhou - trade não será executado');
+          return null;
+        }
+        console.log('✅ Validação aprovada - prosseguindo com execução');
       }
 
       // 5. Executar trade

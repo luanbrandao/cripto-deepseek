@@ -2,7 +2,10 @@
  * Calcula a volatilidade do mercado baseada nos dados históricos de preços
  */
 export function calculateVolatility(klines: any[]): number {
-  if (klines.length < 2) return 1.0; // volatilidade padrão
+  const defaultVolatility = 1.0; // Algorithm constant - default volatility
+  const minDataPoints = 2; // Algorithm constant
+  
+  if (klines.length < minDataPoints) return defaultVolatility;
 
   const prices = klines.map(k => parseFloat(k[4])); // close prices
   const returns = [];
@@ -14,8 +17,9 @@ export function calculateVolatility(klines: any[]): number {
   }
 
   // Volatilidade = média dos retornos absolutos
+  const maxVolatility = 5.0; // Algorithm constant - 5% maximum
   const avgVolatility = returns.reduce((sum, ret) => sum + ret, 0) / returns.length;
-  return Math.min(avgVolatility, 5.0); // limitar a 5% máximo
+  return Math.min(avgVolatility, maxVolatility);
 }
 
 /**

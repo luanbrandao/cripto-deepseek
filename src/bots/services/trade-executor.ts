@@ -190,7 +190,8 @@ export class TradeExecutor {
 
     const takeProfitPrice = parseFloat((avgPrice * (1 + (isLong ? rewardPercent : -rewardPercent))).toFixed(2));
     const stopLossPrice = parseFloat((avgPrice * (1 + (isLong ? -riskPercent : riskPercent))).toFixed(2));
-    const stopLimitPrice = parseFloat((avgPrice * (1 + (isLong ? -riskPercent * 1.1 : riskPercent * 1.1))).toFixed(2));
+    const stopLimitBuffer = 1.1; // Algorithm constant - stop limit buffer multiplier
+    const stopLimitPrice = parseFloat((avgPrice * (1 + (isLong ? -riskPercent * stopLimitBuffer : riskPercent * stopLimitBuffer))).toFixed(2));
 
     const ocoOrder = await binancePrivate.createOCOOrder(
       decision.symbol, side, executedQty, takeProfitPrice, stopLossPrice, stopLimitPrice

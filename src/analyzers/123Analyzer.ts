@@ -1,3 +1,5 @@
+import { TradingConfigManager } from '../shared/config/trading-config-manager';
+
 interface CandleData {
   open: number;
   high: number;
@@ -11,27 +13,52 @@ interface MarketData {
 }
 
 class Analyzer123 {
+  // Get algorithm constants from configuration
+  private static get MIN_CANDLES_REQUIRED() {
+    return TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.MIN_CANDLES_REQUIRED;
+  }
+  
+  private static get DEFAULT_CONFIDENCE() {
+    return TradingConfigManager.getConfig().ALGORITHM.DEFAULT_CONFIDENCE;
+  }
+  
+  private static get DEFAULT_AMOUNT() {
+    return TradingConfigManager.getConfig().ALGORITHM.DEFAULT_AMOUNT;
+  }
+  
+  private static get PATTERN_CANDLES_COUNT() {
+    return TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT;
+  }
+  
+  private static get TREND_ANALYSIS_CANDLES() {
+    return TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.TREND_ANALYSIS_CANDLES;
+  }
+  
+  private static get TREND_OFFSET() {
+    return TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.TREND_OFFSET;
+  }
+  
   static analyze(marketData: MarketData) {
     console.log('123Analyzer');
     const candles = marketData.candles;
     const currentPrice = marketData.currentPrice;
 
-    if (candles.length < 10) {
+    if (candles.length < this.MIN_CANDLES_REQUIRED) {
       return {
         action: "HOLD",
-        confidence: 50,
+        confidence: this.DEFAULT_CONFIDENCE,
         reason: "Dados insuficientes para análise",
-        suggested_amount: 1
+        suggested_amount: this.DEFAULT_AMOUNT
       };
     }
 
     // Pegar os últimos 3 candles para o padrão 123
-    const candle1 = candles[candles.length - 3];
+    const candle1 = candles[candles.length - this.PATTERN_CANDLES_COUNT];
     const candle2 = candles[candles.length - 2];
     const candle3 = candles[candles.length - 1];
 
     // Verificar tendência (últimos 7 candles)
-    const trendCandles = candles.slice(-7, -3);
+    const trendCandles = candles.slice(-this.TREND_ANALYSIS_CANDLES, -this.TREND_OFFSET);
     const isUptrend = this.isUptrend(trendCandles);
     const isDowntrend = this.isDowntrend(trendCandles);
 
@@ -42,7 +69,7 @@ class Analyzer123 {
         action: "BUY",
         confidence: buySetup.confidence,
         reason: buySetup.reason,
-        suggested_amount: buySetup.confidence > 70 ? 3 : 2,
+        suggested_amount: buySetup.confidence > this.getHighConfidenceThreshold() ? this.getHighAmountMultiplier() : this.getMediumAmountMultiplier(),
         stopLoss: candle2.low
       };
     }
@@ -54,17 +81,38 @@ class Analyzer123 {
         action: "SELL",
         confidence: sellSetup.confidence,
         reason: sellSetup.reason,
-        suggested_amount: sellSetup.confidence > 70 ? 3 : 2,
+        suggested_amount: sellSetup.confidence > this.getHighConfidenceThreshold() ? this.getHighAmountMultiplier() : this.getMediumAmountMultiplier(),
         stopLoss: candle2.high
       };
     }
 
     return {
       action: "HOLD",
-      confidence: 50,
+      confidence: this.DEFAULT_CONFIDENCE,
       reason: "Padrão 123 não identificado",
-      suggested_amount: 1
+      suggested_amount: this.DEFAULT_AMOUNT
     };
+  }
+
+  // Algorithm constants from configuration
+  private static getHighConfidenceThreshold(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.HIGH_CONFIDENCE_THRESHOLD;
+  }
+
+  private static getHighAmountMultiplier(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.HIGH_AMOUNT_MULTIPLIER;
+  }
+
+  private static getMediumAmountMultiplier(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.MEDIUM_AMOUNT_MULTIPLIER;
+  }
+
+  private static getBaseConfidence(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.BASE_CONFIDENCE;
+  }
+
+  private static getTrendConfidence(): number {
+    return TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.TREND_CONFIDENCE;
   }
 
   private static identifyBuySetup(candle1: CandleData, candle2: CandleData, candle3: CandleData, currentPrice: number, isUptrend: boolean) {
@@ -79,11 +127,11 @@ class Analyzer123 {
     const breakoutAboveCandle3 = currentPrice > candle3.high;
 
     if (candle2IsLowest && candle3IsBullish && candle3ValidLow && breakoutAboveCandle3) {
-      let confidence = 65;
+      let confidence = this.getBaseConfidence();
       let reason = "Setup 123 de compra identificado";
       
       if (isUptrend) {
-        confidence = 80;
+        confidence = this.getTrendConfidence();
         reason = "Setup 123 de compra em tendência de alta";
       }
       
@@ -105,11 +153,11 @@ class Analyzer123 {
     const breakoutBelowCandle3 = currentPrice < candle3.low;
 
     if (candle2IsHighest && candle3IsBearish && candle3ValidHigh && breakoutBelowCandle3) {
-      let confidence = 65;
+      let confidence = this.getBaseConfidence();
       let reason = "Setup 123 de venda identificado";
       
       if (isDowntrend) {
-        confidence = 80;
+        confidence = this.getTrendConfidence();
         reason = "Setup 123 de venda em tendência de baixa";
       }
       
