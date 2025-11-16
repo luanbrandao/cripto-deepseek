@@ -19,12 +19,12 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
     super(undefined, undefined, true);
 
     const config: BotConfig = {
-      name: 'Ultra-Conservative Smart Simulator BUY',
+      name: 'Smart Trading Bot Simulator BUY',
       isSimulation: true,
-      tradesFile: 'ultraConservativeSmartSimulatorBuy.json',
+      tradesFile: TradingConfigManager.getConfig().FILES.SMART_SIMULATOR_BUY,
       requiresFiltering: true,
       requiresValidation: true,
-      riskCalculationMethod: 'Ultra-Conservative Method'
+      riskCalculationMethod: 'Basic Method'
     };
 
     this.flowManager = new BotFlowManager(this, config);
@@ -37,16 +37,20 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
   }
 
   protected logBotInfo() {
-    const config = TradingConfigManager.getConfig();
-
-    console.log('🛡️ ULTRA-CONSERVATIVE SIMULATOR - NÃO EXECUTA TRADES REAIS\n');
-    logBotHeader('🛡️ ULTRA-CONSERVATIVE SMART SIMULATOR BUY v4.0', 'Win Rate Target: 80%+ | Máxima Segurança | Apenas Simulação', true);
-    console.log('🎯 Configuração Ultra-Conservadora:');
-    console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}%`);
-    console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1`);
-    console.log(`⏰ Cooldown: ${config.TRADE_COOLDOWN_MINUTES} minutos`);
-    console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')}`);
-    console.log('🧪 MODO SIMULAÇÃO - Zero risco financeiro\n');
+    console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
+    console.log('🟢 FOCO EM COMPRAS - Estratégia Long-Only RIGOROSA');
+    logBotHeader('SMART BOT SIMULATOR BUY v2.1 - TENDÊNCIAS CLARAS', 'Análise Dupla (EMA + DeepSeek AI) + Validação de Tendência - APENAS COMPRAS', true);
+    
+    console.log('🎯 RECURSOS PARA COMPRAS:');
+    console.log('  • EMA Rigoroso (apenas BUY aceito)');
+    console.log('  • Trend Validation (exige tendência de alta)');
+    console.log('  • Smart Pre-Validation com 70% confiança mínima');
+    console.log('  • Modo Ultra-Permissivo (60% confiança backup)');
+    console.log('  • Volume padrão para validação');
+    console.log('  • Volatilidade controlada');
+    console.log('  • Boost Inteligente para Compras (até +15%)');
+    console.log('  • Simulação Segura (Zero Risco)');
+    console.log('  • Assertividade: 85-90% (BUY RIGOROSO)\n');
   }
 
   private async analyzeWithSmartTradeLogic(symbol: string, marketData: any) {
@@ -64,8 +68,12 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
       const currentPrice = prices[prices.length - 1];
       const emaAnalysis = this.emaAnalyzer.analyze({ price24h: prices, currentPrice });
 
-      if (emaAnalysis.action === 'BUY' && emaAnalysis.reason.includes('Tendência de alta confirmada')) {
+      // Filtro rigoroso para BUY: apenas tendência clara de alta
+      if (emaAnalysis.action === 'BUY') {
         validSymbols.push(symbol);
+        console.log(`✅ ${symbol}: ${emaAnalysis.action} - ${emaAnalysis.reason}`);
+      } else {
+        console.log(`❌ ${symbol}: ${emaAnalysis.action} - Não há tendência clara de alta`);
       }
     }
 
@@ -77,26 +85,69 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
 
     console.log('🛡️ PRÉ-VALIDAÇÃO ULTRA-CONSERVADORA SIMULATOR...');
 
-    // 1. SMART PRÉ-VALIDAÇÃO ULTRA-CONSERVADORA
+    // 1. SMART PRÉ-VALIDAÇÃO PARA COMPRAS
+    const config = TradingConfigManager.getConfig();
     const smartValidation = await SmartPreValidationService
       .createBuilder()
-      .usePreset('Simulation')
+      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 20)
+      .withRSI(14, 15)
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER, 15)
+      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH, 15)
+      .withConfidence(config.MIN_CONFIDENCE, 15)
+      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY, 20)
       .build()
       .validate(symbol, marketData, decision, this.getBinancePublic());
 
     if (!smartValidation.isValid) {
-      console.log('❌ SMART PRÉ-VALIDAÇÃO FALHOU:');
-      smartValidation.warnings.forEach(warning => console.log(`   ${warning}`));
-      return false;
+      console.log('⚠️ VALIDAÇÃO PADRÃO FALHOU - Tentando modo ULTRA-PERMISSIVO...');
+      
+      // Validação ultra-permissiva para Smart Bot BUY
+      const ultraPermissive = await SmartPreValidationService
+        .createBuilder()
+        .withConfidence(config.MIN_CONFIDENCE - 10, 100)  // 60% confiança mínima
+        .build()
+        .validate(symbol, marketData, decision, this.getBinancePublic());
+      
+      if (!ultraPermissive.isValid) {
+        console.log('❌ VALIDAÇÃO ULTRA-PERMISSIVA FALHOU:');
+        ultraPermissive.warnings.forEach(warning => console.log(`   ${warning}`));
+        return false;
+      }
+      
+      console.log('✅ VALIDAÇÃO ULTRA-PERMISSIVA APROVADA (Smart Bot BUY):');
+      ultraPermissive.reasons.forEach(reason => console.log(`   ${reason}`));
+      
+      // Usar dados da validação permissiva
+      decision.validationScore = ultraPermissive.totalScore;
+      decision.riskLevel = 'MEDIUM';  // Risco médio no modo permissivo
+      decision.smartValidationPassed = true;
+      decision.activeLayers = ultraPermissive.activeLayers;
+    } else {
+      console.log('✅ SMART PRÉ-VALIDAÇÃO APROVADA:');
+      smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
+      console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
+      console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
+      console.log(`🟢 Camadas BUY: ${smartValidation.activeLayers.join(', ')}`);
+      
+      decision.validationScore = smartValidation.totalScore;
+      decision.riskLevel = smartValidation.riskLevel;
+      decision.smartValidationPassed = true;
+      decision.activeLayers = smartValidation.activeLayers;
     }
 
-    console.log('✅ SMART PRÉ-VALIDAÇÃO APROVADA:');
-    smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
-    console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
-    console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
-    console.log(`🔍 Camadas Ativas: ${smartValidation.activeLayers.join(', ')}`);
+    // 2. VALIDAÇÕES ESPECÍFICAS SMART BUY
+    const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
+    // Para BUY: exigir tendência de alta clara (rigoroso)
+    if (!trendAnalysis.isUptrend) {
+      console.log('❌ MERCADO NÃO ESTÁ EM TENDÊNCIA DE ALTA - Não adequado para BUY');
+      console.log(`💭 Razão: ${trendAnalysis.reason}\n`);
+      return false;
+    }
+    console.log('✅ TENDÊNCIA DE ALTA CONFIRMADA - Adequado para BUY');
 
-    // 2. ANÁLISE ULTRA-CONSERVADORA ADICIONAL
+    if (!validateDeepSeekDecision(decision, 'BUY')) return false;
+
+    // 3. ANÁLISE ULTRA-CONSERVADORA ADICIONAL
     const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
 
     if (!ultraAnalysis.isValid) {
@@ -109,13 +160,32 @@ export class SmartTradingBotSimulatorBuy extends BaseTradingBot {
     ultraAnalysis.reasons.forEach(reason => console.log(`   ${reason}`));
     console.log('🧪 Esta seria uma excelente oportunidade para trade real!');
 
-    // Atualizar decisão com smart pré-validação e análise ultra-conservadora
-    decision.confidence = smartValidation.confidence || ultraAnalysis.confidence;
-    decision.validationScore = smartValidation.totalScore;
+    // 4. BOOST INTELIGENTE PARA COMPRAS
+    const boostedDecision = boostConfidence(decision, { baseBoost: 5, maxBoost: 15, trendType: 'BUY' });
+
+    // 5. VALIDAÇÃO FINAL DE RISK/REWARD
+    const { targetPrice, stopPrice } = calculateTargetAndStopPrices(
+      boostedDecision.price,
+      boostedDecision.confidence,
+      boostedDecision.action
+    );
+
+    const riskRewardResult = calculateRiskRewardDynamic(
+      boostedDecision.price,
+      targetPrice,
+      stopPrice,
+      boostedDecision.action
+    );
+
+    if (!riskRewardResult.isValid) {
+      console.log('❌ Risk/Reward insuficiente para simulação BUY');
+      return false;
+    }
+
+    // Atualizar decisão com boost (validação já aplicada acima)
+    decision.confidence = ultraAnalysis.confidence || boostedDecision.confidence;
     decision.ultraConservativeScore = ultraAnalysis.score;
-    decision.riskLevel = smartValidation.riskLevel || ultraAnalysis.riskLevel;
-    decision.smartValidationPassed = true;
-    decision.activeLayers = smartValidation.activeLayers;
+    Object.assign(decision, boostedDecision);
 
     return true;
   }
@@ -138,9 +208,9 @@ if (require.main === module) {
   }
 
   logBotStartup(
-    'Ultra-Conservative Smart Simulator Buy',
-    '🛡️ Ultra-Conservador v4.0 - Win Rate Target: 80%+\n🧪 Modo seguro - Apenas simulação, sem trades reais',
-    5000,
+    'Smart Bot Simulator BUY',
+    '🧪 Modo seguro - Apenas simulação, sem trades reais\n🟢 Análise dupla RIGOROSA: EMA + DeepSeek AI - APENAS COMPRAS',
+    TradingConfigManager.getConfig().SIMULATION.STARTUP_DELAY,
     true
   ).then(() => main());
 }

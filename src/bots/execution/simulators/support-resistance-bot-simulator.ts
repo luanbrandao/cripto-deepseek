@@ -7,6 +7,7 @@ import { TradingConfigManager } from '../../../core';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import { BaseTradingBot } from '../../core/base-trading-bot';
 import SupportResistanceAnalyzer from '../../../core/analyzers/technical/support-resistance-analyzer';
+import { EmaAnalyzer } from '../../../core';
 
 dotenv.config();
 
@@ -33,38 +34,46 @@ interface MarketDataSR {
 export class SupportResistanceBotSimulator extends BaseTradingBot {
   private flowManager: BotFlowManager;
   private srAnalyzer: SupportResistanceAnalyzer;
+  private emaAnalyzer: EmaAnalyzer;
 
   constructor() {
     super(undefined, undefined, true);
 
-    const config: BotConfig = {
-      name: 'Ultra-Conservative S/R Simulator v6.0 - TS Fixed',
+    const botConfig: BotConfig = {
+      name: 'Ultra-Conservative S/R Simulator v7.0 - Enhanced',
       isSimulation: true,
-      tradesFile: 'ultraConservativeSRSimulatorV6.json'
+      tradesFile: 'ultraConservativeSRSimulatorV7.json'
     };
 
-    this.flowManager = new BotFlowManager(this, config);
+    this.flowManager = new BotFlowManager(this, botConfig);
 
-    // Configuração ultra-conservadora para S/R
+    // Configuração ultra-conservadora para S/R MELHORADA
     this.srAnalyzer = new SupportResistanceAnalyzer({
-      tolerance: TradingConfigManager.getBotConfig().SUPPORT_RESISTANCE.MAX_DISTANCE, // Baseado na config
-      minTouches: 2,                 // Mínimo 2 toques
-      lookbackPeriods: 50            // ↑ Mais histórico (era 25)
+      tolerance: TradingConfigManager.getBotConfig().SUPPORT_RESISTANCE.MAX_DISTANCE * 0.5, // Mais rigoroso
+      minTouches: 3,                 // Mínimo 3 toques (era 2)
+      lookbackPeriods: 100           // Mais histórico (era 50)
+    });
+
+    // Analisador EMA para filtro de tendência
+    const tradingConfig = TradingConfigManager.getConfig();
+    this.emaAnalyzer = new EmaAnalyzer({
+      fastPeriod: tradingConfig.EMA.FAST_PERIOD,
+      slowPeriod: tradingConfig.EMA.SLOW_PERIOD
     });
   }
 
   protected logBotInfo() {
     const config = TradingConfigManager.getConfig();
 
-    console.log('🛡️ ULTRA-CONSERVATIVE S/R SIMULATOR v6.0 - TYPESCRIPT CORRIGIDO - NÃO EXECUTA TRADES REAIS\n');
-    logBotHeader('🛡️ S/R SIMULATOR v6.0 - TS FIXED', 'Win Rate Target: 85%+ | S/R + Smart Validation | TypeScript Corrigido', true);
-    console.log('🔧 Atualizações v6.0 (TypeScript + Validações):');
-    console.log('   ✅ Correções TypeScript: Async/await em validateEnhancedSRSignal');
-    console.log('   ✅ Smart Pre-Validation: 5 camadas customizadas para S/R');
-    console.log('   ✅ Score Conversion: 0-100 → 0-25 scale para S/R');
-    console.log('   ✅ Level Analysis: Detecção de níveis ultra-fortes');
-    console.log('   ✅ Risk Classification: Classificação automática de risco');
-    console.log('   ✅ Validation Score: Integração com TradeDecision interface\n');
+    console.log('🛡️ ULTRA-CONSERVATIVE S/R SIMULATOR v7.0 - ENHANCED - NÃO EXECUTA TRADES REAIS\n');
+    logBotHeader('🛡️ S/R SIMULATOR v7.0 - ENHANCED', 'Win Rate Target: 75%+ | S/R + EMA + Ultra Validation', true);
+    console.log('🔧 Atualizações v7.0 (Melhorias de Assertividade):');
+    console.log('   ✅ Filtro EMA: Apenas suportes em tendência de alta');
+    console.log('   ✅ Mínimo 3 toques: Suportes mais confiáveis (era 2)');
+    console.log('   ✅ Tolerância 50% menor: Entrada mais precisa');
+    console.log('   ✅ Volume 50% maior: Confirmação rigorosa');
+    console.log('   ✅ Validação adicional: 20 pontos extras obrigatórios');
+    console.log('   ✅ Histórico dobrado: 100 períodos (era 50)\n');
     console.log('🎯 Validações S/R Ativas (Config-Based):');
     const botConfig = TradingConfigManager.getBotConfig();
     console.log(`   🎯 Support/Resistance: Tolerância ${(botConfig.SUPPORT_RESISTANCE.MAX_DISTANCE * 100).toFixed(1)}%, Score 25pts`);
@@ -114,15 +123,37 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
   }
 
   private async analyzeWithSupportResistance(symbol: string, marketData: MarketDataSR): Promise<TradeDecision> {
-    console.log('\n🎯 Analisando níveis de Suporte e Resistência MELHORADOS...');
+    console.log('\n🎯 Analisando níveis de Suporte e Resistência ULTRA-MELHORADOS...');
 
-    // 1. Análise S/R básica
+    // 1. FILTRO DE TENDÊNCIA EMA (novo)
+    const emaAnalysis = this.emaAnalyzer.analyze({ 
+      price24h: marketData.price24h, 
+      currentPrice: marketData.currentPrice 
+    });
+    
+    console.log(`📈 Tendência EMA: ${emaAnalysis.action} - ${emaAnalysis.reason}`);
+    
+    // Só prosseguir se EMA confirmar tendência de alta para BUY
+    if (emaAnalysis.action !== 'BUY') {
+      console.log('❌ EMA não confirma tendência de alta - rejeitando S/R');
+      return {
+        action: 'HOLD',
+        confidence: 40,
+        reason: 'EMA não confirma tendência de alta para suporte',
+        symbol,
+        price: marketData.currentPrice
+      };
+    }
+    
+    console.log('✅ EMA confirma tendência de alta - prosseguindo com S/R');
+
+    // 2. Análise S/R básica
     const basicAnalysis = this.srAnalyzer.analyze({
       candles: marketData.candles,
       currentPrice: marketData.currentPrice
     }, true);
 
-    // 2. Validações S/R avançadas integradas
+    // 3. Validações S/R avançadas integradas
     const validation = await this.validateEnhancedSRSignal(marketData, basicAnalysis);
 
     if (!validation.isValid) {
@@ -140,11 +171,17 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
     console.log('✅ Sinal S/R aprovado pelas validações avançadas:');
     validation.reasons.forEach(reason => console.log(`   ${reason}`));
 
-    // 3. Ajustar confiança baseada no score de validação
-    const adjustedConfidence = Math.min(95, basicAnalysis.confidence + validation.score);
+    // 4. Ajustar confiança baseada no score de validação RIGOROSO + EMA
+    let adjustedConfidence = Math.min(85, basicAnalysis.confidence + (validation.score * 0.6)); // Menos boost
+    
+    // Boost adicional se EMA estiver muito forte
+    if (emaAnalysis.reason.includes('forte') || emaAnalysis.reason.includes('confirmada')) {
+      adjustedConfidence = Math.min(90, adjustedConfidence + 5);
+      console.log('✅ Boost +5% por EMA forte');
+    }
 
-    console.log(`📈 Sinal S/R: ${basicAnalysis.action} (${adjustedConfidence}% - melhorado)`);
-    console.log(`💭 Razão: ${basicAnalysis.reason} + validações rigorosas`);
+    console.log(`📈 Sinal S/R: ${basicAnalysis.action} (${adjustedConfidence}% - EMA+S/R melhorado)`);
+    console.log(`💭 Razão: ${basicAnalysis.reason} + EMA confirmado + validações rigorosas`);
 
     if (basicAnalysis.levels && basicAnalysis.levels.length > 0) {
       console.log(`🎯 Níveis identificados: ${basicAnalysis.levels.length}`);
@@ -156,7 +193,7 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
     const tradeDecision: TradeDecision = {
       action: basicAnalysis.action as 'BUY' | 'SELL' | 'HOLD',
       confidence: adjustedConfidence,
-      reason: `${basicAnalysis.reason} (Score validação: ${validation.score}/25)`,
+      reason: `${basicAnalysis.reason} + EMA ${emaAnalysis.action} (Score: ${validation.score}/25+)`,
       symbol,
       price: marketData.currentPrice
     };
@@ -168,31 +205,77 @@ export class SupportResistanceBotSimulator extends BaseTradingBot {
   }
 
   private async validateEnhancedSRSignal(marketData: MarketDataSR, basicAnalysis: any) {
-    // Usar smart pré-validação S/R específica com valores das configs
+    // Validações S/R ULTRA-RIGOROSAS para aumentar win rate
     const config = TradingConfigManager.getConfig();
     const botConfig = TradingConfigManager.getBotConfig();
     const mockDecision = { action: basicAnalysis.action, confidence: basicAnalysis.confidence, price: marketData.currentPrice };
     const mockMarketDataForValidation = {
       price: { price: marketData.currentPrice.toString() },
       stats: marketData.stats,
-      klines: marketData.klines
+      klines: marketData.klines,
+      price24h: marketData.price24h,
+      volumes: marketData.volumes
     };
 
+    // 1. VALIDAÇÃO S/R RIGOROSA
     const smartValidation = await SmartPreValidationService
       .createBuilder()
-      .withSupportResistance(botConfig.SUPPORT_RESISTANCE.MAX_DISTANCE, 25)
-      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER / 2, 20) // 1.0x ou 1.5x
-      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 4, 15) // 0.04 ou 0.08
-      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY, 15)
-      .withConfidence(config.MIN_CONFIDENCE, 20) // 65% ou 82%
+      .withSupportResistance(botConfig.SUPPORT_RESISTANCE.MAX_DISTANCE * 0.5, 30) // Tolerância 50% menor
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 1.5, 25) // Volume 50% maior
+      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 2, 20) // Momentum dobrado
+      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY * 0.8, 15) // Volatilidade menor
+      .withConfidence(config.MIN_CONFIDENCE + 5, 10) // Confiança +5%
       .build()
       .validate('', mockMarketDataForValidation, mockDecision, null);
 
+    // 2. VALIDAÇÕES ADICIONAIS S/R
+    let additionalScore = 0;
+    const warnings = [...smartValidation.warnings];
+    const reasons = [...smartValidation.reasons];
+
+    // Verificar força dos níveis
+    if (basicAnalysis.levels && basicAnalysis.levels.length > 0) {
+      const strongLevels = basicAnalysis.levels.filter((level: any) => 
+        level.strength >= 0.8 && level.touches >= 3
+      );
+      if (strongLevels.length > 0) {
+        additionalScore += 10;
+        reasons.push(`✅ ${strongLevels.length} níveis ultra-fortes (≥80% força, ≥3 toques)`);
+      } else {
+        warnings.push('❌ Nenhum nível ultra-forte identificado');
+      }
+    }
+
+    // Verificar teste recente do nível
+    const recentCandles = marketData.candles.slice(-5); // Últimas 5 velas
+    const hasRecentTest = recentCandles.some(candle => 
+      Math.abs(candle.low - marketData.currentPrice) / marketData.currentPrice < 0.01
+    );
+    if (hasRecentTest) {
+      additionalScore += 5;
+      reasons.push('✅ Nível testado recentemente');
+    } else {
+      warnings.push('❌ Nível não testado recentemente');
+    }
+
+    // Verificar volume no teste
+    const avgVolume = marketData.volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+    const recentVolume = marketData.volumes.slice(-3).reduce((a, b) => a + b, 0) / 3;
+    if (recentVolume > avgVolume * 1.2) {
+      additionalScore += 5;
+      reasons.push('✅ Volume confirmado no teste do nível');
+    } else {
+      warnings.push('❌ Volume insuficiente no teste');
+    }
+
+    const finalScore = smartValidation.totalScore + additionalScore;
+    const isValid = smartValidation.isValid && additionalScore >= 15; // Exigir pelo menos 15 pontos extras
+
     return {
-      isValid: smartValidation.isValid,
-      score: Math.round(smartValidation.totalScore / 4), // Convert to 0-25 scale
-      reasons: smartValidation.reasons,
-      warnings: smartValidation.warnings
+      isValid,
+      score: Math.round(finalScore / 4), // Convert to 0-25+ scale
+      reasons,
+      warnings
     };
   }
 
@@ -263,8 +346,8 @@ if (require.main === module) {
   }
 
   logBotStartup(
-    'Ultra-Conservative S/R Simulator v6.0 - TYPESCRIPT FIXED',
-    '🛡️ Ultra-Conservador v6.0 - TypeScript Corrigido + Smart S/R Validation\n🔧 Correções: Async/Await + Score Conversion + Level Analysis\n🧪 Modo seguro - Apenas simulação, sem trades reais',
+    'Ultra-Conservative S/R Simulator v7.0 - ENHANCED',
+    '🛡️ Ultra-Conservador v7.0 - Melhorias de Assertividade\n📈 EMA Filter + 3 Toques + Volume Rigoroso + Validação Extra\n🧪 Modo seguro - Apenas simulação, sem trades reais',
     5000,
     true
   ).then(() => main());
