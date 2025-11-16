@@ -1,12 +1,18 @@
+/**
+ * 🛡️ SMART PRÉ-VALIDAÇÃO SERVICE
+ * Sistema modular de validação inteligente com API fluente
+ */
+
 import { TradingConfigManager } from '../../core';
 
-interface ValidationLayer {
+// === INTERFACES ===
+export interface ValidationLayer {
   name: string;
   weight: number;
   validator: (data: any) => { isValid: boolean; score: number; reason: string };
 }
 
-interface ValidationResult {
+export interface ValidationResult {
   isValid: boolean;
   score: number;
   maxScore: number;
@@ -19,154 +25,63 @@ interface ValidationResult {
   layerScores: { [key: string]: number };
 }
 
-export class SmartPreValidationBuilder {
-  private layers: ValidationLayer[] = [];
-  private data: any;
+// === CALCULADORAS TÉCNICAS ===
+class TechnicalCalculators {
+  static calculateEMA(prices: number[], period: number): number {
+    if (prices.length < period) return prices[prices.length - 1] || 0;
 
-  constructor(data: any) {
-    this.data = data;
-  }
+    const multiplier = 2 / (period + 1);
+    let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
 
-  withEma(fastPeriod: number = 12, slowPeriod: number = 26, weight: number = 20): SmartPreValidationBuilder {
-    this.layers.push({
-      name: 'EMA',
-      weight,
-      validator: (data) => this.validateEMA(data, fastPeriod, slowPeriod)
-    });
-    return this;
-  }
-
-  withRSI(period: number = 14, weight: number = 15): SmartPreValidationBuilder {
-    this.layers.push({
-      name: 'RSI',
-      weight,
-      validator: (data) => this.validateRSI(data, period)
-    });
-    return this;
-  }
-
-  withVolume(multiplier: number = 1.2, weight: number = 15): SmartPreValidationBuilder {
-    this.layers.push({
-      name: 'Volume',
-      weight,
-      validator: (data) => this.validateVolume(data, multiplier)
-    });
-    return this;
-  }
-
-  withSupportResistance(tolerance: number = 0.01, weight: number = 20): SmartPreValidationBuilder {
-    this.layers.push({
-      name: 'Support/Resistance',
-      weight,
-      validator: (data) => this.validateSupportResistance(data, tolerance)
-    });
-    return this;
-  }
-
-  withMomentum(minMomentum: number = 0.01, weight: number = 10): SmartPreValidationBuilder {
-    this.layers.push({
-      name: 'Momentum',
-      weight,
-      validator: (data) => this.validateMomentum(data, minMomentum)
-    });
-    return this;
-  }
-
-  withVolatility(minVol: number = 0.5, maxVol: number = 5.0, weight: number = 10): SmartPreValidationBuilder {
-    this.layers.push({
-      name: 'Volatility',
-      weight,
-      validator: (data) => this.validateVolatility(data, minVol, maxVol)
-    });
-    return this;
-  }
-
-  withConfidence(minConfidence: number = 70, weight: number = 10): SmartPreValidationBuilder {
-    this.layers.push({
-      name: 'Confidence',
-      weight,
-      validator: (data) => this.validateConfidence(data, minConfidence)
-    });
-    return this;
-  }
-
-  validate(): ValidationResult {
-    if (this.layers.length === 0) {
-      return {
-        isValid: false,
-        score: 0,
-        maxScore: 0,
-        totalScore: 0,
-        reasons: [],
-        warnings: ['Nenhuma camada de validação configurada'],
-        activeLayers: [],
-        layerScores: {}
-      };
+    for (let i = period; i < prices.length; i++) {
+      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
     }
 
-    let totalScore = 0;
-    let maxScore = 0;
-    const reasons: string[] = [];
-    const warnings: string[] = [];
-    const activeLayers: string[] = [];
-    const layerScores: { [key: string]: number } = {};
+    return ema;
+  }
 
-    console.log(`🔍 Executando ${this.layers.length} camadas de validação...`);
+  static calculateRSI(prices: number[], period: number = 14): number {
+    if (prices.length < period + 1) return 50;
 
-    for (const layer of this.layers) {
-      try {
-        const result = layer.validator(this.data);
-        const layerScore = (result.score / 100) * layer.weight;
-        
-        totalScore += layerScore;
-        maxScore += layer.weight;
-        layerScores[layer.name.toLowerCase().replace(/[^a-z]/g, '')] = layerScore;
+    const changes = prices.slice(1).map((price, i) => price - prices[i]);
+    const gains = changes.map(change => change > 0 ? change : 0);
+    const losses = changes.map(change => change < 0 ? Math.abs(change) : 0);
 
-        if (result.isValid) {
-          reasons.push(`✅ ${layer.name}: ${result.reason} (${layerScore.toFixed(1)}/${layer.weight})`);
-          activeLayers.push(layer.name);
-        } else {
-          warnings.push(`❌ ${layer.name}: ${result.reason} (${layerScore.toFixed(1)}/${layer.weight})`);
-        }
+    const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
+    const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
 
-        console.log(`   ${layer.name}: ${layerScore.toFixed(1)}/${layer.weight} - ${result.reason}`);
-      } catch (error) {
-        warnings.push(`⚠️ ${layer.name}: Erro na validação - ${error}`);
-        console.log(`   ❌ ${layer.name}: Erro - ${error}`);
+    if (avgLoss === 0) return 100;
+    const rs = avgGain / avgLoss;
+    return 100 - (100 / (1 + rs));
+  }
+
+  static calculateVolatility(prices: number[]): number {
+    if (prices.length < 2) return 0;
+
+    const returns = [];
+    for (let i = 1; i < prices.length; i++) {
+      const returnRate = (prices[i] - prices[i - 1]) / prices[i - 1];
+      if (!isNaN(returnRate) && isFinite(returnRate)) {
+        returns.push(returnRate);
       }
     }
 
-    const scorePercentage = (totalScore / maxScore) * 100;
-    const config = TradingConfigManager.getConfig();
-    const minApprovalScore = config.VALIDATION_SCORES?.MIN_APPROVAL_SCORE || 60;
-    const isValid = scorePercentage >= minApprovalScore;
+    if (returns.length === 0) return 0;
 
-    // Calcular confiança e nível de risco baseado no score
-    const maxConfidence = config.HIGH_CONFIDENCE || 95;
-    const minConfidence = config.VALIDATION_SCORES?.MIN_CONFIDENCE || 50;
-    const confidence = Math.min(maxConfidence, Math.max(minConfidence, scorePercentage));
-    let riskLevel = 'HIGH';
-    const lowRiskThreshold = config.VALIDATION_SCORES?.LOW_RISK_THRESHOLD || 80;
-    const mediumRiskThreshold = config.VALIDATION_SCORES?.MEDIUM_RISK_THRESHOLD || 65;
-    if (scorePercentage >= lowRiskThreshold) riskLevel = 'LOW';
-    else if (scorePercentage >= mediumRiskThreshold) riskLevel = 'MEDIUM';
+    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+    const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - mean, 2), 0) / returns.length;
 
-    return {
-      isValid,
-      score: Math.round(totalScore),
-      maxScore,
-      totalScore: Math.round(totalScore),
-      reasons,
-      warnings,
-      confidence: Math.round(confidence),
-      riskLevel,
-      activeLayers,
-      layerScores
-    };
+    return Math.sqrt(variance) * 100;
   }
+}
 
-  // Validadores específicos
-  private validateEMA(data: any, fastPeriod: number, slowPeriod: number) {
+// === VALIDADORES ESPECIALIZADOS ===
+
+/**
+ * 📈 VALIDADOR EMA
+ */
+class EMAValidator {
+  static validate(data: any, fastPeriod: number, slowPeriod: number) {
     const { marketData } = data;
     
     if (!marketData?.price24h || marketData.price24h.length < slowPeriod) {
@@ -174,84 +89,82 @@ export class SmartPreValidationBuilder {
     }
 
     const prices = marketData.price24h;
-    const emaFast = this.calculateEMA(prices, fastPeriod);
-    const emaSlow = this.calculateEMA(prices, slowPeriod);
+    const emaFast = TechnicalCalculators.calculateEMA(prices, fastPeriod);
+    const emaSlow = TechnicalCalculators.calculateEMA(prices, slowPeriod);
     const currentPrice = marketData.currentPrice || prices[prices.length - 1];
 
     let score = 0;
     const details = [];
-
     const config = TradingConfigManager.getConfig();
-    const emaAlignmentScore = config.VALIDATION_SCORES?.EMA_ALIGNMENT || 40;
-    const priceAboveEmaScore = config.VALIDATION_SCORES?.PRICE_ABOVE_EMA || 40;
-    const separationScore = config.VALIDATION_SCORES?.EMA_SEPARATION || 20;
-    const minValidScore = config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60;
 
-    // Alinhamento bullish
+    // Alinhamento bullish (40 pontos)
     if (emaFast > emaSlow) {
-      score += emaAlignmentScore;
+      score += 40;
       details.push('EMA rápida > lenta');
     }
 
-    // Preço acima das EMAs
+    // Preço acima das EMAs (40 pontos)
     if (currentPrice > emaFast && currentPrice > emaSlow) {
-      score += priceAboveEmaScore;
+      score += 40;
       details.push('Preço > EMAs');
     }
 
-    // Separação adequada
+    // Separação adequada (20 pontos)
     const separation = Math.abs(emaFast - emaSlow) / emaSlow;
     const minSeparation = config.EMA_ADVANCED?.MIN_SEPARATION || 0.005;
     if (separation > minSeparation) {
-      score += separationScore;
+      score += 20;
       details.push('Separação adequada');
     }
 
     return {
-      isValid: score >= minValidScore,
+      isValid: score >= 60,
       score,
       reason: details.join(', ') || 'Condições EMA desfavoráveis'
     };
   }
+}
 
-  private validateRSI(data: any, period: number) {
+/**
+ * 🎯 VALIDADOR RSI
+ */
+class RSIValidator {
+  static validate(data: any, period: number) {
     const { marketData } = data;
     
     if (!marketData?.price24h || marketData.price24h.length < period + 1) {
       return { isValid: false, score: 0, reason: 'Dados insuficientes para RSI' };
     }
 
-    const rsi = this.calculateRSI(marketData.price24h, period);
+    const rsi = TechnicalCalculators.calculateRSI(marketData.price24h, period);
+    const config = TradingConfigManager.getConfig();
+    
     let score = 0;
     let reason = '';
-    
-    const config = TradingConfigManager.getConfig();
+
     const rsiOversold = config.RSI?.OVERSOLD_THRESHOLD || 25;
     const rsiOverbought = config.RSI?.OVERBOUGHT_THRESHOLD || 75;
-    const rsiNeutralScore = config.VALIDATION_SCORES?.RSI_NEUTRAL || 100;
-    const rsiOversoldScore = config.VALIDATION_SCORES?.RSI_OVERSOLD || 80;
-    const rsiOverboughtScore = config.VALIDATION_SCORES?.RSI_OVERBOUGHT || 20;
-    const minValidScore = config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60;
 
     if (rsi >= rsiOversold && rsi <= rsiOverbought) {
-      score = rsiNeutralScore;
+      score = 100;
       reason = `RSI em zona neutra (${rsi.toFixed(1)})`;
     } else if (rsi < rsiOversold) {
-      score = rsiOversoldScore;
+      score = 80;
       reason = `RSI oversold (${rsi.toFixed(1)}) - oportunidade`;
     } else {
-      score = rsiOverboughtScore;
+      score = 20;
       reason = `RSI overbought (${rsi.toFixed(1)}) - risco alto`;
     }
 
-    return {
-      isValid: score >= minValidScore,
-      score,
-      reason
-    };
+    return { isValid: score >= 60, score, reason };
   }
+}
 
-  private validateVolume(data: any, multiplier: number) {
+/**
+ * 📊 VALIDADOR DE VOLUME
+ */
+class VolumeValidator {
+  static validate(data: any, multiplier: number) {
     const { marketData } = data;
     
     if (!marketData?.volumes || marketData.volumes.length < 20) {
@@ -263,35 +176,29 @@ export class SmartPreValidationBuilder {
     const avgVolume = volumes.reduce((a: number, b: number) => a + b, 0) / volumes.length;
     const volumeRatio = recentVolume / avgVolume;
 
-    const config = TradingConfigManager.getConfig();
-    const volumeHighScore = config.VALIDATION_SCORES?.VOLUME_HIGH || 100;
-    const volumeAdequateScore = config.VALIDATION_SCORES?.VOLUME_ADEQUATE || 80;
-    const volumeLowScore = config.VALIDATION_SCORES?.VOLUME_LOW || 40;
-    const volumeHighMultiplier = config.VALIDATION_SCORES?.VOLUME_HIGH_MULTIPLIER || 1.5;
-    const minValidScore = config.VALIDATION_SCORES?.MIN_VALID_SCORE || 60;
-
     let score = 0;
     let reason = '';
 
-    if (volumeRatio >= multiplier * volumeHighMultiplier) {
-      score = volumeHighScore;
+    if (volumeRatio >= multiplier * 1.5) {
+      score = 100;
       reason = `Volume muito alto (${volumeRatio.toFixed(1)}x)`;
     } else if (volumeRatio >= multiplier) {
-      score = volumeAdequateScore;
+      score = 80;
       reason = `Volume adequado (${volumeRatio.toFixed(1)}x)`;
     } else {
-      score = volumeLowScore;
+      score = 40;
       reason = `Volume baixo (${volumeRatio.toFixed(1)}x)`;
     }
 
-    return {
-      isValid: score >= minValidScore,
-      score,
-      reason
-    };
+    return { isValid: score >= 60, score, reason };
   }
+}
 
-  private validateSupportResistance(data: any, tolerance: number) {
+/**
+ * 🎯 VALIDADOR SUPORTE/RESISTÊNCIA
+ */
+class SupportResistanceValidator {
+  static validate(data: any, tolerance: number) {
     const { marketData, levels } = data;
     
     if (!levels || levels.length === 0) {
@@ -334,8 +241,13 @@ export class SmartPreValidationBuilder {
 
     return { isValid: false, score: 0, reason: 'Nenhum nível S/R próximo' };
   }
+}
 
-  private validateMomentum(data: any, minMomentum: number) {
+/**
+ * 🚀 VALIDADOR DE MOMENTUM
+ */
+class MomentumValidator {
+  static validate(data: any, minMomentum: number) {
     const { marketData } = data;
     
     if (!marketData?.stats?.priceChangePercent) {
@@ -357,21 +269,22 @@ export class SmartPreValidationBuilder {
       reason = `Momentum baixo (${(priceChange * 100).toFixed(2)}%)`;
     }
 
-    return {
-      isValid: score >= 60,
-      score,
-      reason
-    };
+    return { isValid: score >= 60, score, reason };
   }
+}
 
-  private validateVolatility(data: any, minVol: number, maxVol: number) {
+/**
+ * 📊 VALIDADOR DE VOLATILIDADE
+ */
+class VolatilityValidator {
+  static validate(data: any, minVol: number, maxVol: number) {
     const { marketData } = data;
     
     if (!marketData?.price24h || marketData.price24h.length < 20) {
       return { isValid: false, score: 50, reason: 'Dados insuficientes para volatilidade' };
     }
 
-    const volatility = this.calculateVolatility(marketData.price24h);
+    const volatility = TechnicalCalculators.calculateVolatility(marketData.price24h);
     let score = 0;
     let reason = '';
 
@@ -386,14 +299,15 @@ export class SmartPreValidationBuilder {
       reason = `Volatilidade alta (${volatility.toFixed(1)}%)`;
     }
 
-    return {
-      isValid: score >= 60,
-      score,
-      reason
-    };
+    return { isValid: score >= 60, score, reason };
   }
+}
 
-  private validateConfidence(data: any, minConfidence: number) {
+/**
+ * 💯 VALIDADOR DE CONFIANÇA
+ */
+class ConfidenceValidator {
+  static validate(data: any, minConfidence: number) {
     const { decision } = data;
     
     if (!decision?.confidence) {
@@ -418,450 +332,115 @@ export class SmartPreValidationBuilder {
       reason = `Confiança baixa (${confidence}%)`;
     }
 
-    return {
-      isValid: score >= 60,
-      score,
-      reason
-    };
-  }
-
-  // Métodos auxiliares de cálculo
-  private calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1];
-
-    const multiplier = 2 / (period + 1);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-
-    for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-
-    return ema;
-  }
-
-  private calculateRSI(prices: number[], period: number = 14): number {
-    if (prices.length < period + 1) return 50;
-
-    const changes = [];
-    for (let i = 1; i < prices.length; i++) {
-      changes.push(prices[i] - prices[i - 1]);
-    }
-
-    const gains = changes.map(change => change > 0 ? change : 0);
-    const losses = changes.map(change => change < 0 ? Math.abs(change) : 0);
-
-    const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
-    const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
-
-    if (avgLoss === 0) return 100;
-
-    const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
-  }
-
-  private calculateVolatility(prices: number[]): number {
-    if (prices.length < 2) return 0;
-
-    const returns = [];
-    for (let i = 1; i < prices.length; i++) {
-      const returnRate = (prices[i] - prices[i - 1]) / prices[i - 1];
-      if (!isNaN(returnRate) && isFinite(returnRate)) {
-        returns.push(returnRate);
-      }
-    }
-
-    if (returns.length === 0) return 0;
-
-    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
-    const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - mean, 2), 0) / returns.length;
-
-    return Math.sqrt(variance) * 100;
+    return { isValid: score >= 60, score, reason };
   }
 }
 
-export class SmartPreValidationService {
-  static createBuilder(): SmartPreValidationServiceBuilder {
-    return new SmartPreValidationServiceBuilder();
-  }
+// === BUILDER PATTERN ===
 
-  static create(data: any): SmartPreValidationBuilder {
-    return new SmartPreValidationBuilder(data);
-  }
-
-  // Presets comuns
-  static forEmaBot(data: any): ValidationResult {
-    const config = TradingConfigManager.getConfig();
-    return this.create(data)
-      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 25)
-      .withRSI(14, 20)
-      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER, 20)
-      .withMomentum(15)
-      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY, 10)
-      .withConfidence(config.MIN_CONFIDENCE, 10)
-      .validate();
-  }
-
-  static forSmartBot(data: any): ValidationResult {
-    const config = TradingConfigManager.getConfig();
-    return this.create(data)
-      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 20)
-      .withRSI(14, 15)
-      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 1.25, 15)
-      .withSupportResistance(config.EMA_ADVANCED.MIN_SEPARATION * 2, 20)
-      .withMomentum(15)
-      .withConfidence(config.MIN_CONFIDENCE + 5, 15)
-      .validate();
-  }
-
-  static forUltraConservative(data: any): ValidationResult {
-    return this.create(data)
-      .withEma(12, 26, 20)
-      .withRSI(14, 15)
-      .withVolume(1.8, 15)
-      .withSupportResistance(0.005, 20)
-      .withMomentum(10)
-      .withVolatility(0.5, 3, 10)
-      .withConfidence(85, 10)
-      .validate();
-  }
-
-  static forSimulation(data: any): ValidationResult {
-    return this.create(data)
-      .withEma(12, 26, 20)
-      .withRSI(14, 15)
-      .withVolume(1.2, 15)
-      .withMomentum(15)
-      .withConfidence(70, 15)
-      .withVolatility(1, 4, 20)
-      .validate();
-  }
-}
-
-export class SmartPreValidationServiceBuilder {
+/**
+ * 🏗️ CONSTRUTOR DE VALIDAÇÕES
+ */
+export class SmartPreValidationBuilder {
   private layers: ValidationLayer[] = [];
+  private data: any;
 
-  withEma(fastPeriod: number = 12, slowPeriod: number = 26, weight: number = 20): SmartPreValidationServiceBuilder {
+  constructor(data: any) {
+    this.data = data;
+  }
+
+  withEma(fastPeriod: number = 12, slowPeriod: number = 26, weight: number = 20): SmartPreValidationBuilder {
     this.layers.push({
       name: 'EMA',
       weight,
-      validator: (data) => this.validateEMA(data, fastPeriod, slowPeriod)
+      validator: (data) => EMAValidator.validate(data, fastPeriod, slowPeriod)
     });
     return this;
   }
 
-  withRSI(period: number = 14, weight: number = 15): SmartPreValidationServiceBuilder {
+  withRSI(period: number = 14, weight: number = 15): SmartPreValidationBuilder {
     this.layers.push({
       name: 'RSI',
       weight,
-      validator: (data) => this.validateRSI(data, period)
+      validator: (data) => RSIValidator.validate(data, period)
     });
     return this;
   }
 
-  withVolume(multiplier: number = 1.2, weight: number = 15): SmartPreValidationServiceBuilder {
+  withVolume(multiplier: number = 1.2, weight: number = 15): SmartPreValidationBuilder {
     this.layers.push({
       name: 'Volume',
       weight,
-      validator: (data) => this.validateVolume(data, multiplier)
+      validator: (data) => VolumeValidator.validate(data, multiplier)
     });
     return this;
   }
 
-  withSupportResistance(tolerance: number = 0.01, weight: number = 20): SmartPreValidationServiceBuilder {
+  withSupportResistance(tolerance: number = 0.01, weight: number = 20): SmartPreValidationBuilder {
     this.layers.push({
       name: 'Support/Resistance',
       weight,
-      validator: (data) => this.validateSupportResistance(data, tolerance)
+      validator: (data) => SupportResistanceValidator.validate(data, tolerance)
     });
     return this;
   }
 
-  withMomentum(minMomentum: number = 0.01, weight: number = 10): SmartPreValidationServiceBuilder {
+  withMomentum(minMomentum: number = 0.01, weight: number = 10): SmartPreValidationBuilder {
     this.layers.push({
       name: 'Momentum',
       weight,
-      validator: (data) => this.validateMomentum(data, minMomentum)
+      validator: (data) => MomentumValidator.validate(data, minMomentum)
     });
     return this;
   }
 
-  withVolatility(minVol: number = 0.5, maxVol: number = 5.0, weight: number = 10): SmartPreValidationServiceBuilder {
+  withVolatility(minVol: number = 0.5, maxVol: number = 5.0, weight: number = 10): SmartPreValidationBuilder {
     this.layers.push({
       name: 'Volatility',
       weight,
-      validator: (data) => this.validateVolatility(data, minVol, maxVol)
+      validator: (data) => VolatilityValidator.validate(data, minVol, maxVol)
     });
     return this;
   }
 
-  withConfidence(minConfidence: number = 70, weight: number = 10): SmartPreValidationServiceBuilder {
+  withConfidence(minConfidence: number = 70, weight: number = 10): SmartPreValidationBuilder {
     this.layers.push({
       name: 'Confidence',
       weight,
-      validator: (data) => this.validateConfidence(data, minConfidence)
+      validator: (data) => ConfidenceValidator.validate(data, minConfidence)
     });
     return this;
   }
 
-  usePreset(preset: string): SmartPreValidationServiceBuilder {
-    switch (preset) {
-      case 'EmaBot':
-        return this.withEma(12, 26, 25).withRSI(14, 20).withVolume(1.2, 20).withMomentum(0.01, 15).withVolatility(1, 5, 10).withConfidence(70, 10);
-      case 'SmartBot':
-        return this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.5, 15).withSupportResistance(0.01, 20).withMomentum(0.01, 15).withConfidence(75, 15);
-      case 'RealBot':
-        return this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.3, 15).withMomentum(0.01, 15).withConfidence(70, 15).withVolatility(1, 4, 20);
-      case 'UltraConservative':
-        return this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.8, 15).withSupportResistance(0.005, 20).withMomentum(0.02, 10).withVolatility(0.5, 3, 10).withConfidence(85, 10);
-      case 'Simulation':
-        return this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.2, 15).withMomentum(0.01, 15).withConfidence(70, 15).withVolatility(1, 4, 20);
-      case 'SmartEntry':
-        return this.withEma(21, 50, 25).withRSI(14, 20).withVolume(1.5, 20).withSupportResistance(0.01, 25).withConfidence(70, 10);
-      default:
-        return this;
-    }
+  usePreset(preset: string): SmartPreValidationBuilder {
+    const presets = {
+      'EmaBot': () => this.withEma(12, 26, 25).withRSI(14, 20).withVolume(1.2, 20).withMomentum(0.01, 15).withVolatility(1, 5, 10).withConfidence(70, 10),
+      'SmartBot': () => this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.5, 15).withSupportResistance(0.01, 20).withMomentum(0.01, 15).withConfidence(75, 15),
+      'RealBot': () => this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.3, 15).withMomentum(0.01, 15).withConfidence(70, 15).withVolatility(1, 4, 20),
+      'UltraConservative': () => this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.8, 15).withSupportResistance(0.005, 20).withMomentum(0.02, 10).withVolatility(0.5, 3, 10).withConfidence(85, 10),
+      'Simulation': () => this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.2, 15).withMomentum(0.01, 15).withConfidence(70, 15).withVolatility(1, 4, 20)
+    };
+
+    const presetFn = presets[preset as keyof typeof presets];
+    return presetFn ? presetFn() : this;
   }
 
   build(): SmartPreValidationValidator {
     return new SmartPreValidationValidator(this.layers);
   }
 
-  // Validadores (copiados da classe anterior)
-  private validateEMA(data: any, fastPeriod: number, slowPeriod: number) {
-    const { marketData } = data;
-    
-    if (!marketData?.klines || marketData.klines.length < slowPeriod) {
-      return { isValid: false, score: 0, reason: 'Dados insuficientes para EMA' };
-    }
-
-    const prices = marketData.klines.map((k: any) => parseFloat(k[4]));
-    const emaFast = this.calculateEMA(prices, fastPeriod);
-    const emaSlow = this.calculateEMA(prices, slowPeriod);
-    const currentPrice = parseFloat(marketData.price?.price || prices[prices.length - 1]);
-
-    let score = 0;
-    const details = [];
-
-    if (emaFast > emaSlow) {
-      score += 40;
-      details.push('EMA rápida > lenta');
-    }
-
-    if (currentPrice > emaFast && currentPrice > emaSlow) {
-      score += 40;
-      details.push('Preço > EMAs');
-    }
-
-    const separation = Math.abs(emaFast - emaSlow) / emaSlow;
-    if (separation > 0.005) {
-      score += 20;
-      details.push('Separação adequada');
-    }
-
-    return {
-      isValid: score >= 60,
-      score,
-      reason: details.join(', ') || 'Condições EMA desfavoráveis'
-    };
-  }
-
-  private validateRSI(data: any, period: number) {
-    const { marketData } = data;
-    
-    if (!marketData?.klines || marketData.klines.length < period + 1) {
-      return { isValid: false, score: 0, reason: 'Dados insuficientes para RSI' };
-    }
-
-    const prices = marketData.klines.map((k: any) => parseFloat(k[4]));
-    const rsi = this.calculateRSI(prices, period);
-    let score = 0;
-    let reason = '';
-
-    if (rsi >= 25 && rsi <= 75) {
-      score = 100;
-      reason = `RSI em zona neutra (${rsi.toFixed(1)})`;
-    } else if (rsi < 25) {
-      score = 80;
-      reason = `RSI oversold (${rsi.toFixed(1)}) - oportunidade`;
-    } else {
-      score = 20;
-      reason = `RSI overbought (${rsi.toFixed(1)}) - risco alto`;
-    }
-
-    return { isValid: score >= 60, score, reason };
-  }
-
-  private validateVolume(data: any, multiplier: number) {
-    const { marketData } = data;
-    
-    if (!marketData?.klines || marketData.klines.length < 20) {
-      return { isValid: false, score: 0, reason: 'Dados de volume insuficientes' };
-    }
-
-    const volumes = marketData.klines.map((k: any) => parseFloat(k[5]));
-    const recentVolume = volumes.slice(-3).reduce((a: number, b: number) => a + b, 0) / 3;
-    const avgVolume = volumes.reduce((a: number, b: number) => a + b, 0) / volumes.length;
-    const volumeRatio = recentVolume / avgVolume;
-
-    let score = 0;
-    let reason = '';
-
-    if (volumeRatio >= multiplier * 1.5) {
-      score = 100;
-      reason = `Volume muito alto (${volumeRatio.toFixed(1)}x)`;
-    } else if (volumeRatio >= multiplier) {
-      score = 80;
-      reason = `Volume adequado (${volumeRatio.toFixed(1)}x)`;
-    } else {
-      score = 40;
-      reason = `Volume baixo (${volumeRatio.toFixed(1)}x)`;
-    }
-
-    return { isValid: score >= 60, score, reason };
-  }
-
-  private validateSupportResistance(data: any, tolerance: number) {
-    // Implementação simplificada - pode ser expandida
-    return { isValid: true, score: 70, reason: 'S/R análise básica' };
-  }
-
-  private validateMomentum(data: any, minMomentum: number) {
-    const { marketData } = data;
-    
-    if (!marketData?.stats?.priceChangePercent) {
-      return { isValid: false, score: 50, reason: 'Dados de momentum indisponíveis' };
-    }
-
-    const priceChange = Math.abs(parseFloat(marketData.stats.priceChangePercent)) / 100;
-    let score = 0;
-    let reason = '';
-
-    if (priceChange >= minMomentum * 2) {
-      score = 100;
-      reason = `Momentum forte (${(priceChange * 100).toFixed(2)}%)`;
-    } else if (priceChange >= minMomentum) {
-      score = 80;
-      reason = `Momentum adequado (${(priceChange * 100).toFixed(2)}%)`;
-    } else {
-      score = 40;
-      reason = `Momentum baixo (${(priceChange * 100).toFixed(2)}%)`;
-    }
-
-    return { isValid: score >= 60, score, reason };
-  }
-
-  private validateVolatility(data: any, minVol: number, maxVol: number) {
-    const { marketData } = data;
-    
-    if (!marketData?.klines || marketData.klines.length < 20) {
-      return { isValid: false, score: 50, reason: 'Dados insuficientes para volatilidade' };
-    }
-
-    const prices = marketData.klines.map((k: any) => parseFloat(k[4]));
-    const volatility = this.calculateVolatility(prices);
-    let score = 0;
-    let reason = '';
-
-    if (volatility >= minVol && volatility <= maxVol) {
-      score = 100;
-      reason = `Volatilidade ideal (${volatility.toFixed(1)}%)`;
-    } else if (volatility < minVol) {
-      score = 60;
-      reason = `Volatilidade baixa (${volatility.toFixed(1)}%)`;
-    } else {
-      score = 40;
-      reason = `Volatilidade alta (${volatility.toFixed(1)}%)`;
-    }
-
-    return { isValid: score >= 60, score, reason };
-  }
-
-  private validateConfidence(data: any, minConfidence: number) {
-    const { decision } = data;
-    
-    if (!decision?.confidence) {
-      return { isValid: false, score: 0, reason: 'Confiança não disponível' };
-    }
-
-    const confidence = decision.confidence;
-    let score = 0;
-    let reason = '';
-
-    if (confidence >= minConfidence + 20) {
-      score = 100;
-      reason = `Confiança muito alta (${confidence}%)`;
-    } else if (confidence >= minConfidence + 10) {
-      score = 80;
-      reason = `Confiança alta (${confidence}%)`;
-    } else if (confidence >= minConfidence) {
-      score = 60;
-      reason = `Confiança adequada (${confidence}%)`;
-    } else {
-      score = 20;
-      reason = `Confiança baixa (${confidence}%)`;
-    }
-
-    return { isValid: score >= 60, score, reason };
-  }
-
-  // Métodos auxiliares
-  private calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1];
-
-    const multiplier = 2 / (period + 1);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-
-    for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-
-    return ema;
-  }
-
-  private calculateRSI(prices: number[], period: number = 14): number {
-    if (prices.length < period + 1) return 50;
-
-    const changes = [];
-    for (let i = 1; i < prices.length; i++) {
-      changes.push(prices[i] - prices[i - 1]);
-    }
-
-    const gains = changes.map(change => change > 0 ? change : 0);
-    const losses = changes.map(change => change < 0 ? Math.abs(change) : 0);
-
-    const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
-    const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
-
-    if (avgLoss === 0) return 100;
-
-    const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
-  }
-
-  private calculateVolatility(prices: number[]): number {
-    if (prices.length < 2) return 0;
-
-    const returns = [];
-    for (let i = 1; i < prices.length; i++) {
-      const returnRate = (prices[i] - prices[i - 1]) / prices[i - 1];
-      if (!isNaN(returnRate) && isFinite(returnRate)) {
-        returns.push(returnRate);
-      }
-    }
-
-    if (returns.length === 0) return 0;
-
-    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
-    const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - mean, 2), 0) / returns.length;
-
-    return Math.sqrt(variance) * 100;
+  validate(): ValidationResult {
+    return this.build().validate(this.data.symbol, this.data.marketData, this.data.decision, this.data.binanceClient);
   }
 }
 
+/**
+ * 🔍 VALIDADOR PRINCIPAL
+ */
 export class SmartPreValidationValidator {
   constructor(private layers: ValidationLayer[]) {}
 
-  async validate(symbol: string, marketData: any, decision: any, binanceClient?: any): Promise<ValidationResult> {
+  validate(symbol: string, marketData: any, decision: any, binanceClient?: any): ValidationResult {
     const data = { symbol, marketData, decision, binanceClient };
     
     if (this.layers.length === 0) {
@@ -884,8 +463,6 @@ export class SmartPreValidationValidator {
     const activeLayers: string[] = [];
     const layerScores: { [key: string]: number } = {};
 
-    console.log(`🔍 Executando ${this.layers.length} camadas de validação...`);
-
     for (const layer of this.layers) {
       try {
         const result = layer.validator(data);
@@ -901,25 +478,23 @@ export class SmartPreValidationValidator {
         } else {
           warnings.push(`❌ ${layer.name}: ${result.reason} (${layerScore.toFixed(1)}/${layer.weight})`);
         }
-
-        console.log(`   ${layer.name}: ${layerScore.toFixed(1)}/${layer.weight} - ${result.reason}`);
       } catch (error) {
         warnings.push(`⚠️ ${layer.name}: Erro na validação - ${error}`);
-        console.log(`   ❌ ${layer.name}: Erro - ${error}`);
       }
     }
 
     const scorePercentage = (totalScore / maxScore) * 100;
     const config = TradingConfigManager.getConfig();
-    const minApprovalScore = 60;
+    const minApprovalScore = config.VALIDATION_SCORES?.MIN_APPROVAL_SCORE || 60;
     const isValid = scorePercentage >= minApprovalScore;
 
     const maxConfidence = config.HIGH_CONFIDENCE || 95;
-    const minConfidence = 50;
+    const minConfidence = config.VALIDATION_SCORES?.MIN_CONFIDENCE || 50;
     const confidence = Math.min(maxConfidence, Math.max(minConfidence, scorePercentage));
+    
     let riskLevel = 'HIGH';
-    const lowRiskThreshold = 80;
-    const mediumRiskThreshold = 65;
+    const lowRiskThreshold = config.VALIDATION_SCORES?.LOW_RISK_THRESHOLD || 80;
+    const mediumRiskThreshold = config.VALIDATION_SCORES?.MEDIUM_RISK_THRESHOLD || 65;
     if (scorePercentage >= lowRiskThreshold) riskLevel = 'LOW';
     else if (scorePercentage >= mediumRiskThreshold) riskLevel = 'MEDIUM';
 
@@ -935,5 +510,155 @@ export class SmartPreValidationValidator {
       activeLayers,
       layerScores
     };
+  }
+}
+
+// === SERVIÇO PRINCIPAL ===
+
+/**
+ * 🛡️ SMART PRÉ-VALIDAÇÃO SERVICE
+ */
+export class SmartPreValidationService {
+  static createBuilder(): SmartPreValidationServiceBuilder {
+    return new SmartPreValidationServiceBuilder();
+  }
+
+  static create(data: any): SmartPreValidationBuilder {
+    return new SmartPreValidationBuilder(data);
+  }
+
+  // Presets otimizados
+  static forEmaBot(data: any): ValidationResult {
+    const config = TradingConfigManager.getConfig();
+    return this.create(data)
+      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 25)
+      .withRSI(14, 20)
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER, 20)
+      .withMomentum(0.01, 15)
+      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY, 10)
+      .withConfidence(config.MIN_CONFIDENCE, 10)
+      .validate();
+  }
+
+  static forSmartBot(data: any): ValidationResult {
+    const config = TradingConfigManager.getConfig();
+    return this.create(data)
+      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 20)
+      .withRSI(14, 15)
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 1.25, 15)
+      .withSupportResistance(config.EMA_ADVANCED.MIN_SEPARATION * 2, 20)
+      .withMomentum(0.01, 15)
+      .withConfidence(config.MIN_CONFIDENCE + 5, 15)
+      .validate();
+  }
+
+  static forUltraConservative(data: any): ValidationResult {
+    return this.create(data)
+      .withEma(12, 26, 20)
+      .withRSI(14, 15)
+      .withVolume(1.8, 15)
+      .withSupportResistance(0.005, 20)
+      .withMomentum(0.02, 10)
+      .withVolatility(0.5, 3, 10)
+      .withConfidence(85, 10)
+      .validate();
+  }
+
+  static forSimulation(data: any): ValidationResult {
+    return this.create(data)
+      .withEma(12, 26, 20)
+      .withRSI(14, 15)
+      .withVolume(1.2, 15)
+      .withMomentum(0.01, 15)
+      .withConfidence(70, 15)
+      .withVolatility(1, 4, 20)
+      .validate();
+  }
+}
+
+/**
+ * 🏗️ BUILDER ALTERNATIVO (Compatibilidade)
+ */
+export class SmartPreValidationServiceBuilder {
+  private layers: ValidationLayer[] = [];
+
+  withEma(fastPeriod: number = 12, slowPeriod: number = 26, weight: number = 20): SmartPreValidationServiceBuilder {
+    this.layers.push({
+      name: 'EMA',
+      weight,
+      validator: (data) => EMAValidator.validate(data, fastPeriod, slowPeriod)
+    });
+    return this;
+  }
+
+  withRSI(period: number = 14, weight: number = 15): SmartPreValidationServiceBuilder {
+    this.layers.push({
+      name: 'RSI',
+      weight,
+      validator: (data) => RSIValidator.validate(data, period)
+    });
+    return this;
+  }
+
+  withVolume(multiplier: number = 1.2, weight: number = 15): SmartPreValidationServiceBuilder {
+    this.layers.push({
+      name: 'Volume',
+      weight,
+      validator: (data) => VolumeValidator.validate(data, multiplier)
+    });
+    return this;
+  }
+
+  withSupportResistance(tolerance: number = 0.01, weight: number = 20): SmartPreValidationServiceBuilder {
+    this.layers.push({
+      name: 'Support/Resistance',
+      weight,
+      validator: (data) => SupportResistanceValidator.validate(data, tolerance)
+    });
+    return this;
+  }
+
+  withMomentum(minMomentum: number = 0.01, weight: number = 10): SmartPreValidationServiceBuilder {
+    this.layers.push({
+      name: 'Momentum',
+      weight,
+      validator: (data) => MomentumValidator.validate(data, minMomentum)
+    });
+    return this;
+  }
+
+  withVolatility(minVol: number = 0.5, maxVol: number = 5.0, weight: number = 10): SmartPreValidationServiceBuilder {
+    this.layers.push({
+      name: 'Volatility',
+      weight,
+      validator: (data) => VolatilityValidator.validate(data, minVol, maxVol)
+    });
+    return this;
+  }
+
+  withConfidence(minConfidence: number = 70, weight: number = 10): SmartPreValidationServiceBuilder {
+    this.layers.push({
+      name: 'Confidence',
+      weight,
+      validator: (data) => ConfidenceValidator.validate(data, minConfidence)
+    });
+    return this;
+  }
+
+  usePreset(preset: string): SmartPreValidationServiceBuilder {
+    const presets = {
+      'EmaBot': () => this.withEma(12, 26, 25).withRSI(14, 20).withVolume(1.2, 20).withMomentum(0.01, 15).withVolatility(1, 5, 10).withConfidence(70, 10),
+      'SmartBot': () => this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.5, 15).withSupportResistance(0.01, 20).withMomentum(0.01, 15).withConfidence(75, 15),
+      'RealBot': () => this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.3, 15).withMomentum(0.01, 15).withConfidence(70, 15).withVolatility(1, 4, 20),
+      'UltraConservative': () => this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.8, 15).withSupportResistance(0.005, 20).withMomentum(0.02, 10).withVolatility(0.5, 3, 10).withConfidence(85, 10),
+      'Simulation': () => this.withEma(12, 26, 20).withRSI(14, 15).withVolume(1.2, 15).withMomentum(0.01, 15).withConfidence(70, 15).withVolatility(1, 4, 20)
+    };
+
+    const presetFn = presets[preset as keyof typeof presets];
+    return presetFn ? presetFn() : this;
+  }
+
+  build(): SmartPreValidationValidator {
+    return new SmartPreValidationValidator(this.layers);
   }
 }
