@@ -151,7 +151,7 @@ export class UltraConservativeAnalyzer {
     }
 
     // RSI em zona segura (25 pontos)
-    const rsi = TechnicalCalculator.calculateRSI(klines.map(k => parseFloat(k[4])));
+    const rsi = TechnicalCalculator.calculateRSI(klines.map((k: any[]) => parseFloat(k[4])));
     const config = TradingConfigManager.getConfig();
     const [rsiMin, rsiMax] = [35, 65]; // Zona segura padrão
     if (rsi >= rsiMin && rsi <= rsiMax) {

@@ -3,9 +3,10 @@ import { BotFlowManager } from '../../utils/execution/bot-flow-manager';
 import { BotConfig, TradeDecision } from '../../core/types';
 import { logBotHeader, logBotStartup } from '../../utils/logging/bot-logger';
 import { logMarketInfo } from '../../utils/logging/market-data-logger';
-import { SupportResistanceAnalyzer, TradingConfigManager } from '../../../core';
+import { TradingConfigManager } from '../../../core';
 import { SmartPreValidationService } from '../../../shared/services/smart-pre-validation-service';
 import { BaseTradingBot } from '../../core/base-trading-bot';
+import SupportResistanceAnalyzer from '../../../core/analyzers/technical/support-resistance-analyzer';
 
 dotenv.config();
 

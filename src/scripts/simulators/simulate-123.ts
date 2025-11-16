@@ -1,4 +1,5 @@
-import { Analyzer123, TradingConfigManager } from '../../core';
+import { TradingConfigManager } from '../../core';
+import Analyzer123 from '../../core/analyzers/technical/pattern-123';
 import { TradeSimulator } from "./trade-simulator";
 
 async function runSimulation123() {

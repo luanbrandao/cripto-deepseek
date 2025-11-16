@@ -49,7 +49,7 @@ export class TechnicalIndicators {
     if (prices.length < period) return prices[prices.length - 1];
 
     const multiplier = this.EMA_MULTIPLIER_NUMERATOR / (period + this.EMA_COMPLEMENT_FACTOR);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b) / period;
+    let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
 
     for (let i = period; i < prices.length; i++) {
       ema = (prices[i] * multiplier) + (ema * (this.EMA_COMPLEMENT_FACTOR - multiplier));
@@ -121,8 +121,8 @@ export class TechnicalIndicators {
       losses.push(change < 0 ? Math.abs(change) : 0);
     }
 
-    let avgGain = gains.reduce((a, b) => a + b) / period;
-    let avgLoss = losses.reduce((a, b) => a + b) / period;
+    let avgGain = gains.length > 0 ? gains.reduce((a, b) => a + b, 0) / period : 0;
+    let avgLoss = losses.length > 0 ? losses.reduce((a, b) => a + b, 0) / period : 0;
 
     // Smoothed RSI calculation for remaining periods
     for (let i = period + 1; i < prices.length; i++) {
@@ -183,14 +183,14 @@ export class TechnicalIndicators {
     }
 
     const currentVolume = volumes[volumes.length - 1];
-    const avgVolume = volumes.slice(-period).reduce((a, b) => a + b) / period;
+    const avgVolume = volumes.slice(-period).reduce((a, b) => a + b, 0) / period;
     const ratio = currentVolume / avgVolume;
 
     // Determine trend
     const recent = volumes.slice(-period);
     const previous = volumes.slice(-period * 2, -period);
-    const recentAvg = recent.reduce((a, b) => a + b) / recent.length;
-    const previousAvg = previous.length > 0 ? previous.reduce((a, b) => a + b) / previous.length : recentAvg;
+    const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const previousAvg = previous.length > 0 ? previous.reduce((a, b) => a + b, 0) / previous.length : recentAvg;
     
     const change = (recentAvg - previousAvg) / previousAvg;
     
@@ -242,7 +242,7 @@ export class TechnicalIndicators {
       };
     }
 
-    const sma = prices.slice(-period).reduce((a, b) => a + b) / period;
+    const sma = prices.slice(-period).reduce((a, b) => a + b, 0) / period;
     const variance = prices.slice(-period).reduce((sum, price) => sum + Math.pow(price - sma, 2), 0) / period;
     const standardDeviation = Math.sqrt(variance);
 
@@ -298,6 +298,6 @@ export class TechnicalIndicators {
       trueRanges.push(Math.max(tr1, tr2, tr3));
     }
 
-    return trueRanges.slice(-period).reduce((a, b) => a + b) / period;
+    return trueRanges.slice(-period).reduce((a, b) => a + b, 0) / period;
   }
 }

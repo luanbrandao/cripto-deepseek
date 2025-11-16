@@ -1,6 +1,7 @@
-import { TradingConfigManager, SupportResistanceAnalyzer } from '../../core';
+import { TradingConfigManager } from '../../core';
 import * as fs from 'fs';
 import { TradeSimulator } from './trade-simulator';
+import SupportResistanceAnalyzer from '../../core/analyzers/technical/support-resistance-analyzer';
 
 // Ativar modo ultra-conservador para este simulador
 TradingConfigManager.setMode('ULTRA_CONSERVATIVE');

@@ -101,7 +101,7 @@ export class SupportResistanceCalculator {
           price: high,
           type: 'high',
           timestamp,
-          strength: this.calculatePivotStrength(klines, i, 'high', period)
+          strength: SupportResistanceCalculator.calculatePivotStrength(klines, i, 'high', period)
         });
       }
       
@@ -110,7 +110,7 @@ export class SupportResistanceCalculator {
           price: low,
           type: 'low',
           timestamp,
-          strength: this.calculatePivotStrength(klines, i, 'low', period)
+          strength: SupportResistanceCalculator.calculatePivotStrength(klines, i, 'low', period)
         });
       }
     }
