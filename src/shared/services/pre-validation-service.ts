@@ -5,6 +5,7 @@
 
 import { TradingConfigManager } from '../config/trading-config-manager';
 
+// === INTERFACES ===
 export interface ValidationResult {
   isValid: boolean;
   score: number;
@@ -30,6 +31,185 @@ export interface TradeDecision {
   price: number;
 }
 
+// === MÓDULOS DE VALIDAÇÃO ===
+
+/**
+ * 📊 MÓDULO DE VALIDAÇÃO DE VOLUME
+ */
+class VolumeValidator {
+  static validate(volumes: number[], config: any): { score: number; reasons: string[]; warnings: string[] } {
+    const result: { score: number; reasons: string[]; warnings: string[] } = { score: 0, reasons: [], warnings: [] };
+    
+    if (volumes.length === 0) return result;
+    
+    const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+    const recentVolume = volumes.slice(-3).reduce((a, b) => a + b, 0) / 3;
+    const volumeRatio = recentVolume / avgVolume;
+    const minMultiplier = config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER;
+    
+    if (volumeRatio >= minMultiplier * 1.3) {
+      result.score = 5;
+      result.reasons.push(`✅ Volume forte: ${volumeRatio.toFixed(1)}x média`);
+    } else if (volumeRatio >= minMultiplier) {
+      result.score = 3;
+      result.reasons.push(`✅ Volume adequado: ${volumeRatio.toFixed(1)}x média`);
+    } else {
+      result.warnings.push(`❌ Volume insuficiente: ${volumeRatio.toFixed(1)}x < ${minMultiplier}x`);
+    }
+    
+    return result;
+  }
+}
+
+/**
+ * 📈 MÓDULO DE VALIDAÇÃO DE TENDÊNCIA
+ */
+class TrendValidator {
+  static validate(prices: number[], config: any): { score: number; reasons: string[]; warnings: string[] } {
+    const result: { score: number; reasons: string[]; warnings: string[] } = { score: 0, reasons: [], warnings: [] };
+    
+    const ema21 = TechnicalCalculator.calculateEMA(prices, 21);
+    const ema50 = TechnicalCalculator.calculateEMA(prices, 50);
+    const trendStrength = Math.abs(ema21 - ema50) / ema50;
+    const minStrength = config.EMA_ADVANCED.MIN_TREND_STRENGTH;
+    
+    if (trendStrength >= minStrength * 2.5) {
+      result.score = 5;
+      result.reasons.push(`✅ Tendência forte: ${(trendStrength * 100).toFixed(2)}%`);
+    } else if (trendStrength >= minStrength) {
+      result.score = 3;
+      result.reasons.push(`✅ Tendência adequada: ${(trendStrength * 100).toFixed(2)}%`);
+    } else {
+      result.warnings.push(`❌ Tendência fraca: ${(trendStrength * 100).toFixed(2)}%`);
+    }
+    
+    return result;
+  }
+}
+
+/**
+ * 🎯 MÓDULO DE VALIDAÇÃO DE RSI
+ */
+class RSIValidator {
+  static validate(prices: number[], config: any): { score: number; reasons: string[]; warnings: string[] } {
+    const result: { score: number; reasons: string[]; warnings: string[] } = { score: 0, reasons: [], warnings: [] };
+    
+    const rsi = TechnicalCalculator.calculateRSI(prices);
+    const { RSI_MIN, RSI_MAX, RSI_OPTIMAL_MIN, RSI_OPTIMAL_MAX } = config.ALGORITHM;
+    
+    if (rsi >= RSI_MIN && rsi <= RSI_MAX) {
+      if (rsi >= RSI_OPTIMAL_MIN && rsi <= RSI_OPTIMAL_MAX) {
+        result.score = 5;
+        result.reasons.push(`✅ RSI em zona ótima: ${rsi.toFixed(1)}`);
+      } else {
+        result.score = 3;
+        result.reasons.push(`✅ RSI em zona boa: ${rsi.toFixed(1)}`);
+      }
+    } else {
+      result.warnings.push(`❌ RSI extremo: ${rsi.toFixed(1)} (${RSI_MIN}-${RSI_MAX})`);
+    }
+    
+    return result;
+  }
+}
+
+/**
+ * 💰 MÓDULO DE VALIDAÇÃO DE PREÇO
+ */
+class PriceValidator {
+  static validate(currentPrice: number, prices: number[], action: string, config: any): { score: number; reasons: string[]; warnings: string[] } {
+    const result: { score: number; reasons: string[]; warnings: string[] } = { score: 0, reasons: [], warnings: [] };
+    
+    const ema21 = TechnicalCalculator.calculateEMA(prices, 21);
+    const distance = Math.abs(currentPrice - ema21) / ema21;
+    
+    if (action === 'BUY' && currentPrice > ema21) {
+      result.score = 3;
+      result.reasons.push('✅ Preço acima EMA21 para compra');
+    } else if (action === 'SELL' && currentPrice < ema21) {
+      result.score = 3;
+      result.reasons.push('✅ Preço abaixo EMA21 para venda');
+    } else if (distance <= config.EMA_ADVANCED.MIN_SEPARATION) {
+      result.score = 2;
+      result.reasons.push('✅ Preço próximo EMA21 (crossover)');
+    } else {
+      result.warnings.push('❌ Posição inadequada para EMA');
+    }
+    
+    return result;
+  }
+}
+
+/**
+ * 📊 MÓDULO DE VALIDAÇÃO DE VOLATILIDADE
+ */
+class VolatilityValidator {
+  static validate(stats: any, config: any): { score: number; reasons: string[]; warnings: string[] } {
+    const result: { score: number; reasons: string[]; warnings: string[] } = { score: 0, reasons: [], warnings: [] };
+    
+    if (!stats?.priceChangePercent) return result;
+    
+    const volatility = Math.abs(parseFloat(stats.priceChangePercent));
+    const { MIN_VOLATILITY, MAX_VOLATILITY } = config.MARKET_FILTERS;
+    
+    if (volatility >= MIN_VOLATILITY && volatility <= MAX_VOLATILITY) {
+      result.score = 2;
+      result.reasons.push(`✅ Volatilidade adequada: ${volatility.toFixed(1)}%`);
+    } else {
+      result.warnings.push(`❌ Volatilidade inadequada: ${volatility.toFixed(1)}%`);
+    }
+    
+    return result;
+  }
+}
+
+/**
+ * 🧮 CALCULADORA TÉCNICA
+ */
+class TechnicalCalculator {
+  static calculateEMA(prices: number[], period: number): number {
+    if (prices.length < period) return prices[prices.length - 1] || 0;
+    
+    const multiplier = 2 / (period + 1);
+    let ema = prices.slice(0, period).reduce((a, b) => a + b) / period;
+    
+    for (let i = period; i < prices.length; i++) {
+      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
+    }
+    
+    return ema;
+  }
+  
+  static calculateRSI(prices: number[], period: number = 14): number {
+    if (prices.length < period + 1) return 50;
+    
+    const changes = prices.slice(1).map((price, i) => price - prices[i]);
+    const gains = changes.map(change => change > 0 ? change : 0);
+    const losses = changes.map(change => change < 0 ? -change : 0);
+    
+    const avgGain = gains.slice(-period).reduce((a, b) => a + b) / period;
+    const avgLoss = losses.slice(-period).reduce((a, b) => a + b) / period;
+    
+    if (avgLoss === 0) return 100;
+    const rs = avgGain / avgLoss;
+    return 100 - (100 / (1 + rs));
+  }
+  
+  static analyzeTrend(candles: any[]): 'up' | 'down' | 'sideways' {
+    if (candles.length < 10) return 'sideways';
+    
+    const closes = candles.slice(-10).map(c => parseFloat(c[4] || c.close || c));
+    const first = closes[0];
+    const last = closes[closes.length - 1];
+    const change = (last - first) / first;
+    
+    if (change > 0.02) return 'up';
+    if (change < -0.02) return 'down';
+    return 'sideways';
+  }
+}
+
+// === SERVIÇO PRINCIPAL ===
 export class PreValidationService {
   
   /**
@@ -43,92 +223,21 @@ export class PreValidationService {
       warnings: []
     };
     
-    const { price24h, volumes = [], currentPrice, stats } = marketData;
     const config = TradingConfigManager.getConfig();
+    const { price24h, volumes = [], currentPrice, stats } = marketData;
     
-    // 1. Validação de Volume (5 pontos)
-    if (volumes.length > 0) {
-      const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
-      const recentVolume = volumes.slice(-3).reduce((a, b) => a + b, 0) / 3;
-      const volumeRatio = recentVolume / avgVolume;
-      const minVolumeMultiplier = config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER;
-      
-      if (volumeRatio >= minVolumeMultiplier * 1.3) {
-        validation.score += 5;
-        validation.reasons.push(`✅ Volume forte: ${volumeRatio.toFixed(1)}x média`);
-      } else if (volumeRatio >= minVolumeMultiplier) {
-        validation.score += 3;
-        validation.reasons.push(`✅ Volume adequado: ${volumeRatio.toFixed(1)}x média`);
-      } else {
-        validation.warnings.push(`❌ Volume insuficiente: ${volumeRatio.toFixed(1)}x < ${minVolumeMultiplier}x`);
-      }
-    }
+    // Validações modulares
+    const volumeResult = VolumeValidator.validate(volumes, config);
+    const trendResult = TrendValidator.validate(price24h, config);
+    const rsiResult = RSIValidator.validate(price24h, config);
+    const priceResult = PriceValidator.validate(currentPrice, price24h, basicAnalysis.action, config);
+    const volatilityResult = VolatilityValidator.validate(stats, config);
     
-    // 2. Validação de Força da Tendência (5 pontos)
-    const ema21 = this.calculateEMA(price24h, 21);
-    const ema50 = this.calculateEMA(price24h, 50);
-    const trendStrength = Math.abs(ema21 - ema50) / ema50;
-    const minTrendStrength = config.EMA_ADVANCED.MIN_TREND_STRENGTH;
+    // Consolidar resultados
+    validation.score = volumeResult.score + trendResult.score + rsiResult.score + priceResult.score + volatilityResult.score;
+    validation.reasons = [...volumeResult.reasons, ...trendResult.reasons, ...rsiResult.reasons, ...priceResult.reasons, ...volatilityResult.reasons];
+    validation.warnings = [...volumeResult.warnings, ...trendResult.warnings, ...rsiResult.warnings, ...priceResult.warnings, ...volatilityResult.warnings];
     
-    if (trendStrength >= minTrendStrength * 2.5) {
-      validation.score += 5;
-      validation.reasons.push(`✅ Tendência forte: ${(trendStrength * 100).toFixed(2)}%`);
-    } else if (trendStrength >= minTrendStrength) {
-      validation.score += 3;
-      validation.reasons.push(`✅ Tendência adequada: ${(trendStrength * 100).toFixed(2)}%`);
-    } else {
-      validation.warnings.push(`❌ Tendência fraca: ${(trendStrength * 100).toFixed(2)}% < ${(minTrendStrength * 100).toFixed(1)}%`);
-    }
-    
-    // 3. Validação de RSI (5 pontos)
-    const rsi = this.calculateRSI(price24h);
-    const rsiMin = config.ALGORITHM.RSI_MIN;
-    const rsiMax = config.ALGORITHM.RSI_MAX;
-    const rsiOptimalMin = config.ALGORITHM.RSI_OPTIMAL_MIN;
-    const rsiOptimalMax = config.ALGORITHM.RSI_OPTIMAL_MAX;
-    
-    if (rsi >= rsiMin && rsi <= rsiMax) {
-      if (rsi >= rsiOptimalMin && rsi <= rsiOptimalMax) {
-        validation.score += 5;
-        validation.reasons.push(`✅ RSI em zona ótima: ${rsi.toFixed(1)}`);
-      } else {
-        validation.score += 3;
-        validation.reasons.push(`✅ RSI em zona boa: ${rsi.toFixed(1)}`);
-      }
-    } else {
-      validation.warnings.push(`❌ RSI em zona extrema: ${rsi.toFixed(1)} (${rsiMin}-${rsiMax} requerido)`);
-    }
-    
-    // 4. Validação de Posição do Preço (3 pontos)
-    const ema21Distance = Math.abs(currentPrice - ema21) / ema21;
-    if (basicAnalysis.action === 'BUY' && currentPrice > ema21) {
-      validation.score += 3;
-      validation.reasons.push('✅ Preço acima EMA21 para compra');
-    } else if (basicAnalysis.action === 'SELL' && currentPrice < ema21) {
-      validation.score += 3;
-      validation.reasons.push('✅ Preço abaixo EMA21 para venda');
-    } else if (ema21Distance <= config.EMA_ADVANCED.MIN_SEPARATION) {
-      validation.score += 2;
-      validation.reasons.push('✅ Preço próximo da EMA21 (crossover)');
-    } else {
-      validation.warnings.push('❌ Posição do preço inadequada para EMA');
-    }
-    
-    // 5. Validação de Volatilidade (2 pontos)
-    if (stats?.priceChangePercent) {
-      const volatility = Math.abs(parseFloat(stats.priceChangePercent));
-      const minVol = config.MARKET_FILTERS.MIN_VOLATILITY;
-      const maxVol = config.MARKET_FILTERS.MAX_VOLATILITY;
-      
-      if (volatility >= minVol && volatility <= maxVol) {
-        validation.score += 2;
-        validation.reasons.push(`✅ Volatilidade adequada: ${volatility.toFixed(1)}%`);
-      } else {
-        validation.warnings.push(`❌ Volatilidade inadequada: ${volatility.toFixed(1)}% (${minVol}-${maxVol}% requerido)`);
-      }
-    }
-    
-    // Critério de aprovação
     const minScore = Math.floor(config.EMA_ADVANCED.MIN_EMA_SCORE * 1.2);
     validation.isValid = validation.score >= minScore;
     
@@ -138,27 +247,14 @@ export class PreValidationService {
   /**
    * 🎯 VALIDAÇÃO SUPORTE/RESISTÊNCIA
    */
-  static validateSupportResistanceSignal(
-    currentPrice: number, 
-    levels: any[], 
-    candles: any[], 
-    decision: TradeDecision
-  ): ValidationResult {
-    const validation: ValidationResult = {
-      isValid: false,
-      score: 0,
-      reasons: [],
-      warnings: []
-    };
-    
-    const config = TradingConfigManager.getConfig();
+  static validateSupportResistanceSignal(currentPrice: number, levels: any[], candles: any[], decision: TradeDecision): ValidationResult {
+    const validation: ValidationResult = { isValid: false, score: 0, reasons: [], warnings: [] };
     const srConfig = TradingConfigManager.getBotConfig().SUPPORT_RESISTANCE;
     
-    // 1. Validação de Níveis Próximos (5 pontos)
+    // Validação de níveis próximos
     const tolerance = currentPrice * (srConfig?.MAX_DISTANCE || 0.005);
-    const nearbyLevels = levels.filter(level =>
-      Math.abs(level.price - currentPrice) <= tolerance * 3 &&
-      level.touches >= (srConfig?.MIN_TOUCHES || 2)
+    const nearbyLevels = levels.filter(level => 
+      Math.abs(level.price - currentPrice) <= tolerance * 3 && level.touches >= (srConfig?.MIN_TOUCHES || 2)
     );
     
     if (nearbyLevels.length >= 2) {
@@ -171,7 +267,7 @@ export class PreValidationService {
       validation.warnings.push(`❌ Nenhum nível S/R próximo`);
     }
     
-    // 2. Validação de Força dos Níveis (5 pontos)
+    // Validação de força dos níveis
     const strongLevels = levels.filter(level => level.strength >= 0.7);
     if (strongLevels.length >= 2) {
       validation.score += 5;
@@ -183,10 +279,9 @@ export class PreValidationService {
       validation.warnings.push(`❌ Níveis S/R fracos`);
     }
     
-    // 3. Validação de Tendência (5 pontos)
-    const trend = this.analyzeTrend(candles);
-    if ((decision.action === 'BUY' && trend === 'up') || 
-        (decision.action === 'SELL' && trend === 'down')) {
+    // Validação de tendência
+    const trend = TechnicalCalculator.analyzeTrend(candles);
+    if ((decision.action === 'BUY' && trend === 'up') || (decision.action === 'SELL' && trend === 'down')) {
       validation.score += 5;
       validation.reasons.push(`✅ Tendência alinhada: ${trend}`);
     } else if (trend === 'sideways') {
@@ -196,21 +291,14 @@ export class PreValidationService {
       validation.warnings.push(`❌ Tendência contrária: ${trend}`);
     }
     
-    // Critério de aprovação
-    const minScore = Math.floor((srConfig?.MIN_TOUCHES || 2) * 5);
-    validation.isValid = validation.score >= minScore;
-    
+    validation.isValid = validation.score >= Math.floor((srConfig?.MIN_TOUCHES || 2) * 5);
     return validation;
   }
 
   /**
    * 🚀 VALIDAÇÃO ULTRA-CONSERVADORA
    */
-  static validateUltraConservative(
-    symbol: string, 
-    marketData: MarketData, 
-    decision: TradeDecision
-  ): ValidationResult {
+  static validateUltraConservative(symbol: string, marketData: MarketData, decision: TradeDecision): ValidationResult {
     const validation: ValidationResult = {
       isValid: false,
       score: 0,
@@ -220,205 +308,39 @@ export class PreValidationService {
     };
     
     const config = TradingConfigManager.getConfig();
+    const { EXCEPTIONAL_CONFIDENCE, VERY_HIGH_CONFIDENCE, EXCEPTIONAL_SCORE, VERY_HIGH_SCORE, MIN_SCORE } = config.ALGORITHM;
     
-    // 1. Validação de Confiança (25 pontos)
-    const exceptionalConfidence = config.ALGORITHM.EXCEPTIONAL_CONFIDENCE;
-    const veryHighConfidence = config.ALGORITHM.VERY_HIGH_CONFIDENCE;
-    const exceptionalScore = config.ALGORITHM.EXCEPTIONAL_SCORE;
-    const veryHighScore = config.ALGORITHM.VERY_HIGH_SCORE;
-    
-    if (decision.confidence >= exceptionalConfidence) {
-      validation.score += exceptionalScore;
+    // Validação de confiança
+    if (decision.confidence >= EXCEPTIONAL_CONFIDENCE) {
+      validation.score += EXCEPTIONAL_SCORE;
       validation.reasons.push(`✅ Confiança excepcional: ${decision.confidence}%`);
       validation.riskLevel = 'LOW';
-    } else if (decision.confidence >= veryHighConfidence) {
-      validation.score += veryHighScore;
+    } else if (decision.confidence >= VERY_HIGH_CONFIDENCE) {
+      validation.score += VERY_HIGH_SCORE;
       validation.reasons.push(`✅ Confiança muito alta: ${decision.confidence}%`);
       validation.riskLevel = 'MEDIUM';
     } else if (decision.confidence >= config.MIN_CONFIDENCE) {
-      const minScore = config.ALGORITHM.MIN_SCORE;
-      validation.score += minScore;
+      validation.score += MIN_SCORE;
       validation.reasons.push(`✅ Confiança mínima: ${decision.confidence}%`);
     } else {
-      validation.warnings.push(`❌ Confiança insuficiente: ${decision.confidence}% < ${config.MIN_CONFIDENCE}%`);
+      validation.warnings.push(`❌ Confiança insuficiente: ${decision.confidence}%`);
     }
     
-    // 2. Validação EMA (25 pontos)
-    const emaValidation = this.validateEmaSignal(marketData, decision);
-    validation.score += Math.floor(emaValidation.score * 1.25);
-    validation.reasons.push(...emaValidation.reasons);
-    validation.warnings.push(...emaValidation.warnings);
-    
-    // 3. Validação de Símbolo (25 pontos)
-    const approvedSymbolScore = config.ALGORITHM.MIN_SCORE;
-    const premiumSymbolScore = config.ALGORITHM.MIN_SCORE_THRESHOLD;
-    const premiumSymbols = ['BTCUSDT', 'ETHUSDT'];
-    
-    if (config.SYMBOLS.includes(symbol)) {
-      validation.score += approvedSymbolScore;
-      validation.reasons.push(`✅ Símbolo aprovado: ${symbol}`);
+    // Validação de símbolo
+    const stableSymbols = ['BTCUSDT', 'ETHUSDT'];
+    if (stableSymbols.includes(symbol)) {
+      validation.score += config.ALGORITHM.ACTION_SCORE;
+      validation.reasons.push(`✅ Símbolo estável: ${symbol}`);
     } else {
-      validation.warnings.push(`❌ Símbolo não aprovado: ${symbol}`);
+      validation.warnings.push(`⚠️ Símbolo volátil: ${symbol}`);
     }
     
-    if (premiumSymbols.includes(symbol)) {
-      validation.score += premiumSymbolScore;
-      validation.reasons.push(`✅ Símbolo premium: ${symbol}`);
-    }
-    
-    // Critério ultra-rigoroso
-    const ultraConservativeThreshold = config.ALGORITHM.ULTRA_CONSERVATIVE_THRESHOLD;
-    validation.isValid = validation.score >= ultraConservativeThreshold;
-    validation.confidence = Math.min(100, validation.score);
-    
-    return validation;
-  }
-
-  /**
-   * 📊 VALIDAÇÃO DE SIMULAÇÃO
-   */
-  static validateSimulation(
-    marketData: MarketData, 
-    decision: TradeDecision
-  ): ValidationResult {
-    const validation: ValidationResult = {
-      isValid: false,
-      score: 0,
-      reasons: [],
-      warnings: []
-    };
-    
-    const config = TradingConfigManager.getConfig();
-    
-    // 1. Validação de Confiança (40 pontos)
-    const simulationConfidenceScore = config.ALGORITHM.SIMULATION_CONFIDENCE_SCORE;
-    if (decision.confidence >= config.MIN_CONFIDENCE) {
-      validation.score += simulationConfidenceScore;
-      validation.reasons.push(`✅ Confiança adequada: ${decision.confidence}%`);
-    } else {
-      validation.warnings.push(`❌ Confiança baixa: ${decision.confidence}%`);
-    }
-    
-    // 2. Validação EMA Simplificada (40 pontos)
-    const emaMultiplier = config.ALGORITHM.EMA_MULTIPLIER_NUMERATOR;
+    // Validação EMA adicional
     const emaValidation = this.validateEmaSignal(marketData, decision);
-    validation.score += Math.floor(emaValidation.score * emaMultiplier);
+    validation.score += Math.floor(emaValidation.score * 0.5);
     validation.reasons.push(...emaValidation.reasons.slice(0, 2));
-    validation.warnings.push(...emaValidation.warnings.slice(0, 2));
     
-    // 3. Validação de Ação (20 pontos)
-    const actionScore = config.ALGORITHM.ACTION_SCORE;
-    if (decision.action !== 'HOLD') {
-      validation.score += actionScore;
-      validation.reasons.push(`✅ Ação definida: ${decision.action}`);
-    } else {
-      validation.warnings.push(`❌ Nenhuma ação recomendada`);
-    }
-    
-    // Critério relaxado
-    const simulationThreshold = config.ALGORITHM.SIMULATION_THRESHOLD;
-    validation.isValid = validation.score >= simulationThreshold;
-    validation.confidence = Math.min(100, validation.score);
-    
+    validation.isValid = validation.score >= config.ALGORITHM.ULTRA_CONSERVATIVE_THRESHOLD;
     return validation;
-  }
-
-  // ==================== MÉTODOS AUXILIARES ====================
-
-  private static calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1];
-    
-    const config = TradingConfigManager.getConfig().ALGORITHM;
-    const multiplier = config.EMA_MULTIPLIER_NUMERATOR / (period + config.EMA_COMPLEMENT_FACTOR);
-    let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-    
-    for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
-    }
-    
-    return ema;
-  }
-
-  private static calculateRSI(prices: number[], period: number = 14): number {
-    const defaultRSI = TradingConfigManager.getConfig().ALGORITHM.DEFAULT_CONFIDENCE;
-    if (prices.length < period + 1) return defaultRSI;
-    
-    const changes = [];
-    for (let i = 1; i < prices.length; i++) {
-      changes.push(prices[i] - prices[i - 1]);
-    }
-    
-    const gains = changes.map(change => change > 0 ? change : 0);
-    const losses = changes.map(change => change < 0 ? Math.abs(change) : 0);
-    
-    const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
-    const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
-    
-    const maxRSI = 100;
-    if (avgLoss === 0) return maxRSI;
-    
-    const rs = avgGain / avgLoss;
-    return maxRSI - (maxRSI / (1 + rs));
-  }
-
-  private static analyzeTrend(candles: any[]): 'up' | 'down' | 'sideways' {
-    const minCandlesForTrend = TradingConfigManager.getConfig().ALGORITHM.PATTERN_123.PATTERN_CANDLES_COUNT;
-    if (candles.length < minCandlesForTrend) return 'sideways';
-
-    const first = candles[0].close;
-    const last = candles[candles.length - 1].close;
-    const change = (last - first) / first;
-
-    const config = TradingConfigManager.getConfig();
-    const trendThreshold = config.EMA_ADVANCED.MIN_TREND_STRENGTH;
-    
-    if (change > trendThreshold) return 'up';
-    if (change < -trendThreshold) return 'down';
-    return 'sideways';
-  }
-
-  /**
-   * 🎯 MÉTODO PRINCIPAL - SELETOR DE VALIDAÇÃO
-   */
-  static validate(
-    type: 'EMA' | 'SUPPORT_RESISTANCE' | 'ULTRA_CONSERVATIVE' | 'SIMULATION',
-    data: {
-      marketData: MarketData;
-      decision: TradeDecision;
-      symbol?: string;
-      levels?: any[];
-      candles?: any[];
-    }
-  ): ValidationResult {
-    switch (type) {
-      case 'EMA':
-        return this.validateEmaSignal(data.marketData, data.decision);
-      
-      case 'SUPPORT_RESISTANCE':
-        return this.validateSupportResistanceSignal(
-          data.marketData.currentPrice,
-          data.levels || [],
-          data.candles || [],
-          data.decision
-        );
-      
-      case 'ULTRA_CONSERVATIVE':
-        return this.validateUltraConservative(
-          data.symbol || '',
-          data.marketData,
-          data.decision
-        );
-      
-      case 'SIMULATION':
-        return this.validateSimulation(data.marketData, data.decision);
-      
-      default:
-        return {
-          isValid: false,
-          score: 0,
-          reasons: [],
-          warnings: ['❌ Tipo de validação não reconhecido']
-        };
-    }
   }
 }
