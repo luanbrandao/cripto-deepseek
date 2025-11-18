@@ -55,7 +55,14 @@ export class RealTradingBotSimulator extends BaseTradingBot {
 
     ValidationLogger.logValidationHeader('ULTRA-CONSERVADORA REAL BOT', true);
 
-    // 1. SMART PRÉ-VALIDAÇÃO
+    // 1. VALIDAÇÃO REALISTA - Aceita HOLD sempre para simulação
+    if (decision.action === 'HOLD') {
+      console.log('✅ HOLD aceito - Simulação de mercado lateral/consolidação');
+      this.saveBasicAnalysisHistory(symbol, decision, marketData);
+      return true;
+    }
+
+    // 2. SMART PRÉ-VALIDAÇÃO (apenas para BUY/SELL)
     const smartValidation = await SmartPreValidationService
       .createBuilder()
       .usePreset('Simulation')
@@ -65,12 +72,12 @@ export class RealTradingBotSimulator extends BaseTradingBot {
     ValidationLogger.logSmartValidation(smartValidation);
     if (!smartValidation.isValid) return false;
 
-    // 2. CÁLCULO DE ALVOS E STOPS
+    // 3. CÁLCULO DE ALVOS E STOPS
     const enhancedTargets = this.calculateEnhancedTargetsAndStops(decision, parseFloat(marketData.price.price));
     this.logTechnicalLevels(decision.technicalLevels);
     this.logEnhancedTargets(enhancedTargets, decision);
 
-    // 3. ANÁLISE ULTRA-CONSERVADORA
+    // 4. ANÁLISE ULTRA-CONSERVADORA (apenas para trades ativos)
     const ultraAnalysis = UltraConservativeAnalyzer.analyzeSymbol(symbol, marketData, decision);
 
     if (!ValidationLogger.logUltraConservativeAnalysis(ultraAnalysis)) {
@@ -80,11 +87,11 @@ export class RealTradingBotSimulator extends BaseTradingBot {
 
     console.log('🧪 Esta seria uma excelente oportunidade para trade real!');
 
-    // 4. ATUALIZAR DECISÃO
+    // 5. ATUALIZAR DECISÃO
     DecisionUpdater.updateWithValidation(decision, smartValidation, ultraAnalysis);
     DecisionUpdater.updateWithEnhancedTargets(decision, enhancedTargets);
 
-    // 5. SALVAR HISTÓRICO
+    // 6. SALVAR HISTÓRICO
     this.saveAnalysisHistory(symbol, decision, marketData, enhancedTargets);
 
     return true;
@@ -98,7 +105,7 @@ export class RealTradingBotSimulator extends BaseTradingBot {
     DeepSeekHistoryLogger.logAnalysisWithTechnicals(
       {
         symbol,
-        botType: 'realBot',
+        botType: 'realBotSimulator',
         prompt: `Ultra-Conservative Analysis for ${symbol}`,
         response: `Technical levels and enhanced targets calculated`,
         confidence: decision.confidence,
@@ -114,6 +121,26 @@ export class RealTradingBotSimulator extends BaseTradingBot {
       decision.technicalLevels,
       enhancedTargets
     );
+  }
+
+  private saveBasicAnalysisHistory(symbol: string, decision: any, marketData: any) {
+    console.log('💾 Salvando análise HOLD no histórico...');
+
+    DeepSeekHistoryLogger.logAnalysis({
+      symbol,
+      botType: 'realBotSimulator',
+      prompt: `Analyze ${symbol} market data and provide trading recommendation`,
+      response: decision.reason || 'Market consolidation - HOLD recommended',
+      confidence: decision.confidence,
+      action: decision.action,
+      reason: decision.reason,
+      marketData: {
+        price: parseFloat(marketData.price.price),
+        change24h: 0,
+        volume24h: 0
+      },
+      executionTime: 0
+    });
   }
 
   private calculateEnhancedTargetsAndStops(decision: any, currentPrice: number) {

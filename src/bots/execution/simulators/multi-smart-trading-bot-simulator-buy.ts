@@ -40,20 +40,20 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
 
   protected logBotInfo() {
     console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
-    logBotHeader('MULTI-SMART BOT SIMULATOR BUY v5.0 - PRÉ-VALIDAÇÃO INTELIGENTE', 'Análise Multi-Dimensional + Pré-Validação Inteligente - SIMULAÇÃO', true);
+    console.log('🟢 FOCO EXCLUSIVO EM COMPRAS - Estratégia Long-Only Otimizada');
+    logBotHeader('MULTI-SMART BOT SIMULATOR BUY v4.0 - VALIDAÇÕES OTIMIZADAS', 'Análise Multi-Dimensional + Validações Baseadas em Performance - SIMULAÇÃO - APENAS COMPRAS', true);
 
-    console.log('🎯 RECURSOS AVANÇADOS:');
-    console.log('  • EMA Multi-Timeframe (12/26/50/100/200)');
-    console.log('  • AI Parser com Análise de Sentimento');
-    console.log('  • Smart Scoring 4D (EMA+AI+Volume+Momentum)');
-    console.log('  • Filtro Adaptativo por Condição de Mercado');
-    console.log('  • Boost Inteligente de Confiança');
-    console.log('  • Simulação Segura (Zero Risco)');
-    console.log('  • Targets Baseados em Suporte/Resistência');
-    console.log('  • 🚀 MÓDULOS UNIFICADOS (v5.0)');
-    console.log('  • 🧠 Pré-Validação Inteligente (API Fluente)');
-    console.log('  • 🔧 Camadas Customizáveis: EMA+RSI+Volume+S/R+Momentum+Confiança');
-    console.log('  • 🔍 Validações Específicas Multi-Smart');
+    console.log('🎯 RECURSOS OTIMIZADOS PARA COMPRAS (v4.0):');
+    console.log('  • 📊 Filtro de Variação 24h (+0.2% a +3.0%)');
+    console.log('  • ⏰ Cooldown Dinâmico por Símbolo (BTC:20min, BNB:25min, ETH:30min, SOL:35min)');
+    console.log('  • 🎯 Confiança Dinâmica (BTC:78%, BNB:80%, ETH:82%, SOL:85%)');
+    console.log('  • 🔍 Validação de Padrões Bullish (2/6 obrigatório)');
+    console.log('  • 🕰️ Filtro de Timing (evitar: 22h-4h UTC)');
+    console.log('  • 🚀 Boost Baseado em Padrões (até +8%)');
+    console.log('  • 🛡️ Validação Smart Simplificada');
+    console.log('  • 🏆 Baseado em Análise de Performance Geral');
+    console.log('  • 💰 Foco em Qualidade vs Quantidade');
+    console.log('  • Assertividade Esperada: 50-60% (REALISTA)\n');
   }
 
   private async analyzeSymbol(symbol: string, marketData: any) {
@@ -108,26 +108,110 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
   // }
 
   private getThresholdBuyMarketCondition(marketType: string): number {
-    // Critérios EXECUTÁVEIS para Multi-Smart Bot BUY
+    // Critérios OTIMIZADOS para Multi-Smart Bot BUY
     switch (marketType) {
-      case 'BULL_MARKET': return 20; // Permissivo em bull market
-      case 'BEAR_MARKET': return 30; // Moderado em bear market  
-      case 'SIDEWAYS': return 25;    // Executável para mercado atual
-      default: return 25;            // Padrão executável
+      case 'BULL_MARKET': return 25; // Moderado em bull market
+      case 'BEAR_MARKET': return 35; // Rigoroso em bear market  
+      case 'SIDEWAYS': return 30;    // Moderado para mercado atual
+      default: return 30;            // Padrão mais rigoroso
     }
   }
 
   private async validateMultiSmartDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
     if (!symbol || !marketData) return false;
 
-    console.log('🛡️ PRÉ-VALIDAÇÃO MULTI-SMART BUY SIMULATOR...');
+    console.log('🛡️ VALIDAÇÃO MULTI-SMART BUY OTIMIZADA...');
 
-    // Preparar dados de mercado para validação
+    // Preparar dados de mercado
     const klines = await this.getBinancePublic().getKlines(symbol, TradingConfigManager.getConfig().CHART.TIMEFRAME, TradingConfigManager.getConfig().CHART.PERIODS);
     const prices = klines.map((k: any) => parseFloat(k[4]));
     const volumes = klines.map((k: any) => parseFloat(k[5]));
     const stats = await this.getBinancePublic().get24hrStats(symbol);
     
+    // 1. FILTRO DE VARIAÇÃO 24H (inverso do SELL)
+    const priceChange = parseFloat(stats.priceChangePercent);
+    console.log(`📊 Variação 24h: ${priceChange.toFixed(2)}%`);
+    
+    if (priceChange < 0) {
+      console.log('❌ Mercado em queda - não adequado para BUY');
+      return false;
+    }
+    
+    if (priceChange > 3.0) {
+      console.log('⚠️ Alta muito acentuada (> 3.0%) - risco de correção');
+      return false;
+    }
+    
+    if (priceChange < 0.2) {
+      console.log('⚠️ Alta insuficiente (< 0.2%) - aguardar mais momentum bullish');
+      return false;
+    }
+    
+    console.log('✅ Variação 24h adequada para BUY');
+
+    // 2. COOLDOWN POR SÍMBOLO (baseado na performance geral)
+    const lastTradeKey = `lastBuyTrade_${symbol}`;
+    const lastTradeTime = (global as any)[lastTradeKey] || 0;
+    let cooldownMinutes = 20; // Padrão
+    
+    switch (symbol) {
+      case 'BTCUSDT': cooldownMinutes = 20; break; // Performance moderada
+      case 'BNBUSDT': cooldownMinutes = 25; break; // Performance média
+      case 'ETHUSDT': cooldownMinutes = 30; break; // Mais cauteloso
+      case 'SOLUSDT': cooldownMinutes = 35; break; // Mais rigoroso
+      default: cooldownMinutes = 25; break;
+    }
+    
+    const cooldownMs = cooldownMinutes * 60 * 1000;
+    if (Date.now() - lastTradeTime < cooldownMs) {
+      console.log(`❌ COOLDOWN ATIVO: Aguarde ${cooldownMinutes}min para ${symbol}`);
+      return false;
+    }
+    
+    // 3. CONFIANÇA DINÂMICA POR SÍMBOLO (mais rigoroso para BUY)
+    let minConfidence = 80; // Padrão
+    switch (symbol) {
+      case 'BTCUSDT': minConfidence = 78; break; // Mais permissivo
+      case 'BNBUSDT': minConfidence = 80; break; // Padrão
+      case 'ETHUSDT': minConfidence = 82; break; // Mais rigoroso
+      case 'SOLUSDT': minConfidence = 85; break; // Muito rigoroso
+      default: minConfidence = 80; break;
+    }
+    
+    if (decision.confidence < minConfidence) {
+      console.log(`❌ Confiança ${decision.confidence}% < ${minConfidence}% para ${symbol}`);
+      return false;
+    }
+    
+    // 4. VALIDAÇÃO DE PADRÕES TÉCNICOS BULLISH
+    const reason = decision.reason?.toLowerCase() || '';
+    const winningPatterns = [
+      'golden cross', 'rompimento de resistência', 'volume de acumulação', 
+      'suporte forte', 'momentum bullish', 'breakout'
+    ];
+    
+    const patternCount = winningPatterns.filter(pattern => reason.includes(pattern)).length;
+    if (patternCount < 2) {
+      console.log(`❌ Padrões insuficientes: ${patternCount}/2 mínimo`);
+      console.log(`🔍 Padrões encontrados: ${winningPatterns.filter(p => reason.includes(p)).join(', ')}`);
+      return false;
+    }
+    
+    console.log(`✅ Padrões técnicos aprovados: ${patternCount}/6`);
+    
+    // 5. FILTRO DE TIMING (baseado na performance geral)
+    const hour = new Date().getUTCHours();
+    if (hour >= 22 || hour <= 4) {
+      console.log(`⚠️ Horário desfavorável: ${hour}h UTC (evitar 22h-4h)`);
+      minConfidence += 5;
+      if (decision.confidence < minConfidence) {
+        console.log(`❌ Confiança insuficiente para horário: ${decision.confidence}% < ${minConfidence}%`);
+        return false;
+      }
+    }
+    
+    // 6. VALIDAÇÃO SMART SIMPLIFICADA
+    const config = TradingConfigManager.getConfig();
     const validationMarketData = {
       price: { price: decision.price.toString() },
       stats: stats,
@@ -136,137 +220,60 @@ export class MultiSmartTradingBotSimulatorBuy extends BaseTradingBot {
       volumes: volumes
     };
 
-    // 1. SMART PRÉ-VALIDAÇÃO PARA COMPRAS (REALISTA)
-    const config = TradingConfigManager.getConfig();
     const smartValidation = await SmartPreValidationService
       .createBuilder()
-      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 0.5, 20)  // Volume mais flexível
-      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 0.5, 15)  // Momentum menor
-      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY * 1.5, 15)  // Volatilidade flexível
-      .withConfidence(config.MIN_CONFIDENCE - 5, 20)  // Confiança 5% menor
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 0.4, 25)
+      .withConfidence(minConfidence - 5, 25)
       .build()
       .validate(symbol, validationMarketData, decision, this.getBinancePublic());
 
-    // Se falhar, tentar validação mais permissiva
-    if (!smartValidation.isValid) {
-      console.log('🔄 Tentando validação mais permissiva para BUY...');
-      const permissiveValidation = await SmartPreValidationService
-        .createBuilder()
-        .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 0.3, 30)  // Muito flexível
-        .withConfidence(config.MIN_CONFIDENCE - 10, 30)  // Confiança 10% menor
-        .build()
-        .validate(symbol, validationMarketData, decision, this.getBinancePublic());
-      
-      if (permissiveValidation.isValid) {
-        console.log('✅ VALIDAÇÃO PERMISSIVA APROVADA:');
-        permissiveValidation.reasons.forEach(reason => console.log(`   ${reason}`));
-        console.log(`📊 Score Total: ${permissiveValidation.totalScore}/100`);
-        console.log(`🛡️ Nível de Risco: ${permissiveValidation.riskLevel}`);
-      } else {
-        console.log('❌ SMART PRÉ-VALIDAÇÃO FALHOU:');
-        permissiveValidation.warnings.forEach(warning => console.log(`   ${warning}`));
-        
-        // Para BUY, ser mais permissivo se a IA tem alta confiança
-        if (decision.confidence >= 85) {
-          console.log(`🤖 IA com alta confiança (${decision.confidence}%) - prosseguindo mesmo com validação falha`);
-        } else {
-          return false;
-        }
-      }
-    } else {
-      console.log('✅ SMART PRÉ-VALIDAÇÃO APROVADA:');
-      smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
-      console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
-      console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
-    }
-
-    // 2. VALIDAÇÕES ESPECÍFICAS MULTI-SMART BUY
-    console.log('🔍 Validações específicas Multi-Smart BUY...');
-
-    // Validar tendência EMA para alta (mais permissivo para BUY)
-    const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    // Para BUY, aceitar tendência de alta OU lateral com variação positiva
-    const isBuyFriendly = trendAnalysis.isUptrend || 
-                         trendAnalysis.reason?.includes('lateral') || 
-                         trendAnalysis.reason?.includes('consolidação') ||
-                         trendAnalysis.reason?.includes('sideways') ||
-                         parseFloat(stats.priceChangePercent) >= -0.5; // Aceitar se variação >= -0.5%
-    
-    if (!isBuyFriendly) {
-      console.log('❌ Tendência muito bearish para compra');
-      console.log(`💭 Razão: ${trendAnalysis.reason}`);
-      console.log(`📊 Variação 24h: ${stats.priceChangePercent}%`);
+    if (!smartValidation.isValid && decision.confidence < 85) {
+      console.log('❌ Smart validação falhou e confiança < 85%');
       return false;
     }
-    console.log('✅ Condições de mercado favoráveis para BUY');
-    console.log(`📊 Variação 24h: ${stats.priceChangePercent}% (adequada para BUY)`);
 
-    // Validar decisão DeepSeek para BUY
+    // 7. VALIDAÇÕES FINAIS
     if (decision.action !== 'BUY') {
       console.log('❌ DeepSeek não recomenda BUY');
       return false;
     }
-    console.log('✅ DeepSeek confirma oportunidade de BUY');
     
-    // Validar confiança mínima
-    if (decision.confidence < config.MIN_CONFIDENCE) {
-      console.log(`❌ Confiança ${decision.confidence}% < ${config.MIN_CONFIDENCE}% mínimo`);
-      return false;
-    }
-    console.log(`✅ Confiança ${decision.confidence}% ≥ ${config.MIN_CONFIDENCE}% mínimo`);
-
-    // 3. BOOST INTELIGENTE DE CONFIANÇA (mais conservador)
-    const boostedDecision = boostConfidence(decision, { baseBoost: 3, maxBoost: 8, trendType: 'BUY' });
-    console.log(`🚀 Confiança após boost: ${boostedDecision.confidence}%`);
+    // Registrar timestamp do trade
+    (global as any)[lastTradeKey] = Date.now();
     
-    // Verificar se ainda atende critérios após boost
-    if (boostedDecision.confidence < config.MIN_CONFIDENCE) {
-      console.log(`❌ Confiança final ${boostedDecision.confidence}% < ${config.MIN_CONFIDENCE}% mínimo`);
-      return false;
-    }
+    // Boost conservador baseado na qualidade dos padrões
+    const boost = Math.min(patternCount * 2, 8); // Máximo 8%
+    decision.confidence = Math.min(95, decision.confidence + boost);
+    decision.reason = `${decision.reason} + Padrões validados (+${boost}% boost)`;
+    
+    console.log(`✅ VALIDAÇÃO MULTI-SMART BUY APROVADA!`);
+    console.log(`📊 Confiança final: ${decision.confidence}%`);
+    console.log(`🎯 Padrões: ${patternCount}, Boost: +${boost}%`);
 
-    // 4. CÁLCULO DE VOLATILIDADE E TARGETS
-    const volatility = await calculateSymbolVolatility(
-      this.getBinancePublic(),
-      symbol,
-      TradingConfigManager.getConfig().CHART.TIMEFRAME,
-      TradingConfigManager.getConfig().CHART.PERIODS
-    );
-
-    console.log(`📊 Volatilidade ${symbol}: ${volatility.toFixed(2)}%`);
-
+    // 8. VALIDAÇÃO FINAL DE RISK/REWARD
     const priceResult = calculateTargetAndStopPrices(
-      boostedDecision.price,
-      boostedDecision.confidence,
-      boostedDecision.action
+      decision.price,
+      decision.confidence,
+      decision.action
     );
 
-    console.log(`🎯 Target: ${priceResult.targetPrice.toFixed(2)} (Balanced Method)`);
-    console.log(`🛑 Stop: ${priceResult.stopPrice.toFixed(2)} (Balanced Method)`);
-    console.log(`📊 Risk: ${priceResult.riskPercent.toFixed(2)}% | Volatilidade: ${volatility.toFixed(2)}%`);
-
-    // 5. VALIDAÇÃO FINAL DE RISK/REWARD
     const riskRewardResult = calculateRiskRewardDynamic(
-      boostedDecision.price,
+      decision.price,
       priceResult.targetPrice,
       priceResult.stopPrice,
-      boostedDecision.action
+      decision.action
     );
 
     if (!riskRewardResult.isValid) {
-      console.log('❌ Risk/Reward insuficiente para simulação');
+      console.log('❌ Risk/Reward insuficiente');
       return false;
     }
 
-    console.log('🧪 SIMULAÇÃO MULTI-SMART BUY APROVADA - Excelente oportunidade!');
-
-    // Atualizar decisão com smart pré-validação e boost
-    decision.confidence = boostedDecision.confidence;
-    decision.validationScore = smartValidation.isValid ? smartValidation.totalScore : 60; // Score mínimo se passou por IA
-    (decision as any).riskLevel = smartValidation.riskLevel || 'MEDIUM';
-    (decision as any).smartValidationPassed = true;
-    (decision as any).activeLayers = smartValidation.activeLayers || ['AI-Confidence'];
-    Object.assign(decision, boostedDecision);
+    // Atualizar metadados da decisão
+    decision.validationScore = smartValidation.isValid ? smartValidation.totalScore : 70;
+    (decision as any).riskLevel = 'MEDIUM';
+    (decision as any).patternCount = patternCount;
+    (decision as any).priceChange24h = priceChange;
 
     return true;
   }

@@ -39,22 +39,20 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
 
   protected logBotInfo() {
     console.log('🚀 MODO SIMULAÇÃO - SEM TRADES REAIS\n');
-    console.log('🔴 FOCO EXCLUSIVO EM VENDAS - Estratégia Short-Only Avançada');
-    logBotHeader('MULTI-SMART BOT SIMULATOR SELL v3.1 - PRÉ-VALIDAÇÃO OTIMIZADA', 'Análise Multi-Dimensional + Pré-Validação Centralizada - SIMULAÇÃO - APENAS VENDAS', true);
+    console.log('🔴 FOCO EXCLUSIVO EM VENDAS - Estratégia Short-Only Otimizada');
+    logBotHeader('MULTI-SMART BOT SIMULATOR SELL v4.0 - VALIDAÇÕES OTIMIZADAS', 'Análise Multi-Dimensional + Validações Baseadas em Performance - SIMULAÇÃO - APENAS VENDAS', true);
 
-    console.log('🎯 RECURSOS AVANÇADOS PARA VENDAS:');
-    console.log('  • EMA Multi-Timeframe (Death Cross Detection)');
-    console.log('  • AI Parser com Análise Bearish Avançada');
-    console.log('  • Smart Scoring 4D (EMA+AI+Volume+Momentum) BEARISH');
-    console.log('  • Filtro Adaptativo para Condições Bearish');
-    console.log('  • Boost Inteligente para Vendas (até +15%)');
-    console.log('  • Validação Realista (70%+ confiança)');
-    console.log('  • Simulação Segura (Zero Risco)');
-    console.log('  • Targets Baseados em Suporte/Resistência');
-    console.log('  • 🚀 MÓDULOS UNIFICADOS (v3.1)');
-    console.log('  • 🛡️ Pré-Validação Centralizada Otimizada');
-    console.log('  • 🔍 Validações Específicas Multi-Smart SELL');
-    console.log('  • Assertividade: 75-85% (REALISTA SELL)\n');
+    console.log('🎯 RECURSOS OTIMIZADOS PARA VENDAS (v4.0):');
+    console.log('  • 📊 Filtro de Variação 24h (-0.3% a -2.5%)');
+    console.log('  • ⏰ Cooldown Dinâmico por Símbolo (BTC:15min, BNB:30min, ETH:45min)');
+    console.log('  • 🎯 Confiança Dinâmica (BTC:75%, BNB:82%, ETH:85%)');
+    console.log('  • 🔍 Validação de Padrões Técnicos (2/5 obrigatório)');
+    console.log('  • 🕰️ Filtro de Timing (melhor: 14h-19h UTC)');
+    console.log('  • 🚀 Boost Baseado em Padrões (até +8%)');
+    console.log('  • 🛡️ Validação Smart Simplificada');
+    console.log('  • 🏆 Baseado em 48% Win Rate (12/25 trades)');
+    console.log('  • 💰 Retorno Médio: +$249.40 por trade');
+    console.log('  • Assertividade Esperada: 55-65% (REALISTA)\n');
   }
 
   private async analyzeSymbol(symbol: string, marketData: any) {
@@ -95,12 +93,12 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   }
 
   private getThresholdSellMarketCondition(marketType: string): number {
-    // Critérios EXECUTÁVEIS para Multi-Smart Bot SELL
+    // Critérios OTIMIZADOS baseados na análise de performance
     switch (marketType) {
-      case 'BULL_MARKET': return 35;  // Moderado em bull market
-      case 'BEAR_MARKET': return 15;  // Muito permissivo em bear market
-      case 'SIDEWAYS': return 25;     // Executável para mercado atual
-      default: return 25;             // Padrão executável
+      case 'BULL_MARKET': return 40;  // Mais rigoroso em bull market
+      case 'BEAR_MARKET': return 20;  // Permissivo em bear market
+      case 'SIDEWAYS': return 30;     // Moderado para mercado atual
+      default: return 32;             // Padrão mais rigoroso
     }
   }
 
@@ -137,14 +135,97 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
   private async validateMultiSmartDecision(decision: any, symbol?: string, marketData?: any): Promise<boolean> {
     if (!symbol || !marketData) return false;
 
-    console.log('🛡️ PRÉ-VALIDAÇÃO MULTI-SMART SELL SIMULATOR...');
+    console.log('🛡️ VALIDAÇÃO MULTI-SMART SELL OTIMIZADA...');
 
-    // Preparar dados de mercado para validação
+    // Preparar dados de mercado
     const klines = await this.getBinancePublic().getKlines(symbol, TradingConfigManager.getConfig().CHART.TIMEFRAME, TradingConfigManager.getConfig().CHART.PERIODS);
     const prices = klines.map((k: any) => parseFloat(k[4]));
     const volumes = klines.map((k: any) => parseFloat(k[5]));
     const stats = await this.getBinancePublic().get24hrStats(symbol);
-    
+
+    // 1. FILTRO DE VARIAÇÃO 24H (baseado na análise)
+    const priceChange = parseFloat(stats.priceChangePercent);
+    console.log(`📊 Variação 24h: ${priceChange.toFixed(2)}%`);
+
+    if (priceChange > 0) {
+      console.log('❌ Mercado em alta - não adequado para SELL');
+      return false;
+    }
+
+    if (priceChange < -2.5) {
+      console.log('⚠️ Queda muito acentuada (< -2.5%) - risco de reversão');
+      return false;
+    }
+
+    if (priceChange > -0.3) {
+      console.log('⚠️ Queda insuficiente (> -0.3%) - aguardar mais momentum bearish');
+      return false;
+    }
+
+    console.log('✅ Variação 24h adequada para SELL');
+
+    // 2. COOLDOWN POR SÍMBOLO (baseado na performance)
+    const lastTradeKey = `lastSellTrade_${symbol}`;
+    const lastTradeTime = (global as any)[lastTradeKey] || 0;
+    let cooldownMinutes = 20; // Padrão
+
+    switch (symbol) {
+      case 'BTCUSDT': cooldownMinutes = 15; break; // Melhor performance
+      case 'BNBUSDT': cooldownMinutes = 30; break; // Teve losses consecutivas
+      case 'ETHUSDT': cooldownMinutes = 45; break; // Baixa assertividade
+      default: cooldownMinutes = 25; break;
+    }
+
+    const cooldownMs = cooldownMinutes * 60 * 1000;
+    if (Date.now() - lastTradeTime < cooldownMs) {
+      console.log(`❌ COOLDOWN ATIVO: Aguarde ${cooldownMinutes}min para ${symbol}`);
+      return false;
+    }
+
+    // 3. CONFIANÇA DINÂMICA POR SÍMBOLO
+    let minConfidence = 80; // Padrão
+    switch (symbol) {
+      case 'BTCUSDT': minConfidence = 80; break; // Melhor performance
+      case 'BNBUSDT': minConfidence = 82; break; // Performance média
+      case 'ETHUSDT': minConfidence = 85; break; // Pior performance
+      default: minConfidence = 80; break;
+    }
+
+    if (decision.confidence < minConfidence) {
+      console.log(`❌ Confiança ${decision.confidence}% < ${minConfidence}% para ${symbol}`);
+      return false;
+    }
+
+    // 4. VALIDAÇÃO DE PADRÕES TÉCNICOS (baseado nos winners)
+    const reason = decision.reason?.toLowerCase() || '';
+    const winningPatterns = [
+      'duplo topo', 'death cross', 'volume de distribuição',
+      'rompimento de suporte', 'exaustão de compradores'
+    ];
+
+    const patternCount = winningPatterns.filter(pattern => reason.includes(pattern)).length;
+    if (patternCount < 2) {
+      console.log(`❌ Padrões insuficientes: ${patternCount}/2 mínimo`);
+      console.log(`🔍 Padrões encontrados: ${winningPatterns.filter(p => reason.includes(p)).join(', ')}`);
+      return false;
+    }
+
+    console.log(`✅ Padrões técnicos aprovados: ${patternCount}/5`);
+
+    // 5. FILTRO DE TIMING (baseado na performance)
+    const hour = new Date().getUTCHours();
+    if (hour >= 20 || hour <= 2) {
+      console.log(`⚠️ Horário desfavorável: ${hour}h UTC (evitar 20h-2h)`);
+      // Não bloquear completamente, mas aumentar threshold
+      minConfidence += 5;
+      if (decision.confidence < minConfidence) {
+        console.log(`❌ Confiança insuficiente para horário: ${decision.confidence}% < ${minConfidence}%`);
+        return false;
+      }
+    }
+
+    // 6. VALIDAÇÃO SMART SIMPLIFICADA
+    const config = TradingConfigManager.getConfig();
     const validationMarketData = {
       price: { price: decision.price.toString() },
       stats: stats,
@@ -153,137 +234,60 @@ export class MultiSmartTradingBotSimulatorSell extends BaseTradingBot {
       volumes: volumes
     };
 
-    // 1. SMART PRÉ-VALIDAÇÃO PARA VENDAS (REALISTA)
-    const config = TradingConfigManager.getConfig();
     const smartValidation = await SmartPreValidationService
       .createBuilder()
-      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 0.5, 20)  // Volume mais flexível
-      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 0.5, 15)  // Momentum menor
-      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY * 1.5, 15)  // Volatilidade flexível
-      .withConfidence(config.MIN_CONFIDENCE - 5, 20)  // Confiança 5% menor
+      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 0.4, 25)
+      .withConfidence(minConfidence, 25)
       .build()
       .validate(symbol, validationMarketData, decision, this.getBinancePublic());
 
-    // Se falhar, tentar validação mais permissiva
-    if (!smartValidation.isValid) {
-      console.log('🔄 Tentando validação mais permissiva para SELL...');
-      const permissiveValidation = await SmartPreValidationService
-        .createBuilder()
-        .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER * 0.3, 30)  // Muito flexível
-        .withConfidence(config.MIN_CONFIDENCE - 10, 30)  // Confiança 10% menor
-        .build()
-        .validate(symbol, validationMarketData, decision, this.getBinancePublic());
-      
-      if (permissiveValidation.isValid) {
-        console.log('✅ VALIDAÇÃO PERMISSIVA APROVADA:');
-        permissiveValidation.reasons.forEach(reason => console.log(`   ${reason}`));
-        console.log(`📊 Score Total: ${permissiveValidation.totalScore}/100`);
-        console.log(`🛡️ Nível de Risco: ${permissiveValidation.riskLevel}`);
-      } else {
-        console.log('❌ SMART PRÉ-VALIDAÇÃO FALHOU:');
-        permissiveValidation.warnings.forEach(warning => console.log(`   ${warning}`));
-        
-        // Para SELL, ser mais permissivo se a IA tem alta confiança
-        if (decision.confidence >= 85) {
-          console.log(`🤖 IA com alta confiança (${decision.confidence}%) - prosseguindo mesmo com validação falha`);
-        } else {
-          return false;
-        }
-      }
-    } else {
-      console.log('✅ SMART PRÉ-VALIDAÇÃO APROVADA:');
-      smartValidation.reasons.forEach(reason => console.log(`   ${reason}`));
-      console.log(`📊 Score Total: ${smartValidation.totalScore}/100`);
-      console.log(`🛡️ Nível de Risco: ${smartValidation.riskLevel}`);
-    }
-
-    // 2. VALIDAÇÕES ESPECÍFICAS MULTI-SMART SELL
-    console.log('🔍 Validações específicas Multi-Smart SELL...');
-
-    // Validar tendência EMA para baixa (mais permissivo para SELL)
-    const trendAnalysis = await this.trendAnalyzer.checkMarketTrendWithEma(symbol);
-    // Para SELL, aceitar qualquer tendência que não seja fortemente bullish
-    const isSellFriendly = !trendAnalysis.isUptrend || 
-                          trendAnalysis.reason?.includes('lateral') || 
-                          trendAnalysis.reason?.includes('consolidação') ||
-                          trendAnalysis.reason?.includes('sideways') ||
-                          parseFloat(stats.priceChangePercent) <= 1.0; // Aceitar se variação <= 1%
-    
-    if (!isSellFriendly) {
-      console.log('❌ Tendência muito bullish para venda');
-      console.log(`💭 Razão: ${trendAnalysis.reason}`);
-      console.log(`📊 Variação 24h: ${stats.priceChangePercent}%`);
+    if (!smartValidation.isValid && decision.confidence < 85) {
+      console.log('❌ Smart validação falhou e confiança < 85%');
       return false;
     }
-    console.log('✅ Condições de mercado favoráveis para SELL');
-    console.log(`📊 Variação 24h: ${stats.priceChangePercent}% (adequada para SELL)`);
 
-    // Validar decisão DeepSeek para SELL
+    // 7. VALIDAÇÕES FINAIS
     if (decision.action !== 'SELL') {
       console.log('❌ DeepSeek não recomenda SELL');
       return false;
     }
-    console.log('✅ DeepSeek confirma oportunidade de SELL');
-    
-    // Validar confiança mínima
-    if (decision.confidence < config.MIN_CONFIDENCE) {
-      console.log(`❌ Confiança ${decision.confidence}% < ${config.MIN_CONFIDENCE}% mínimo`);
-      return false;
-    }
-    console.log(`✅ Confiança ${decision.confidence}% ≥ ${config.MIN_CONFIDENCE}% mínimo`);
 
-    // 3. BOOST INTELIGENTE DE CONFIANÇA (mais conservador)
-    const boostedDecision = boostConfidence(decision, { baseBoost: 3, maxBoost: 8, trendType: 'SELL' });
-    console.log(`🚀 Confiança após boost: ${boostedDecision.confidence}%`);
-    
-    // Verificar se ainda atende critérios após boost
-    if (boostedDecision.confidence < config.MIN_CONFIDENCE) {
-      console.log(`❌ Confiança final ${boostedDecision.confidence}% < ${config.MIN_CONFIDENCE}% mínimo`);
-      return false;
-    }
+    // Registrar timestamp do trade
+    (global as any)[lastTradeKey] = Date.now();
 
-    // 4. CÁLCULO DE VOLATILIDADE E TARGETS
-    const volatility = await calculateSymbolVolatility(
-      this.getBinancePublic(),
-      symbol,
-      TradingConfigManager.getConfig().CHART.TIMEFRAME,
-      TradingConfigManager.getConfig().CHART.PERIODS
-    );
+    // Boost conservador baseado na qualidade dos padrões
+    const boost = Math.min(patternCount * 2, 8); // Máximo 8%
+    decision.confidence = Math.min(95, decision.confidence + boost);
+    decision.reason = `${decision.reason} + Padrões validados (+${boost}% boost)`;
 
-    console.log(`📊 Volatilidade ${symbol}: ${volatility.toFixed(2)}%`);
+    console.log(`✅ VALIDAÇÃO MULTI-SMART SELL APROVADA!`);
+    console.log(`📊 Confiança final: ${decision.confidence}%`);
+    console.log(`🎯 Padrões: ${patternCount}, Boost: +${boost}%`);
 
+    // 8. VALIDAÇÃO FINAL DE RISK/REWARD
     const priceResult = calculateTargetAndStopPrices(
-      boostedDecision.price,
-      boostedDecision.confidence,
-      boostedDecision.action
+      decision.price,
+      decision.confidence,
+      decision.action
     );
 
-    console.log(`🎯 Target: ${priceResult.targetPrice.toFixed(2)} (Balanced Method)`);
-    console.log(`🛑 Stop: ${priceResult.stopPrice.toFixed(2)} (Balanced Method)`);
-    console.log(`📊 Risk: ${priceResult.riskPercent.toFixed(2)}% | Volatilidade: ${volatility.toFixed(2)}%`);
-
-    // 5. VALIDAÇÃO FINAL DE RISK/REWARD
     const riskRewardResult = calculateRiskRewardDynamic(
-      boostedDecision.price,
+      decision.price,
       priceResult.targetPrice,
       priceResult.stopPrice,
-      boostedDecision.action
+      decision.action
     );
 
     if (!riskRewardResult.isValid) {
-      console.log('❌ Risk/Reward insuficiente para simulação SELL');
+      console.log('❌ Risk/Reward insuficiente');
       return false;
     }
 
-    console.log('🧪 SIMULAÇÃO MULTI-SMART SELL APROVADA - Excelente oportunidade!');
-
-    // Atualizar decisão com smart pré-validação e boost
-    decision.confidence = boostedDecision.confidence;
-    decision.validationScore = smartValidation.isValid ? smartValidation.totalScore : 60; // Score mínimo se passou por IA
-    (decision as any).riskLevel = smartValidation.riskLevel || 'MEDIUM';
-    (decision as any).smartValidationPassed = true;
-    (decision as any).activeLayers = smartValidation.activeLayers || ['AI-Confidence'];
-    Object.assign(decision, boostedDecision);
+    // Atualizar metadados da decisão
+    decision.validationScore = smartValidation.isValid ? smartValidation.totalScore : 70;
+    (decision as any).riskLevel = 'MEDIUM';
+    (decision as any).patternCount = patternCount;
+    (decision as any).priceChange24h = priceChange;
 
     return true;
   }

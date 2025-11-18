@@ -4,7 +4,7 @@ import * as path from 'path';
 interface DeepSeekAnalysis {
   timestamp: string;
   symbol: string;
-  botType: 'realBot' | 'smartBot' | 'multiSmartBot' | 'smartEntryBot';
+  botType: 'realBot' | 'realBotSimulator' | 'smartBot' | 'multiSmartBot' | 'smartEntryBot';
   prompt: string;
   response: string;
   confidence?: number;
@@ -32,6 +32,7 @@ interface DeepSeekAnalysis {
 
 interface DeepSeekHistory {
   realBot: DeepSeekAnalysis[];
+  realBotSimulator: DeepSeekAnalysis[];
   smartBot: DeepSeekAnalysis[];
   multiSmartBot: DeepSeekAnalysis[];
   smartEntryBot: DeepSeekAnalysis[];
@@ -41,6 +42,7 @@ interface DeepSeekHistory {
     totalCalls: number;
     callsByBot: {
       realBot: number;
+      realBotSimulator: number;
       smartBot: number;
       multiSmartBot: number;
       smartEntryBot: number;
@@ -63,6 +65,7 @@ export class DeepSeekHistoryLogger {
 
     return {
       realBot: [],
+      realBotSimulator: [],
       smartBot: [],
       multiSmartBot: [],
       smartEntryBot: [],
@@ -72,6 +75,7 @@ export class DeepSeekHistoryLogger {
         totalCalls: 0,
         callsByBot: {
           realBot: 0,
+          realBotSimulator: 0,
           smartBot: 0,
           multiSmartBot: 0,
           smartEntryBot: 0
@@ -113,7 +117,7 @@ export class DeepSeekHistoryLogger {
 
     // Log com informações técnicas se disponíveis
     let logMessage = `📝 DeepSeek análise salva: ${analysis.botType} | ${analysis.symbol} | ${analysis.action || 'N/A'}`;
-    
+
     if (analysis.technicalLevels) {
       const levelsCount = [
         analysis.technicalLevels.support?.length || 0,
@@ -121,16 +125,16 @@ export class DeepSeekHistoryLogger {
         analysis.technicalLevels.targets?.length || 0,
         analysis.technicalLevels.stopLoss?.length || 0
       ].reduce((a, b) => a + b, 0);
-      
+
       if (levelsCount > 0) {
         logMessage += ` | ${levelsCount} níveis técnicos`;
       }
     }
-    
+
     if (analysis.enhancedTargets?.target) {
       logMessage += ` | Target: $${analysis.enhancedTargets.target.toLocaleString()}`;
     }
-    
+
     console.log(logMessage);
   }
 
@@ -144,18 +148,18 @@ export class DeepSeekHistoryLogger {
       technicalLevels,
       enhancedTargets
     };
-    
+
     this.logAnalysis(enhancedAnalysis);
   }
 
-  static getHistory(botType?: 'realBot' | 'smartBot' | 'multiSmartBot' | 'smartEntryBot'): DeepSeekHistory | DeepSeekAnalysis[] {
+  static getHistory(botType?: 'realBot' | 'realBotSimulator' | 'smartBot' | 'multiSmartBot' | 'smartEntryBot'): DeepSeekHistory | DeepSeekAnalysis[] {
     const history = this.loadHistory();
     return botType ? history[botType] : history;
   }
 
   static getStats(): { totalCalls: number; callsByBot: Record<string, number>; lastCall?: string } {
     const history = this.loadHistory();
-    const allAnalyses = [...history.realBot, ...history.smartBot, ...history.multiSmartBot, ...history.smartEntryBot];
+    const allAnalyses = [...history.realBot, ...history.realBotSimulator, ...history.smartBot, ...history.multiSmartBot, ...history.smartEntryBot];
     const lastCall = allAnalyses.length > 0
       ? allAnalyses[allAnalyses.length - 1].timestamp
       : undefined;

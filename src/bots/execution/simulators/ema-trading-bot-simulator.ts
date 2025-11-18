@@ -46,28 +46,28 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
   protected logBotInfo() {
     const config = TradingConfigManager.getConfig();
     
-    console.log('📈 REALISTIC EMA SIMULATOR v7.0 - BALANCED - NÃO EXECUTA TRADES REAIS\n');
-    logBotHeader('📈 EMA SIMULATOR v7.0 - REALISTIC', `Win Rate Target: 65-70% | EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} + Balanced Validation`, true);
-    console.log('🔧 Atualizações v7.0 (Validações Realistas):');
-    console.log('   ✅ Modo Balanceado: Confiança mínima 75% (era 82%)');
-    console.log('   ✅ Validações Práticas: Critérios alcançáveis');
-    console.log('   ✅ EMA Rigoroso: Separação mínima + alinhamento');
-    console.log('   ✅ Volume Realista: 2.0x média (rigoroso mas alcançável)');
-    console.log('   ✅ RSI Flexível: 30-70 zona operável');
-    console.log('   ✅ Win Rate Alvo: 65-70% (realista)\n');
-    console.log('🎯 Validações Balanceadas:');
-    console.log(`   📈 EMA: Períodos ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} + Separação 0.5%`);
-    console.log(`   📊 RSI: Zona 30-70 (evita extremos)`);
-    console.log(`   📊 Volume: ${config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER.toFixed(1)}x média mínimo`);
-    console.log(`   ⚡ Momentum: ${(config.EMA_ADVANCED.MIN_TREND_STRENGTH * 100).toFixed(1)}% mínimo`);
-    console.log(`   📉 Volatilidade: ${config.MARKET_FILTERS.MIN_VOLATILITY}-${config.MARKET_FILTERS.MAX_VOLATILITY}%`);
-    console.log(`   🎯 Confidence: ${config.MIN_CONFIDENCE}% mínimo\n`);
-    console.log('🎯 Configuração Ultra-Conservadora:');
-    console.log(`📊 Confiança Mínima: ${config.MIN_CONFIDENCE}% (REAL)`);
-    console.log(`🛡️ Risk/Reward: ${config.MIN_RISK_REWARD_RATIO}:1 (GARANTIDO)`);
-    console.log(`⏰ Cooldown: ${config.TRADE_COOLDOWN_MINUTES} minutos`);
-    console.log(`🪙 Símbolos: ${config.SYMBOLS.join(', ')} (apenas estáveis)`);
-    console.log('🧪 MODO SIMULAÇÃO - Zero risco financeiro\n');
+    console.log('📈 EMA SIMULATOR v8.0 - OTIMIZADO PARA MAIOR WIN RATE\n');
+    logBotHeader('📈 EMA SIMULATOR v8.0 - OTIMIZADO', `Performance-Based | EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} + Anti-Overtrading`, true);
+    console.log('🚀 Atualizações v8.0 (Baseado na Análise de Performance):');
+    console.log('   ✅ Separação EMA Mínima: 0.70% (era 0.50%)');
+    console.log('   ✅ Cooldown Anti-Overtrading: 45-90min por símbolo');
+    console.log('   ✅ Filtro de Símbolos: Evita BTC (0% win rate)');
+    console.log('   ✅ Timing Otimizado: Boost 18h-23h UTC');
+    console.log('   ✅ Volume Rigoroso: 1.5x média mínimo');
+    console.log('   ✅ Win Rate Alvo: 45-55% (realista vs 27% atual)\n');
+    console.log('🎯 Validações Baseadas em Dados Históricos:');
+    console.log('   📈 EMA Separação: ≥0.70% (winners tiveram 0.62-0.92%)');
+    console.log('   ⏰ Timing: 18h-23h UTC (melhor performance)');
+    console.log('   🚫 BTC Bloqueado: 0% win rate (3/3 losses)');
+    console.log('   🏆 ETH Priorizado: 15.4% win rate (melhor relativo)');
+    console.log('   ⏰ Cooldown ETH: 60min, SOL: 90min');
+    console.log('   📊 Volume: 1.5x média (confirmação)\n');
+    console.log('📊 Performance Histórica Analisada:');
+    console.log('   📉 Total Trades: 22 (27.3% win rate)');
+    console.log('   ❌ Overtrading: 22 trades em 7h (problema crítico)');
+    console.log('   🏆 Winners: Separação 0.62-0.92%, timing 18h+');
+    console.log('   ⚠️ Losers: Separação 0.50-0.65%, overtrading');
+    console.log('🧪 MODO SIMULAÇÃO - Validações otimizadas, sem trades reais\n');
   }
 
   private async getMarketData(symbol: string): Promise<MarketData> {
@@ -93,104 +93,161 @@ export class EmaTradingBotSimulator extends BaseTradingBot {
 
   private async analyzeWithEma(symbol: string, marketData: MarketData): Promise<TradeDecision> {
     const config = TradingConfigManager.getConfig();
-    console.log(`\n📊 Analisando mercado com EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} MELHORADO...`);
+    console.log(`\n📊 Analisando ${symbol} com EMA ${config.EMA.FAST_PERIOD}/${config.EMA.SLOW_PERIOD} OTIMIZADO...`);
 
     // 1. Análise EMA básica
     const basicAnalysis = this.emaAnalyzer.analyze(marketData);
     
-    // 2. Validações EMA avançadas integradas
-    const validation = await this.validateEnhancedEmaSignal(marketData, basicAnalysis);
+    // 2. Validações EMA otimizadas baseadas na performance
+    const validation = await this.validateEnhancedEmaSignal(marketData, { ...basicAnalysis, symbol });
     
     if (!validation.isValid) {
-      console.log('❌ Sinal EMA rejeitado pelas validações avançadas:');
+      console.log('❌ Sinal EMA REJEITADO pelas validações otimizadas:');
       validation.warnings.forEach(warning => console.log(`   ${warning}`));
-      const config = TradingConfigManager.getConfig();
       return {
         action: 'HOLD',
-        confidence: config.VALIDATION_SCORES?.MIN_CONFIDENCE || 50,
-        reason: 'Sinal EMA não passou nas validações rigorosas',
+        confidence: 50,
+        reason: 'Sinal EMA não atende critérios de performance otimizados',
         symbol,
         price: marketData.currentPrice
       };
     }
     
-    console.log('✅ Sinal EMA aprovado pelas validações avançadas:');
+    console.log('✅ Sinal EMA APROVADO pelas validações otimizadas:');
     validation.reasons.forEach(reason => console.log(`   ${reason}`));
     
-    // 3. Ajustar confiança de forma REALISTA
-    const adjustedConfidence = Math.min(85, basicAnalysis.confidence + Math.min(validation.score, 10)); // Máximo +10%
+    // 3. Confiança dinâmica baseada na separação EMA
+    const emaFast = this.calculateSimpleEMA(marketData.price24h, config.EMA.FAST_PERIOD);
+    const emaSlow = this.calculateSimpleEMA(marketData.price24h, config.EMA.SLOW_PERIOD);
+    const separation = Math.abs(emaFast - emaSlow) / emaSlow;
     
-    console.log(`📈 Sinal EMA: ${basicAnalysis.action} (${adjustedConfidence}% - melhorado)`);
-    console.log(`💭 Razão: ${basicAnalysis.reason} + validações rigorosas`);
+    let finalConfidence = 78; // Base mais alta
+    if (separation >= 0.0085) finalConfidence = 82; // 0.85%+
+    else if (separation >= 0.0075) finalConfidence = 80; // 0.75%+
+    else if (separation >= 0.007) finalConfidence = 78; // 0.70%+
+    
+    console.log(`📈 Sinal EMA OTIMIZADO: ${basicAnalysis.action} (${finalConfidence}%)`);
+    console.log(`📊 Separação: ${(separation * 100).toFixed(2)}% | Score: ${validation.score}`);
 
     return {
       action: basicAnalysis.action as 'BUY' | 'SELL' | 'HOLD',
-      confidence: adjustedConfidence,
-      reason: `${basicAnalysis.reason} (Score validação: ${validation.score}/20)`,
+      confidence: finalConfidence,
+      reason: `${basicAnalysis.reason} (Sep: ${(separation * 100).toFixed(2)}%, Score: ${validation.score})`,
       symbol,
       price: marketData.currentPrice
     };
   }
   
   private async validateEnhancedEmaSignal(marketData: MarketData, basicAnalysis: any) {
-    // Validações EMA REALISTAS e ALCANÇÁVEIS
-    const mockDecision = { action: basicAnalysis.action, confidence: basicAnalysis.confidence, price: marketData.currentPrice };
-    const mockMarketDataForValidation = { 
-      price: { price: marketData.currentPrice.toString() }, 
-      stats: marketData.stats, 
-      klines: marketData.klines,
-      price24h: marketData.price24h,
-      volumes: marketData.volumes
-    };
-    
+    // Validações EMA OTIMIZADAS baseadas na análise de performance
     const config = TradingConfigManager.getConfig();
-    const smartValidation = await SmartPreValidationService
-      .createBuilder()
-      .withEma(config.EMA.FAST_PERIOD, config.EMA.SLOW_PERIOD, 25)  // EMA principal
-      .withRSI(14, 15)  // RSI flexível
-      .withVolume(config.MARKET_FILTERS.MIN_VOLUME_MULTIPLIER, 20)  // Volume realista
-      .withMomentum(config.EMA_ADVANCED.MIN_TREND_STRENGTH, 15)  // Momentum normal
-      .withVolatility(config.MARKET_FILTERS.MIN_VOLATILITY, config.MARKET_FILTERS.MAX_VOLATILITY, 15)  // Volatilidade balanceada
-      .withConfidence(config.MIN_CONFIDENCE, 10)  // Confiança mínima
-      .build()
-      .validate('', mockMarketDataForValidation, mockDecision, null);
-    
-    // Validações adicionais EMA específicas
     let additionalScore = 0;
-    const warnings = [...smartValidation.warnings];
-    const reasons = [...smartValidation.reasons];
+    const warnings: string[] = [];
+    const reasons: string[] = [];
 
-    // Verificar separação EMA adequada (mais flexível)
+    // 1. FILTRO DE SEPARAÇÃO EMA RIGOROSO (baseado na análise)
     if (marketData.price24h.length >= config.EMA.SLOW_PERIOD) {
       const emaFast = this.calculateSimpleEMA(marketData.price24h, config.EMA.FAST_PERIOD);
       const emaSlow = this.calculateSimpleEMA(marketData.price24h, config.EMA.SLOW_PERIOD);
       const separation = Math.abs(emaFast - emaSlow) / emaSlow;
-      const minSeparation = config.EMA_ADVANCED.MIN_SEPARATION * 0.5; // 50% mais flexível
+      
+      // OTIMIZAÇÃO: Separação mínima 0.70% (baseado nos winners)
+      const minSeparation = 0.007; // 0.70%
       
       if (separation >= minSeparation) {
-        additionalScore += 5;
-        reasons.push(`✅ Separação EMA adequada (${(separation * 100).toFixed(2)}%)`);
+        additionalScore += 15;
+        reasons.push(`✅ Separação EMA forte (${(separation * 100).toFixed(2)}% ≥ 0.70%)`);
       } else {
-        warnings.push(`❌ Separação EMA insuficiente (${(separation * 100).toFixed(2)}% < ${(minSeparation * 100).toFixed(1)}%)`);
+        warnings.push(`❌ Separação EMA fraca (${(separation * 100).toFixed(2)}% < 0.70%) - alta probabilidade de loss`);
+        return { isValid: false, score: 0, reasons, warnings };
       }
     }
 
-    // Verificar alinhamento de preço com EMAs
-    if (basicAnalysis.action === 'BUY' && marketData.currentPrice > marketData.price24h[marketData.price24h.length - 2]) {
-      additionalScore += 3;
-      reasons.push('✅ Preço acima da EMA para BUY');
-    } else if (basicAnalysis.action === 'SELL' && marketData.currentPrice < marketData.price24h[marketData.price24h.length - 2]) {
-      additionalScore += 3;
-      reasons.push('✅ Preço abaixo da EMA para SELL');
+    // 2. FILTRO DE SÍMBOLO (baseado na performance)
+    const symbol = basicAnalysis.symbol || '';
+    if (symbol === 'BTCUSDT') {
+      warnings.push('❌ BTC teve 0% win rate - evitando');
+      return { isValid: false, score: 0, reasons, warnings };
+    }
+    
+    if (symbol === 'ETHUSDT') {
+      additionalScore += 5;
+      reasons.push('✅ ETH: Melhor performance relativa (5/6 wins)');
+    } else if (symbol === 'SOLUSDT') {
+      additionalScore += 2;
+      reasons.push('✅ SOL: Performance moderada (1/3 wins)');
     }
 
-    const finalScore = smartValidation.totalScore + additionalScore;
-    // Mais flexível: aceitar se smart validation passou OU se tem pontos EMA
-    const isValid = smartValidation.isValid || (smartValidation.totalScore >= 40 && additionalScore >= 3);
+    // 3. FILTRO DE TIMING (baseado na análise)
+    const hour = new Date().getUTCHours();
+    if (hour >= 18 && hour <= 23) {
+      additionalScore += 8;
+      reasons.push('✅ Timing ótimo (18h-23h UTC) - melhor performance histórica');
+    } else if (hour >= 16 && hour < 18) {
+      warnings.push('⚠️ Timing desfavorável (16h-18h UTC) - muitos losses históricos');
+      additionalScore -= 5;
+    }
+
+    // 4. COOLDOWN ANTI-OVERTRADING (problema crítico identificado)
+    const lastTradeKey = `lastEmaTrade_${symbol}`;
+    const lastTradeTime = (global as any)[lastTradeKey] || 0;
+    let cooldownMinutes = 45; // Base
+    
+    switch (symbol) {
+      case 'ETHUSDT': cooldownMinutes = 60; break; // ETH teve overtrading
+      case 'SOLUSDT': cooldownMinutes = 90; break; // SOL mais cauteloso
+      default: cooldownMinutes = 45; break;
+    }
+    
+    const cooldownMs = cooldownMinutes * 60 * 1000;
+    if (Date.now() - lastTradeTime < cooldownMs) {
+      warnings.push(`❌ COOLDOWN ATIVO: Aguarde ${cooldownMinutes}min para ${symbol} (anti-overtrading)`);
+      return { isValid: false, score: 0, reasons, warnings };
+    }
+
+    // 5. VALIDAÇÃO DE VOLUME
+    const avgVolume = marketData.volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+    const currentVolume = marketData.volumes[marketData.volumes.length - 1];
+    const volumeRatio = currentVolume / avgVolume;
+    
+    if (volumeRatio >= 1.5) {
+      additionalScore += 8;
+      reasons.push(`✅ Volume elevado (${volumeRatio.toFixed(1)}x média)`);
+    } else {
+      warnings.push(`⚠️ Volume baixo (${volumeRatio.toFixed(1)}x < 1.5x média)`);
+      additionalScore -= 3;
+    }
+
+    // 6. CONFIANÇA DINÂMICA baseada na separação
+    const emaFast = this.calculateSimpleEMA(marketData.price24h, config.EMA.FAST_PERIOD);
+    const emaSlow = this.calculateSimpleEMA(marketData.price24h, config.EMA.SLOW_PERIOD);
+    const separation = Math.abs(emaFast - emaSlow) / emaSlow;
+    
+    let confidenceBonus = 0;
+    if (separation >= 0.0085) { // 0.85%+
+      confidenceBonus = 7;
+      reasons.push('✅ Separação EMA excelente (0.85%+)');
+    } else if (separation >= 0.0075) { // 0.75%+
+      confidenceBonus = 5;
+      reasons.push('✅ Separação EMA boa (0.75%+)');
+    } else if (separation >= 0.007) { // 0.70%+
+      confidenceBonus = 3;
+      reasons.push('✅ Separação EMA adequada (0.70%+)');
+    }
+    
+    additionalScore += confidenceBonus;
+
+    // Registrar timestamp do trade se aprovado
+    if (additionalScore >= 15) {
+      (global as any)[lastTradeKey] = Date.now();
+    }
+
+    const finalScore = additionalScore;
+    const isValid = finalScore >= 15; // Threshold mais rigoroso
     
     return {
       isValid,
-      score: Math.round(finalScore / 5), // Convert to 0-20+ scale
+      score: finalScore,
       reasons,
       warnings
     };

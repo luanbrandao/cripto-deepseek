@@ -5,7 +5,8 @@ const execAsync = promisify(exec);
 
 const simulators = [
   // 🛡️ ULTRA-CONSERVATIVE SIMULATORS (v5.0 - Win Rate Target: 75-85%)
-  { name: 'Ultra-Conservative Smart Simulator', command: 'npm run ultra-conservative-smart-simulator' },
+  // mesma coisa do smart-trading-bot-buy-simulator
+  // { name: 'Ultra-Conservative Smart Simulator', command: 'npm run ultra-conservative-smart-simulator' },
   { name: 'Ultra-Conservative Real Simulator', command: 'npm run ultra-conservative-real-simulator' },
   { name: 'Ultra-Conservative EMA Bot Simulator', command: 'npm run ultra-conservative-ema-bot-simulator' },
   { name: 'Ultra-Conservative S/R Bot Simulator', command: 'npm run ultra-conservative-sr-bot-simulator' },

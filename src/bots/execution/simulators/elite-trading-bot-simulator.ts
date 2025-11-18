@@ -95,7 +95,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     try {
       // Verificar cooldown
       if (!this.checkCooldown()) {
-        return;
+        return false;
       }
 
       // Analisar múltiplos símbolos
@@ -104,14 +104,16 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
       if (!bestSetup) {
         console.log('\n⏸️ NENHUM SETUP ELITE ENCONTRADO');
         console.log('🔍 Aguardando confluência perfeita das 5 camadas...');
-        return;
+        return false;
       }
 
       // Validar setup final antes da execução
       if (this.validateFinalSetup(bestSetup)) {
-        await this.executeEliteSetup(bestSetup);
+        const tradeExecuted = await this.executeEliteSetup(bestSetup);
+        return tradeExecuted;
       } else {
         console.log('\n❌ SETUP REJEITADO na validação final');
+        return false;
       }
 
     } catch (error) {
@@ -230,7 +232,7 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     console.log(`   🔍 Camadas ativas: ${smartValidation.activeLayers.join(', ')}`);
 
     // Camada Final: AI Analysis - Só se passou na smart pré-validação
-    const aiDecision = await UnifiedDeepSeekAnalyzer.analyzeRealTrade(
+    const aiDecision = await UnifiedDeepSeekAnalyzer.analyzeSmartTrade(
       this.deepseek!,
       symbol,
       marketData
@@ -673,11 +675,14 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
     };
 
     // Salvar no arquivo
+    console.log('\n💾 SALVANDO TRADE ELITE...');
     this.saveEliteTrade(trade);
 
     console.log(`\n✅ SIMULAÇÃO ELITE CONCLUÍDA!`);
     console.log(`💾 Trade salvo: ${symbol} ${aiDecision.action}`);
     console.log(`🏆 Classificação: ${this.getSetupClassification(score.totalScore)}`);
+    
+    return true; // Indicar que o trade foi executado
   }
 
   private calculatePositionSize(score: number): number {
@@ -788,10 +793,22 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
 
   private saveEliteTrade(trade: any) {
     try {
+      console.log(`💾 Salvando trade elite em: ${this.tradesFile}`);
+      
+      // Criar diretório se não existir
+      const dir = path.dirname(this.tradesFile);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        console.log(`📁 Diretório criado: ${dir}`);
+      }
+
       let trades = [];
 
       if (fs.existsSync(this.tradesFile)) {
         trades = JSON.parse(fs.readFileSync(this.tradesFile, 'utf8'));
+        console.log(`📊 Trades existentes: ${trades.length}`);
+      } else {
+        console.log('📄 Criando novo arquivo de trades');
       }
 
       trades.push(trade);
@@ -802,9 +819,11 @@ export class EliteTradingBotSimulator extends BaseTradingBot {
       }
 
       fs.writeFileSync(this.tradesFile, JSON.stringify(trades, null, 2));
+      console.log(`✅ Trade elite salvo com sucesso! Total: ${trades.length}`);
 
     } catch (error) {
       console.error('❌ Erro ao salvar trade elite:', error);
+      console.error('📁 Caminho do arquivo:', this.tradesFile);
     }
   }
 }

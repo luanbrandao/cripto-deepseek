@@ -89,7 +89,6 @@
     "ultra-conservative-smart-bot": "ts-node src/bots/execution/real/smart-trading-bot-buy.ts",
     "ultra-conservative-ema-bot": "ts-node src/bots/execution/real/ema-trading-bot.ts",
     "_comment5b": "--- 🧪 Ultra-Conservative Simulators (Safe Testing) ---",
-    "ultra-conservative-smart-simulator": "ts-node src/bots/execution/simulators/smart-trading-bot-simulator-buy.ts",
     "ultra-conservative-real-simulator": "ts-node src/bots/execution/simulators/real-trading-bot-simulator.ts",
     "ultra-conservative-ema-bot-simulator": "ts-node src/bots/execution/simulators/ema-trading-bot-simulator.ts",
     "ultra-conservative-sr-bot-simulator": "ts-node src/bots/execution/simulators/support-resistance-bot-simulator.ts",
